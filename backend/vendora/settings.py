@@ -30,8 +30,8 @@ SECRET_KEY = 'django-insecure-2$m+wi9f1)bnxyb8=r1z1e@)*k=^@b91ajy1t&rf%&*a$1$o=b
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['2059d35dcfda.ngrok-free.app', '127.0.0.1', 'localhost']
-CSRF_TRUSTED_ORIGINS = ["http://127.0.0.1:8000", "https://2059d35dcfda.ngrok-free.app"]
+ALLOWED_HOSTS = ['51b78c512b9c.ngrok-free.app', '127.0.0.1', 'localhost']
+CSRF_TRUSTED_ORIGINS = ["http://127.0.0.1:8000", "https://51b78c512b9c.ngrok-free.app"]
 
 # Telegram Bot Configuration
 TELEGRAM_BOT_TOKEN = str(config('TELEGRAM_BOT_TOKEN', default='')).strip()

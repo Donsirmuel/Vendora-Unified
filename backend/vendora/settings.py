@@ -189,6 +189,11 @@ CORS_ALLOW_CREDENTIALS = True
 # Use custom user model
 AUTH_USER_MODEL = 'accounts.Vendor'
 
+# Authentication backends (default honors USERNAME_FIELD='email')
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+]
+
 # JWT Configuration
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),

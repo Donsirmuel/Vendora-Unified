@@ -7,26 +7,20 @@ from .models import Vendor, BroadcastMessage
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
-    """Custom JWT serializer that accepts email instead of username"""
-    
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # Replace the username field with email field
-        self.fields.pop('username', None)
-        self.fields['email'] = serializers.EmailField()
-    
+    """JWT serializer that works with email-based login.
+
+    Our Vendor model uses USERNAME_FIELD = 'email'. SimpleJWT respects
+    AUTH_USER_MODEL.USERNAME_FIELD when validating credentials, so we
+    don't need to redefine fields. However, the frontend posts `{ email, password }`.
+    We'll gently map `email` into `username` for compatibility while also
+    supporting native `{ username: email, password }` payloads.
+    """
+
     def validate(self, attrs):
+        # If client sent `email`, mirror it into `username` without removing keys.
         email = attrs.get('email')
-        password = attrs.get('password')
-        
-        if not email or not password:
-            raise serializers.ValidationError('Email and password are required.')
-        
-        # Since our Vendor model has USERNAME_FIELD = 'email', 
-        # we need to pass the email as 'username' to the parent class
-        attrs['username'] = email
-        
-        # Call parent validation which will use our Vendor model's authentication
+        if email and not attrs.get('username'):
+            attrs['username'] = email
         return super().validate(attrs)
 
 

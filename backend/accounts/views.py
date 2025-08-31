@@ -25,6 +25,24 @@ class VendorViewSet(ModelViewSet):
 
         return VendorSerializer
 
+    @action(detail=False, methods=["get", "patch"], url_path="me")
+    def me(self, request):
+        """Retrieve or update the authenticated vendor's own profile.
+
+        GET /vendors/me/    -> current user's Vendor profile
+        PATCH /vendors/me/  -> partial update of current user's Vendor profile
+        """
+        user = request.user
+        if request.method.lower() == "get":
+            serializer = self.get_serializer(user)
+            return Response(serializer.data)
+
+        # PATCH
+        serializer = self.get_serializer(user, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
 
 class BroadcastMessageViewSet(ModelViewSet):
     """ViewSet for managing broadcast messages to Telegram bot."""

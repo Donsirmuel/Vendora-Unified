@@ -1,3 +1,5 @@
+# Vendora-Unified
+
 # Vendora - Crypto Vendor Management Platform
 
 A comprehensive platform for managing cryptocurrency transactions with integrated Telegram bot functionality.
@@ -31,10 +33,10 @@ npm run dev
 
 ## Development
 
-- **Backend**: Django 5.2.5 + DRF + JWT Authentication
-- **Frontend**: React 18 + TypeScript + Vite + shadcn/ui
-- **Database**: SQLite (development) / PostgreSQL (production)
-- **API**: RESTful API with JWT authentication
+- Backend: Django 5.2.5 + DRF + JWT Authentication
+- Frontend: React 18 + TypeScript + Vite + shadcn/ui
+- Database: SQLite (development) / PostgreSQL (production)
+- API: RESTful API with JWT authentication
 
 ## Features
 

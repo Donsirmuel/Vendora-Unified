@@ -2,6 +2,9 @@
 echo Starting Vendora Development Environment
 echo.
 
+echo Applying Django migrations...
+cmd /d /c "cd backend && python manage.py makemigrations && python manage.py migrate"
+
 echo Starting Django backend...
 start "Django Backend" cmd /k "cd backend && python manage.py runserver"
 

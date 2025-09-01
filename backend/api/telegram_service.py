@@ -158,6 +158,33 @@ class TelegramBotService:
             logger.error(f"Error getting webhook info: {e}")
             return {"success": False, "error": str(e)}
 
+    def send_document(self, file_bytes: bytes, filename: str, caption: str = "", chat_id: str | None = None) -> Dict[str, Any]:
+        """Send a document (e.g., receipt/proof) to a Telegram chat."""
+        if not self.token:
+            return {"success": False, "error": "Bot token not configured"}
+        target_chat_id = chat_id or self.chat_id
+        if not target_chat_id:
+            return {"success": False, "error": "Chat ID not configured"}
+        try:
+            files = {
+                "document": (filename, file_bytes)
+            }
+            data = {
+                "chat_id": target_chat_id,
+                "caption": caption,
+                "parse_mode": "HTML",
+            }
+            resp = requests.post(f"{self.base_url}/sendDocument", data=data, files=files, timeout=60)
+            if resp.status_code == 200:
+                js = resp.json()
+                if js.get("ok"):
+                    return {"success": True, "message_id": js["result"]["message_id"]}
+                return {"success": False, "error": js.get("description", "Unknown error")}
+            return {"success": False, "error": f"HTTP {resp.status_code}: {resp.text}"}
+        except Exception as e:
+            logger.error(f"Error sending document to Telegram: {e}")
+            return {"success": False, "error": str(e)}
+
     def get_file_info(self, file_id: str) -> Dict[str, Any]:
         """Get Telegram file info (including file_path) from a file_id."""
         if not self.token:

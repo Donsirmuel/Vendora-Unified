@@ -9,6 +9,9 @@ class Transaction(models.Model):
     completed_at = models.DateTimeField(null=True, blank=True)
     customer_receiving_details = models.TextField(blank=True)
     customer_note = models.TextField(blank=True)
+    # Vendor completion artifacts
+    vendor_proof = models.FileField(upload_to="vendor_proofs/", null=True, blank=True)
+    vendor_completed_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         ordering = ["-completed_at", "-id"]

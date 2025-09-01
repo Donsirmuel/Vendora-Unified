@@ -144,9 +144,9 @@ def telegram_webhook(request):
                                         if updates:
                                             txn.save(update_fields=updates)
 
-                                    # Reset BotUser state
+                                    # Reset immediate state, but keep linking to the current order for next steps
                                     bu.state = ""
-                                    bu.temp_order_id = ""
+                                    bu.temp_order_id = str(order.id)
                                     bu.save(update_fields=["state", "temp_order_id"])
 
                                     # Ask for receiving details depending on order type

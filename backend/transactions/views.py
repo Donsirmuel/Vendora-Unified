@@ -7,6 +7,7 @@ from rest_framework import filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import status
+from django.http import HttpResponse
 
 
 class TransactionViewSet(ModelViewSet):
@@ -28,6 +29,18 @@ class TransactionViewSet(ModelViewSet):
 
         return TransactionSerializer
 
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if instance.status == "declined":
+            return Response({"detail": "This transaction is declined and cannot be modified."}, status=status.HTTP_400_BAD_REQUEST)
+        return super().update(request, *args, **kwargs)
+
+    def partial_update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if instance.status == "declined":
+            return Response({"detail": "This transaction is declined and cannot be modified."}, status=status.HTTP_400_BAD_REQUEST)
+        return super().partial_update(request, *args, **kwargs)
+
     @action(detail=True, methods=["post"], url_path="complete")
     def complete(self, request, pk=None):
         from .models import Transaction
@@ -36,6 +49,10 @@ class TransactionViewSet(ModelViewSet):
         transaction = self.get_object()
         if transaction.order.vendor != request.user and not request.user.is_staff:
             return Response({"detail": "Forbidden"}, status=status.HTTP_403_FORBIDDEN)
+
+        # Hard read-only for declined transactions
+        if transaction.status == "declined":
+            return Response({"detail": "This transaction is declined and cannot be updated."}, status=status.HTTP_400_BAD_REQUEST)
 
         status_value = request.data.get("status")
         if status_value not in {"completed", "declined"}:
@@ -94,3 +111,61 @@ class TransactionViewSet(ModelViewSet):
             pass
 
         return Response({"status": transaction.status}, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=["get"], url_path="pdf")
+    def download_pdf(self, request, pk=None):
+        """Generate a simple PDF summary for the transaction and order."""
+        transaction = self.get_object()
+        if transaction.order.vendor != request.user and not request.user.is_staff:
+            return Response({"detail": "Forbidden"}, status=status.HTTP_403_FORBIDDEN)
+
+        try:
+            # Attempt to use reportlab if available
+            from reportlab.lib.pagesizes import letter
+            from reportlab.pdfgen import canvas
+            from io import BytesIO
+
+            buffer = BytesIO()
+            p = canvas.Canvas(buffer, pagesize=letter)
+            width, height = letter
+
+            y = height - 50
+            p.setFont("Helvetica-Bold", 14)
+            p.drawString(50, y, "Vendora Transaction Summary")
+            y -= 25
+            p.setFont("Helvetica", 10)
+
+            order = transaction.order
+            lines = [
+                f"Order: {order.order_code or order.id}",
+                f"Asset: {order.asset}",
+                f"Type: {order.type}",
+                f"Amount: {order.amount}",
+                f"Rate: {order.rate}",
+                f"Total Value: {order.total_value}",
+                f"Status: {order.status}",
+                f"Customer: {order.customer_name or ''}",
+                f"Customer Chat ID: {order.customer_chat_id or ''}",
+                f"Txn Status: {transaction.status}",
+                f"Completed At: {transaction.completed_at or ''}",
+                f"Vendor Completed At: {transaction.vendor_completed_at or ''}",
+            ]
+
+            for line in lines:
+                p.drawString(50, y, str(line))
+                y -= 15
+                if y < 50:
+                    p.showPage()
+                    y = height - 50
+
+            p.showPage()
+            p.save()
+            pdf = buffer.getvalue()
+            buffer.close()
+
+            response = HttpResponse(pdf, content_type="application/pdf")
+            filename = f"transaction_{transaction.id}.pdf"
+            response["Content-Disposition"] = f"attachment; filename=\"{filename}\""
+            return response
+        except Exception as e:
+            return Response({"detail": f"PDF generation failed: {e}. Install 'reportlab' to enable PDFs."}, status=status.HTTP_501_NOT_IMPLEMENTED)

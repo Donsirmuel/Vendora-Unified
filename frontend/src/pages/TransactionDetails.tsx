@@ -87,12 +87,28 @@ const TransactionDetails = () => {
     }, 2000);
   };
 
-  const handleDownloadPDF = () => {
-    toast({
-      title: "Downloading PDF",
-      description: "Transaction details are being prepared for download.",
-      className: "bg-primary text-primary-foreground"
-    });
+  const handleDownloadPDF = async () => {
+    try {
+      if (!id) return;
+      const resp = await fetch(`/api/v1/transactions/${id}/pdf/`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token') || ''}` },
+      });
+      if (!resp.ok) {
+        const text = await resp.text();
+        throw new Error(text || 'Failed to generate PDF');
+      }
+      const blob = await resp.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `transaction_${id}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (e: any) {
+      toast({ title: 'PDF Error', description: e.message || 'Failed to download PDF', variant: 'destructive' });
+    }
   };
 
   const getStatusColor = (status: string) => {

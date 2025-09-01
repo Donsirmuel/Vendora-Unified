@@ -16,10 +16,11 @@ import {
   Clock
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { listOrders } from "@/lib/orders";
+import { listOrders, expireOverdueOrders } from "@/lib/orders";
 import { listTransactions } from "@/lib/transactions";
 import { listQueries } from "@/lib/queries";
 import { listBroadcasts } from "@/lib/broadcast";
+import { useToast } from "@/hooks/use-toast";
 
 interface DashboardStats {
   totalOrders: number;
@@ -39,6 +40,7 @@ interface RecentActivity {
 
 const Dashboard = () => {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [stats, setStats] = useState<DashboardStats>({
     totalOrders: 0,
     pendingOrders: 0,
@@ -111,6 +113,20 @@ const Dashboard = () => {
     }
   };
 
+  const handleExpireOverdue = async () => {
+    try {
+      const res = await expireOverdueOrders();
+      toast({
+        title: "Expired overdue orders",
+        description: `${res.expired} order(s) marked as expired`,
+        className: "bg-success text-success-foreground",
+      });
+      await loadDashboardData();
+    } catch (error: any) {
+      toast({ title: "Action failed", description: error.message || String(error), variant: "destructive" });
+    }
+  };
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -153,12 +169,16 @@ const Dashboard = () => {
     <Layout>
       <div className="space-y-6">
         {/* Header */}
-        <div>
+        <div className="flex items-center justify-between gap-4 flex-wrap">
           <h1 className="text-3xl font-bold">Dashboard</h1>
-          <p className="text-muted-foreground">
-            Welcome back, {user?.name || 'Vendor'}! Here's your business overview.
-          </p>
+          <div className="flex items-center gap-2 ml-auto">
+            <Button variant="outline" onClick={loadDashboardData}>Refresh</Button>
+            <Button variant="destructive" onClick={handleExpireOverdue}>Expire Overdue</Button>
+          </div>
         </div>
+        <p className="text-muted-foreground">
+          Welcome back, {user?.name || 'Vendor'}! Here's your business overview.
+        </p>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

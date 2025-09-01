@@ -86,3 +86,13 @@ export async function createOrder(orderData: Partial<Order>): Promise<Order> {
     throw new Error(message);
   }
 }
+
+export async function expireOverdueOrders(): Promise<{ expired: number }> {
+  try {
+    const response = await http.post<{ expired: number }>(`/api/v1/orders/expire-overdue/`, {});
+    return response.data;
+  } catch (error: any) {
+    const message = error.response?.data?.detail || 'Failed to expire overdue orders';
+    throw new Error(message);
+  }
+}

@@ -21,6 +21,13 @@ class OrderViewSet(ModelViewSet):
         user = self.request.user
         if user and user.is_authenticated:
             qs = qs.filter(vendor=user)
+        # Optional status filter via query param
+        try:
+            status_param = (self.request.GET.get("status") or "").strip()
+            if status_param:
+                qs = qs.filter(status=status_param)
+        except Exception:
+            pass
         return qs
 
     def get_serializer_class(self):

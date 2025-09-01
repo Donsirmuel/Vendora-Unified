@@ -53,9 +53,9 @@ const Transactions = () => {
 
   const statusBadge = (status: string) => {
     const map: Record<string, string> = {
+      uncompleted: "bg-warning/20 text-warning",
       completed: "bg-crypto-green/20 text-crypto-green",
       declined: "bg-destructive/20 text-destructive",
-      pending: "bg-warning/20 text-warning",
     };
     return <Badge className={map[status] || "bg-secondary text-secondary-foreground"}>{status}</Badge>;
   };

@@ -5,7 +5,15 @@ from orders.models import Order
 class Transaction(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE)
     proof = models.FileField(upload_to="proofs/")
-    status = models.CharField(max_length=20, choices=[("completed", "Completed"), ("declined", "Declined")])
+    status = models.CharField(
+        max_length=20,
+        choices=[
+            ("uncompleted", "Uncompleted"),
+            ("completed", "Completed"),
+            ("declined", "Declined"),
+        ],
+        default="uncompleted",
+    )
     completed_at = models.DateTimeField(null=True, blank=True)
     customer_receiving_details = models.TextField(blank=True)
     customer_note = models.TextField(blank=True)

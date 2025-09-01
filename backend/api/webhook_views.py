@@ -128,19 +128,15 @@ def telegram_webhook(request):
                                         order = cast(Any, Order)._default_manager.get(id=order_id)
                                         txn = cast(Any, Transaction)._default_manager.filter(order=order).first()
                                         if not txn:
-                                            txn = Transaction(order=order, status="completed")
+                                            txn = Transaction(order=order, status="uncompleted")
 
                                         # Save to FileField (this will save the instance as well)
                                         txn.proof.save(filename, ContentFile(bytes(content)), save=True)
-                                        # Ensure status and completed_at
-                                        from django.utils import timezone
+                                        # Ensure status is uncompleted; vendor will complete later
                                         updates = []
-                                        if txn.status != "completed":
-                                            txn.status = "completed"
+                                        if txn.status != "uncompleted":
+                                            txn.status = "uncompleted"
                                             updates.append("status")
-                                        if not txn.completed_at:
-                                            txn.completed_at = timezone.now()
-                                            updates.append("completed_at")
                                         if updates:
                                             txn.save(update_fields=updates)
 

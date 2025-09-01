@@ -65,6 +65,16 @@ class OrderViewSet(ModelViewSet):
             order.send_instructions = send_instructions
         order.save(update_fields=["status", "acceptance_note", "pay_instructions", "send_instructions"])
         
+        # Ensure a transaction exists and is set to 'uncompleted' for vendor processing
+        try:
+            from transactions.models import Transaction
+            txn, created = Transaction._default_manager.get_or_create(order=order, defaults={"status": "uncompleted"})
+            if not created and txn.status not in {"uncompleted", "declined", "completed"}:
+                txn.status = "uncompleted"
+                txn.save(update_fields=["status"])
+        except Exception:
+            pass
+        
         # Notify customer via Telegram
         try:
             if order.customer_chat_id:

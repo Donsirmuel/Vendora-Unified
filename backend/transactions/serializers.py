@@ -18,6 +18,6 @@ class TransactionSerializer(serializers.ModelSerializer):
         read_only_fields = ["id"]
 
     def validate_status(self, value: str) -> str:
-        if not value:
-            raise serializers.ValidationError("Status is required.")
+        if value not in {"uncompleted", "completed", "declined"}:
+            raise serializers.ValidationError("Invalid status.")
         return value

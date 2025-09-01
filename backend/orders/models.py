@@ -49,7 +49,13 @@ class Order(models.Model):
             try:
                 from django.utils import timezone
                 from datetime import timedelta
-                ttl_min = int(getattr(settings, "ORDER_AUTO_EXPIRE_MINUTES", 30) or 30)
+                # Prefer vendor-specific override if present; else fallback to global setting
+                vendor_ttl = None
+                try:
+                    vendor_ttl = int(getattr(self.vendor, "auto_expire_minutes", None) or 0)
+                except Exception:
+                    vendor_ttl = None
+                ttl_min = vendor_ttl or int(getattr(settings, "ORDER_AUTO_EXPIRE_MINUTES", 30) or 30)
                 # created_at may not exist until first save; use now for initial
                 base_time = self.created_at or timezone.now()
                 self.auto_expire_at = base_time + timedelta(minutes=ttl_min)

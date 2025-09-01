@@ -24,6 +24,9 @@ class Vendor(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True)
     name = models.CharField(max_length=100)
     bank_details = models.TextField(blank=True)
+    # Optional per-vendor override for how many minutes before a pending order auto-expires.
+    # If null/blank, fallback to global settings.ORDER_AUTO_EXPIRE_MINUTES.
+    auto_expire_minutes = models.PositiveIntegerField(null=True, blank=True)
     is_available = models.BooleanField(default=cast(Any, True))
     is_staff = models.BooleanField(default=cast(Any, False))
     is_superuser = models.BooleanField(default=cast(Any, False))

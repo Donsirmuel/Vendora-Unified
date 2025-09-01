@@ -37,6 +37,7 @@ export interface VendorProfile {
   email: string;
   name: string;
   bank_details: string;
+  auto_expire_minutes: number | null;
   is_available: boolean;
   is_staff: boolean;
   is_superuser: boolean;

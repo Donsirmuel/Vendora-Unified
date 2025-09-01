@@ -16,6 +16,7 @@ const Settings = () => {
   const [profileImage, setProfileImage] = useState("");
   const [userName, setUserName] = useState("");
   const [bankDetails, setBankDetails] = useState("");
+  const [autoExpireMinutes, setAutoExpireMinutes] = useState<number | "">("");
   const [currency, setCurrency] = useState("naira");
   const [theme, setTheme] = useState("dark");
   const [loading, setLoading] = useState(true);
@@ -28,6 +29,9 @@ const Settings = () => {
         const profile = await getVendorProfile();
         setUserName(profile.name || "");
         setBankDetails(profile.bank_details || "");
+        setAutoExpireMinutes(
+          typeof profile.auto_expire_minutes === "number" ? profile.auto_expire_minutes : ""
+        );
       } catch (e: any) {
         toast({ title: "Failed to load profile", description: e.message || String(e), variant: "destructive" });
       } finally {
@@ -40,9 +44,18 @@ const Settings = () => {
   const handleSave = async () => {
     try {
       setSaving(true);
-      const updated = await updateVendorProfile({ name: userName, bank_details: bankDetails });
+      const payload: any = { name: userName, bank_details: bankDetails };
+      if (autoExpireMinutes === "") {
+        payload.auto_expire_minutes = null;
+      } else {
+        payload.auto_expire_minutes = Number(autoExpireMinutes);
+      }
+      const updated = await updateVendorProfile(payload);
       setUserName(updated.name || "");
       setBankDetails(updated.bank_details || "");
+      setAutoExpireMinutes(
+        typeof updated.auto_expire_minutes === "number" ? updated.auto_expire_minutes : ""
+      );
       toast({
         title: "Settings Saved",
         description: "Your settings have been updated successfully.",
@@ -141,6 +154,37 @@ const Settings = () => {
                   <SelectItem value="naira">Nigerian Naira (₦)</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Orders Auto-Expire Settings */}
+        <Card className="bg-gradient-card border-border">
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <SettingsIcon className="h-5 w-5" />
+              <span>Orders Auto-Expiry</span>
+            </CardTitle>
+            <CardDescription>How many minutes before a pending order auto-expires</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="max-w-xs space-y-2">
+              <Label htmlFor="auto-expire-minutes">Auto-expire after (minutes)</Label>
+              <Input
+                id="auto-expire-minutes"
+                type="number"
+                min={1}
+                placeholder="e.g. 30"
+                value={autoExpireMinutes}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  if (v === "") setAutoExpireMinutes("");
+                  else setAutoExpireMinutes(Number(v));
+                }}
+                className="bg-background border-border"
+                disabled={loading}
+              />
+              <p className="text-xs text-muted-foreground">Leave blank to use the global default.</p>
             </div>
           </CardContent>
         </Card>

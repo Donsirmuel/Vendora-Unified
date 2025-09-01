@@ -63,6 +63,7 @@ class VendorSerializer(serializers.ModelSerializer):
             "email",
             "name",
             "bank_details",
+            "auto_expire_minutes",
             "is_available",
             "is_staff",
             "is_superuser",
@@ -73,6 +74,20 @@ class VendorSerializer(serializers.ModelSerializer):
         if not value.strip():
             raise serializers.ValidationError("Name cannot be empty.")
         return value
+
+    def validate_auto_expire_minutes(self, value):
+        if value is None:
+            return value
+        try:
+            ivalue = int(value)
+        except (TypeError, ValueError):
+            raise serializers.ValidationError("Must be an integer number of minutes or null.")
+        if ivalue <= 0:
+            raise serializers.ValidationError("Must be greater than 0 minutes.")
+        if ivalue > 24 * 60:
+            # Hard cap to 24h to avoid very long pending orders
+            raise serializers.ValidationError("Cannot exceed 1440 minutes (24 hours).")
+        return ivalue
 
 
 class BroadcastMessageSerializer(serializers.ModelSerializer):

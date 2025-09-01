@@ -39,6 +39,10 @@ TELEGRAM_BOT_USERNAME = str(config('TELEGRAM_BOT_USERNAME', default='VendoraBot'
 TELEGRAM_CHAT_ID = str(config('TELEGRAM_CHAT_ID', default='')).strip()
 TELEGRAM_WEBHOOK_URL = str(config('TELEGRAM_WEBHOOK_URL', default='')).strip()
 
+# Orders configuration
+# Global fallback for auto-expiry (minutes) used when a Vendor has not set a preference
+ORDER_AUTO_EXPIRE_MINUTES = int(config('ORDER_AUTO_EXPIRE_MINUTES', default=30))
+
 # Application definition
 
 INSTALLED_APPS = [

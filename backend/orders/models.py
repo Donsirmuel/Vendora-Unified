@@ -44,6 +44,17 @@ class Order(models.Model):
         # Auto-calculate total value
         if self.amount and self.rate:
             self.total_value = self.amount * self.rate
+        # Ensure auto_expire_at for pending orders
+        if self.status == self.PENDING and not self.auto_expire_at:
+            try:
+                from django.utils import timezone
+                from datetime import timedelta
+                ttl_min = int(getattr(settings, "ORDER_AUTO_EXPIRE_MINUTES", 30) or 30)
+                # created_at may not exist until first save; use now for initial
+                base_time = self.created_at or timezone.now()
+                self.auto_expire_at = base_time + timedelta(minutes=ttl_min)
+            except Exception:
+                pass
         # Generate order_code once
         if not self.order_code:
             from django.utils import timezone

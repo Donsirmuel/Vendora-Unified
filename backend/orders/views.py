@@ -130,3 +130,27 @@ class OrderViewSet(ModelViewSet):
         # Serialize the updated order
         serializer = self.get_serializer(order)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["post"], url_path="expire-overdue")
+    def expire_overdue(self, request):
+        from django.utils import timezone
+        from .models import Order
+
+        now = timezone.now()
+        vendor = request.user
+        if not vendor.is_authenticated:
+            return Response({"detail": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
+        qs = Order.objects.filter(vendor=vendor, status=Order.PENDING, auto_expire_at__isnull=False, auto_expire_at__lt=now)
+        updated = 0
+        for order in qs.iterator():
+            order.status = Order.EXPIRED
+            order.save(update_fields=["status"])
+            # Notify customer via Telegram
+            try:
+                if order.customer_chat_id:
+                    from api.telegram_service import TelegramBotService
+                    TelegramBotService().send_message(f"⏰ Order {order.order_code or order.pk} has expired.", chat_id=str(order.customer_chat_id))
+            except Exception:
+                pass
+            updated += 1
+        return Response({"expired": updated}, status=status.HTTP_200_OK)

@@ -42,11 +42,48 @@ class OrderViewSet(ModelViewSet):
         
         # Get acceptance note from request
         acceptance_note = request.data.get("acceptance_note", "")
+        # Optionally override instructions from request
+        pay_instructions = request.data.get("pay_instructions")
+        send_instructions = request.data.get("send_instructions")
         
         order.status = Order.ACCEPTED
         order.acceptance_note = acceptance_note
-        order.save(update_fields=["status", "acceptance_note"])
+        # Set instructions: default from rates if not provided
+        if not pay_instructions and not send_instructions:
+            try:
+                from rates.models import Rate
+                rate = Rate._default_manager.get(vendor=order.vendor, asset=order.asset)
+                if order.type == Order.BUY:
+                    order.pay_instructions = rate.bank_details or order.pay_instructions
+                else:
+                    order.send_instructions = rate.contract_address or order.send_instructions
+            except Exception:
+                pass
+        if pay_instructions is not None:
+            order.pay_instructions = pay_instructions
+        if send_instructions is not None:
+            order.send_instructions = send_instructions
+        order.save(update_fields=["status", "acceptance_note", "pay_instructions", "send_instructions"])
         
+        # Notify customer via Telegram
+        try:
+            if order.customer_chat_id:
+                from api.telegram_service import TelegramBotService
+                tgs = TelegramBotService()
+                msg = (
+                    f"✅ Order {order.order_code or order.id} accepted\n\n"
+                    f"Asset: {order.asset}\nType: {order.type}\nAmount: {order.amount}\nRate: {order.rate}\n"
+                )
+                if order.type == Order.BUY and order.pay_instructions:
+                    msg += f"\nPayment Details:\n{order.pay_instructions}"
+                if order.type == Order.SELL and order.send_instructions:
+                    msg += f"\nSend to:\n{order.send_instructions}"
+                if acceptance_note:
+                    msg += f"\n\nNote: {acceptance_note}"
+                tgs.send_message(msg, chat_id=str(order.customer_chat_id))
+        except Exception:
+            pass
+
         # Serialize the updated order
         serializer = self.get_serializer(order)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -70,6 +107,25 @@ class OrderViewSet(ModelViewSet):
         order.status = Order.DECLINED
         order.rejection_reason = rejection_reason
         order.save(update_fields=["status", "rejection_reason"])
+        
+        # Create a declined transaction entry for read-only history
+        try:
+            from transactions.models import Transaction
+            Transaction._default_manager.get_or_create(order=order, defaults={"status": "declined"})
+        except Exception:
+            pass
+        
+        # Notify customer via Telegram
+        try:
+            if order.customer_chat_id:
+                from api.telegram_service import TelegramBotService
+                tgs = TelegramBotService()
+                msg = (
+                    f"❌ Order {order.order_code or order.id} declined.\n\nReason: {rejection_reason}"
+                )
+                tgs.send_message(msg, chat_id=str(order.customer_chat_id))
+        except Exception:
+            pass
         
         # Serialize the updated order
         serializer = self.get_serializer(order)

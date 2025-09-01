@@ -19,7 +19,7 @@ class EmailBackend(ModelBackend):
             # If somehow there are multiple users with the same email, get the first one
             user = User.objects.filter(Q(email__iexact=username) | Q(email__iexact=kwargs.get('email', ''))).first()
         
-        if user and user.check_password(password) and user.is_active:
+        if user and password is not None and user.check_password(password) and user.is_active:
             return user
         return None
     

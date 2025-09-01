@@ -73,9 +73,14 @@ def handle_callback_query(data: str, vendor_id: Optional[int] = None, chat_id: O
     elif data == "assets":
         return handle_assets(), {}
     elif data.startswith("asset_"):
-        asset = data.replace("asset_", "")
-        # We need to determine order type from state or pass it separately
-        return handle_asset_selection(asset, "buy", vendor_id)  # Default to buy for now
+        # asset_{type}_{asset}
+        parts = data.split("_", 2)
+        if len(parts) == 3:
+            _, order_type, asset = parts
+            return handle_asset_selection(asset, order_type, vendor_id)
+        else:
+            asset = data.replace("asset_", "")
+            return handle_asset_selection(asset, "buy", vendor_id)
     elif data.startswith("amount_"):
         # Parse: amount_{asset}_{order_type}_{amount}
         parts = data.replace("amount_", "").split("_")
@@ -86,6 +91,22 @@ def handle_callback_query(data: str, vendor_id: Optional[int] = None, chat_id: O
             # Fallback for old format
             asset, amount = parts[0], parts[1]
             return handle_amount_confirmation(asset, "buy", amount, vendor_id, chat_id)
+    elif data.startswith("cont_"):
+        parts = data.split("_")
+        if len(parts) >= 3 and chat_id:
+            asset, order_type = parts[1], parts[2]
+            try:
+                from .models import BotUser
+                from typing import Any, cast
+                bu = cast(Any, BotUser)._default_manager.get(chat_id=str(chat_id))
+                bu.state = "awaiting_amount"
+                bu.temp_asset = asset
+                bu.temp_type = order_type
+                bu.save(update_fields=["state", "temp_asset", "temp_type"])
+            except Exception:
+                pass
+            return (f"Please enter the amount you want to {order_type} for {asset}.", None)
+        return ("Invalid request. Try again.", None)
     elif data.startswith("confirm_"):
         # Parse: confirm_{order_id}_{asset}_{order_type}_{amount}_{vendor_id}
         return handle_order_creation(data, chat_id)
@@ -119,9 +140,9 @@ def handle_buy_command(vendor_id: Optional[int] = None) -> Tuple[str, dict]:
     # Create dynamic buttons for available assets
     for i in range(0, len(assets), 2):
         row = []
-        row.append({"text": f"{assets[i]}", "callback_data": f"asset_{assets[i]}"})
+        row.append({"text": f"{assets[i]}", "callback_data": f"asset_buy_{assets[i]}"})
         if i + 1 < len(assets):
-            row.append({"text": f"{assets[i+1]}", "callback_data": f"asset_{assets[i+1]}"})
+            row.append({"text": f"{assets[i+1]}", "callback_data": f"asset_buy_{assets[i+1]}"})
         buttons.append(row)
     
     # Add back button
@@ -153,9 +174,9 @@ def handle_sell_command(vendor_id: Optional[int] = None) -> Tuple[str, dict]:
     # Create dynamic buttons for available assets
     for i in range(0, len(assets), 2):
         row = []
-        row.append({"text": f"{assets[i]}", "callback_data": f"asset_{assets[i]}"})
+        row.append({"text": f"{assets[i]}", "callback_data": f"asset_sell_{assets[i]}"})
         if i + 1 < len(assets):
-            row.append({"text": f"{assets[i+1]}", "callback_data": f"asset_{assets[i+1]}"})
+            row.append({"text": f"{assets[i+1]}", "callback_data": f"asset_sell_{assets[i+1]}"})
         buttons.append(row)
     
     # Add back button
@@ -204,21 +225,14 @@ def handle_asset_selection(asset: str, order_type: str = "buy", vendor_id: Optio
         except Rate.DoesNotExist:
             rate_info = f"Rate not available for {asset}"
     
-    text = f"{'🛒 BUY' if order_type == 'buy' else '💰 SELL'} {asset}\n\n{rate_info}\n\nPlease enter the amount you want to {order_type}:"
-    
-    # Preset amount buttons
+    text = f"{'🛒 BUY' if order_type == 'buy' else '💰 SELL'} {asset}\n\n{rate_info}\n\nTap Continue to enter amount or Cancel to go back."
     buttons = [
         [
-            {"text": "100", "callback_data": f"amount_{asset}_{order_type}_100"},
-            {"text": "500", "callback_data": f"amount_{asset}_{order_type}_500"}
+            {"text": "✅ Continue", "callback_data": f"cont_{asset}_{order_type}"},
+            {"text": "❌ Cancel", "callback_data": "back_to_menu"}
         ],
         [
-            {"text": "1000", "callback_data": f"amount_{asset}_{order_type}_1000"},
-            {"text": "5000", "callback_data": f"amount_{asset}_{order_type}_5000"}
-        ],
-        [
-            {"text": "🔙 Back to Assets", "callback_data": order_type},
-            {"text": "🏠 Main Menu", "callback_data": "back_to_menu"}
+            {"text": "🔙 Back to Assets", "callback_data": order_type}
         ]
     ]
     
@@ -293,6 +307,7 @@ def handle_order_creation(callback_data: str, chat_id: Optional[str] = None) -> 
     """Handle actual order creation in database."""
     from orders.models import Order
     from accounts.models import Vendor
+    from .models import BotUser
     from typing import Any, cast
     
     try:
@@ -327,24 +342,31 @@ def handle_order_creation(callback_data: str, chat_id: Optional[str] = None) -> 
             except Rate.DoesNotExist:
                 pass
             
-            text = f"""
-✅ ORDER CREATED SUCCESSFULLY!
+            # Update BotUser state to expect proof next
+            try:
+                bu = cast(Any, BotUser)._default_manager.get(chat_id=str(chat_id))
+                bu.state = "awaiting_proof"
+                bu.temp_order_id = str(order.id)
+                bu.temp_type = order_type
+                bu.temp_asset = asset
+                bu.temp_amount = amount
+                bu.save(update_fields=["state", "temp_order_id", "temp_type", "temp_asset", "temp_amount"])
+            except BotUser.DoesNotExist:
+                pass
 
-📋 Order ID: {order_id}
+            text = f"""
+✅ ORDER CREATED!
+
+📋 Order: {order.id}
 {'🛒' if order_type == 'buy' else '💰'} Type: {order_type.upper()}
 💎 Asset: {asset}
 📊 Amount: {amount} {asset}
-📍 Status: Pending Vendor Review
+📍 Status: Pending Proof
 
-The vendor will review your order and respond shortly.
-You can check your order status anytime by using the Query option.
+Please send a screenshot/photo of your payment or on-chain transfer proof here. You can upload an image or document.
 """
-            
+
             buttons = [
-                [
-                    {"text": "📋 Check Order Status", "callback_data": f"check_order_{order.id}"},
-                    {"text": "❓ Ask Question", "callback_data": "query"}
-                ],
                 [
                     {"text": "🏠 Main Menu", "callback_data": "back_to_menu"}
                 ]

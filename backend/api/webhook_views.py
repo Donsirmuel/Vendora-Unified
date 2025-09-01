@@ -76,7 +76,105 @@ def telegram_webhook(request):
                 
             else:
                 from . import bot_handlers
-                if text.startswith("/assets"):
+                # Handle image/document uploads as proof first
+                if message.get("photo") or message.get("document"):
+                    try:
+                        from .telegram_service import TelegramBotService
+                        from .models import BotUser
+                        from transactions.models import Transaction
+                        from orders.models import Order
+                        from django.core.files.base import ContentFile
+                        from typing import Any, cast
+
+                        # Determine file_id: choose highest resolution photo if multiple
+                        file_id = None
+                        if message.get("photo"):
+                            photos = message["photo"]
+                            # photos is a list of sizes; pick the last (largest)
+                            if isinstance(photos, list) and photos:
+                                file_id = photos[-1].get("file_id")
+                        if not file_id and message.get("document"):
+                            file_id = message["document"].get("file_id")
+
+                        if not file_id:
+                            response_text = "Couldn't read the uploaded file. Please try again."
+                            reply_markup = None
+                        else:
+                            # Resolve current BotUser state
+                            try:
+                                bu = cast(Any, BotUser)._default_manager.get(chat_id=str(chat_id))
+                            except BotUser.DoesNotExist:
+                                bu = None
+
+                            if not bu or bu.state != "awaiting_proof" or not bu.temp_order_id:
+                                response_text = "Thanks for the file. If this is a payment proof, please create an order first."
+                                reply_markup = None
+                            else:
+                                # Download the file
+                                tgs = TelegramBotService()
+                                dres = tgs.download_file_by_file_id(file_id)
+                                if not dres.get("success"):
+                                    response_text = f"Couldn't download the file: {dres.get('error')}"
+                                    reply_markup = None
+                                else:
+                                    filename = str(dres.get("filename") or "proof.jpg")
+                                    content = dres.get("content")
+                                    if not isinstance(content, (bytes, bytearray)) or not content:
+                                        response_text = "Couldn't download the file content. Please try again."
+                                        reply_markup = None
+                                    else:
+                                        # Find existing transaction (if any) for this order
+                                        order_id = int(bu.temp_order_id)
+                                        order = cast(Any, Order)._default_manager.get(id=order_id)
+                                        txn = cast(Any, Transaction)._default_manager.filter(order=order).first()
+                                        if not txn:
+                                            txn = Transaction(order=order, status="completed")
+
+                                        # Save to FileField (this will save the instance as well)
+                                        txn.proof.save(filename, ContentFile(bytes(content)), save=True)
+                                        # Ensure status and completed_at
+                                        from django.utils import timezone
+                                        updates = []
+                                        if txn.status != "completed":
+                                            txn.status = "completed"
+                                            updates.append("status")
+                                        if not txn.completed_at:
+                                            txn.completed_at = timezone.now()
+                                            updates.append("completed_at")
+                                        if updates:
+                                            txn.save(update_fields=updates)
+
+                                    # Reset BotUser state
+                                    bu.state = ""
+                                    bu.temp_order_id = ""
+                                    bu.save(update_fields=["state", "temp_order_id"])
+
+                                    response_text = "✅ Proof received! The vendor will review and update the order shortly."
+                                    reply_markup = None
+                    except Exception as e:
+                        logger.error(f"Error handling file upload: {e}")
+                        response_text = "An error occurred while processing your file. Please try again."
+                        reply_markup = None
+
+                elif text and text.strip() and not text.startswith("/"):
+                    # Possibly freeform amount entry
+                    try:
+                        from .models import BotUser
+                        from typing import Any, cast
+                        bu = cast(Any, BotUser)._default_manager.get(chat_id=str(chat_id))
+                        if bu.state == "awaiting_amount" and bu.temp_asset and bu.temp_type:
+                            amt = text.strip().replace(",", "")
+                            response_text, reply_markup = bot_handlers.handle_amount_confirmation(bu.temp_asset, bu.temp_type, amt, bu.vendor.id if bu.vendor else None, str(chat_id))
+                            # Clear awaiting_amount to avoid reusing on next message
+                            bu.state = ""
+                            bu.save(update_fields=["state"])
+                        else:
+                            response_text = "I received your message. Use /help to see commands."
+                            reply_markup = None
+                    except Exception:
+                        response_text = "I received your message. Use /help to see commands."
+                        reply_markup = None
+                elif text.startswith("/assets"):
                     response_text = bot_handlers.handle_assets()
                     reply_markup = {}
                 elif text.startswith("/rate"):
@@ -167,11 +265,17 @@ def telegram_webhook(request):
 def set_telegram_webhook(request):
     """Set the Telegram webhook URL."""
     try:
-        data = json.loads(request.body)
+        data = json.loads(request.body or b"{}")
         webhook_url = data.get("webhook_url")
         
+        # Allow defaulting to settings if not provided in payload
         if not webhook_url:
-            return JsonResponse({"error": "webhook_url is required"}, status=400)
+            default_url = getattr(settings, "TELEGRAM_WEBHOOK_URL", "")
+            default_url = str(default_url).strip() if default_url is not None else ""
+            if default_url:
+                webhook_url = default_url
+            else:
+                return JsonResponse({"error": "webhook_url is required (or set TELEGRAM_WEBHOOK_URL in settings/.env)"}, status=400)
         
         from .telegram_service import TelegramBotService
         telegram_service = TelegramBotService()
@@ -197,7 +301,7 @@ def telegram_webhook_info(request):
         result = telegram_service.get_webhook_info()
         
         if result["success"]:
-            return JsonResponse(result["data"])
+            return JsonResponse(result["webhook_info"])
         else:
             return JsonResponse({"error": result.get("error")}, status=500)
             

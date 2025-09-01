@@ -40,7 +40,8 @@ class TelegramBotService:
             
             # Add reply_markup if provided
             if reply_markup:
-                payload["reply_markup"] = reply_markup
+                import json
+                payload["reply_markup"] = json.dumps(reply_markup)
 
             last_error: Optional[str] = None
             for attempt in range(3):
@@ -156,3 +157,46 @@ class TelegramBotService:
         except Exception as e:
             logger.error(f"Error getting webhook info: {e}")
             return {"success": False, "error": str(e)}
+
+    def get_file_info(self, file_id: str) -> Dict[str, Any]:
+        """Get Telegram file info (including file_path) from a file_id."""
+        if not self.token:
+            return {"success": False, "error": "Bot token not configured"}
+        try:
+            resp = requests.get(f"{self.base_url}/getFile", params={"file_id": file_id}, timeout=15)
+            if resp.status_code == 200:
+                data = resp.json()
+                if data.get("ok") and data.get("result"):
+                    return {"success": True, **data["result"]}
+                return {"success": False, "error": data.get("description", "Unknown error")}
+            return {"success": False, "error": f"HTTP {resp.status_code}"}
+        except Exception as e:
+            logger.error(f"Error getting file info: {e}")
+            return {"success": False, "error": str(e)}
+
+    def download_file(self, file_path: str) -> Dict[str, Any]:
+        """Download a Telegram file by its file_path. Returns bytes and filename."""
+        if not self.token:
+            return {"success": False, "error": "Bot token not configured"}
+        try:
+            # The download URL uses /file/bot<token>/<file_path>
+            url = f"https://api.telegram.org/file/bot{self.token}/{file_path}"
+            resp = requests.get(url, timeout=60)
+            if resp.status_code == 200:
+                # derive filename from file_path
+                filename = file_path.split('/')[-1] if '/' in file_path else file_path
+                return {"success": True, "filename": filename, "content": resp.content}
+            return {"success": False, "error": f"HTTP {resp.status_code}"}
+        except Exception as e:
+            logger.error(f"Error downloading file: {e}")
+            return {"success": False, "error": str(e)}
+
+    def download_file_by_file_id(self, file_id: str) -> Dict[str, Any]:
+        """Helper: given file_id, resolve file_path then download and return filename+content."""
+        info = self.get_file_info(file_id)
+        if not info.get("success"):
+            return info
+        file_path = info.get("file_path") or info.get("filePath")
+        if not file_path:
+            return {"success": False, "error": "file_path missing from Telegram response"}
+        return self.download_file(file_path)

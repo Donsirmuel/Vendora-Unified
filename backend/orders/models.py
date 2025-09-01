@@ -20,8 +20,11 @@ class Order(models.Model):
     ]
 
     vendor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    order_code = models.CharField(max_length=32, unique=True, blank=True)
     customer_chat_id = models.CharField(max_length=64, blank=True)  # Telegram chat ID
     customer_name = models.CharField(max_length=100, blank=True)   # Customer name from Telegram
+    pay_instructions = models.TextField(blank=True)   # bank details for buy
+    send_instructions = models.TextField(blank=True)  # contract address for sell
     asset = models.CharField(max_length=50)
     type = models.CharField(max_length=10, choices=ORDER_TYPES)
     amount = models.DecimalField(max_digits=20, decimal_places=2)
@@ -41,6 +44,17 @@ class Order(models.Model):
         # Auto-calculate total value
         if self.amount and self.rate:
             self.total_value = self.amount * self.rate
+        # Generate order_code once
+        if not self.order_code:
+            from django.utils import timezone
+            from django.db.models import Count
+            today = timezone.localdate()
+            type_code = "01" if self.type == self.BUY else "02"
+            day_str = today.strftime("%d%m%Y")
+            # Daily count for this vendor and day
+            today_count = Order.objects.filter(vendor=self.vendor, created_at__date=today).count() + 1
+            seq = f"{today_count:02d}"
+            self.order_code = f"ORD{type_code}{day_str}{seq}"
         super().save(*args, **kwargs)
 
     def __str__(self):

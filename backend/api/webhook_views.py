@@ -149,8 +149,21 @@ def telegram_webhook(request):
                                     bu.temp_order_id = ""
                                     bu.save(update_fields=["state", "temp_order_id"])
 
-                                    response_text = "✅ Proof received! The vendor will review and update the order shortly."
-                                    reply_markup = None
+                                    # Ask for receiving details depending on order type
+                                    try:
+                                        # Update state to await receiving details
+                                        bu.state = "awaiting_receiving"
+                                        bu.save(update_fields=["state"])
+                                        from django.utils.html import escape
+                                        if order.type == order.BUY:
+                                            ask = "Please enter your receiving wallet address (to receive the asset)."
+                                        else:
+                                            ask = "Please enter your bank details (Account Name, Number, Bank)."
+                                        response_text = f"✅ Proof received!\n\n{ask}"
+                                        reply_markup = None
+                                    except Exception:
+                                        response_text = "✅ Proof received! The vendor will review and update the order shortly."
+                                        reply_markup = None
                     except Exception as e:
                         logger.error(f"Error handling file upload: {e}")
                         response_text = "An error occurred while processing your file. Please try again."
@@ -168,6 +181,32 @@ def telegram_webhook(request):
                             # Clear awaiting_amount to avoid reusing on next message
                             bu.state = ""
                             bu.save(update_fields=["state"])
+                        elif bu.state == "awaiting_receiving" and bu.temp_order_id:
+                            # Save receiving details then prompt for optional note
+                            from transactions.models import Transaction
+                            from typing import cast as _cast
+                            txn = _cast(Any, Transaction)._default_manager.filter(order_id=int(bu.temp_order_id)).first()
+                            if txn:
+                                txn.customer_receiving_details = text.strip()
+                                txn.save(update_fields=["customer_receiving_details"])
+                            bu.state = "awaiting_note"
+                            bu.save(update_fields=["state"])
+                            response_text = "Got it. If you have any other information to share with the vendor (optional), type it now. If not, send 'skip'."
+                            reply_markup = None
+                        elif bu.state == "awaiting_note" and bu.temp_order_id:
+                            # Save optional note or skip
+                            from transactions.models import Transaction
+                            note = text.strip()
+                            if note.lower() != "skip":
+                                txn = Transaction._default_manager.filter(order_id=int(bu.temp_order_id)).first()
+                                if txn:
+                                    txn.customer_note = note
+                                    txn.save(update_fields=["customer_note"])
+                            bu.state = ""
+                            bu.temp_order_id = ""
+                            bu.save(update_fields=["state", "temp_order_id"])
+                            response_text = "✅ Thanks! Your transaction details have been sent to the vendor. You'll be notified when it's processed."
+                            reply_markup = None
                         else:
                             response_text = "I received your message. Use /help to see commands."
                             reply_markup = None

@@ -7,6 +7,8 @@ class Transaction(models.Model):
     proof = models.FileField(upload_to="proofs/")
     status = models.CharField(max_length=20, choices=[("completed", "Completed"), ("declined", "Declined")])
     completed_at = models.DateTimeField(null=True, blank=True)
+    customer_receiving_details = models.TextField(blank=True)
+    customer_note = models.TextField(blank=True)
 
     class Meta:
         ordering = ["-completed_at", "-id"]

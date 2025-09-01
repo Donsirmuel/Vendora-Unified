@@ -4,11 +4,11 @@ export interface Order {
   id: number;
   vendor: number;
   customer_chat_id: string;
-  order_type: 'buy' | 'sell';
+  type: 'buy' | 'sell';
   asset: string;
-  amount: string;
-  rate: string;
-  total_value: string;
+  amount: number;
+  rate: number;
+  total_value: number | null;
   status: 'pending' | 'accepted' | 'declined' | 'expired' | 'completed';
   auto_expire_at: string;
   rejection_reason?: string;

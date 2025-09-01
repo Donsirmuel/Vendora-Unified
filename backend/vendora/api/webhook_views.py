@@ -1,3 +1,13 @@
+"""
+Deprecated: This module has been superseded by backend.api.webhook_views.
+
+It remains only as a guard to prevent accidental imports. Import from
+`backend.api` instead.
+"""
+
+raise ImportError(
+    "backend.vendora.api.webhook_views is deprecated. Use backend.api.webhook_views instead."
+)
 import json
 import logging
 from django.http import JsonResponse

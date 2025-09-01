@@ -1,11 +1,10 @@
-from django.urls import path
-from . import webhook_views
+"""
+Deprecated: This module has been superseded by backend.api.urls.
 
-app_name = 'api'
+It remains only as a guard to prevent accidental imports. Import from
+`backend.api` instead.
+"""
 
-urlpatterns = [
-    # Telegram Bot Webhooks
-    path('webhook/', webhook_views.telegram_webhook, name='telegram_webhook'),
-    path('webhook/set/', webhook_views.set_telegram_webhook, name='set_webhook'),
-    path('webhook/info/', webhook_views.telegram_webhook_info, name='webhook_info'),
-]
+raise ImportError(
+    "backend.vendora.api.urls is deprecated. Use backend.api.urls instead."
+)

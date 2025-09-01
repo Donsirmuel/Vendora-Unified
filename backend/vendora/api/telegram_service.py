@@ -1,3 +1,13 @@
+"""
+Deprecated: This module has been superseded by backend.api.telegram_service.
+
+It remains only as a guard to prevent accidental imports. Import from
+`backend.api` instead.
+"""
+
+raise ImportError(
+    "backend.vendora.api.telegram_service is deprecated. Use backend.api.telegram_service instead."
+)
 import requests
 import logging
 from typing import Dict, Any, Optional

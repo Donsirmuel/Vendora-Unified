@@ -1,3 +1,13 @@
+"""
+Deprecated: This module has been superseded by backend.api.bot_handlers.
+
+It remains only as a guard to prevent accidental imports. Import from
+`backend.api` instead.
+"""
+
+raise ImportError(
+    "backend.vendora.api.bot_handlers is deprecated. Use backend.api.bot_handlers instead."
+)
 import json
 from typing import Dict, Any, Optional
 

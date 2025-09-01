@@ -70,10 +70,12 @@ const Orders = () => {
 
     // Apply search filter
     if (searchTerm) {
+      const q = searchTerm.toLowerCase();
       filtered = filtered.filter(order => 
-        order.asset.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        order.order_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        order.amount.toLowerCase().includes(searchTerm.toLowerCase())
+        (order.asset && order.asset.toLowerCase().includes(q)) ||
+        (order.type && order.type.toLowerCase().includes(q)) ||
+        String(order.amount).toLowerCase().includes(q) ||
+        (order.rate !== undefined && String(order.rate).toLowerCase().includes(q))
       );
     }
 
@@ -206,17 +208,17 @@ const Orders = () => {
         {/* Orders List */}
         <div className="space-y-4">
           {filteredOrders.length > 0 ? (
-            filteredOrders.map((order) => (
+    filteredOrders.map((order) => (
               <Card key={order.id} className="hover:shadow-md transition-shadow">
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between">
                     <div className="flex items-start space-x-4">
-                      {getOrderTypeIcon(order.order_type)}
+          {getOrderTypeIcon(order.type)}
                       
                       <div className="space-y-2">
                         <div className="flex items-center space-x-3">
                           <h3 className="font-semibold text-lg">
-                            {order.asset} {order.order_type.toUpperCase()}
+            {order.asset} {order.type.toUpperCase()}
                           </h3>
                           {getStatusBadge(order.status)}
                         </div>
@@ -224,15 +226,15 @@ const Orders = () => {
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                           <div>
                             <span className="text-muted-foreground">Amount:</span>
-                            <p className="font-medium">{order.amount} {order.asset}</p>
+            <p className="font-medium">{order.amount} {order.asset}</p>
                           </div>
                           <div>
                             <span className="text-muted-foreground">Rate:</span>
-                            <p className="font-medium">${order.rate}</p>
+            <p className="font-medium">${order.rate}</p>
                           </div>
                           <div>
                             <span className="text-muted-foreground">Total Value:</span>
-                            <p className="font-medium">${order.total_value}</p>
+            <p className="font-medium">{order.total_value != null ? `$${order.total_value}` : '-'}</p>
                           </div>
                           <div>
                             <span className="text-muted-foreground">Created:</span>

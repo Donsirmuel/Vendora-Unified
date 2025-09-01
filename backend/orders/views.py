@@ -55,14 +55,22 @@ class OrderViewSet(ModelViewSet):
         
         order.status = Order.ACCEPTED
         order.acceptance_note = acceptance_note
-        # Set instructions: default from rates if not provided
+        # Set instructions: prefer vendor's default BankDetail for BUY, or Rate.contract_address for SELL, if not provided
         if not pay_instructions and not send_instructions:
             try:
-                from rates.models import Rate
-                rate = Rate._default_manager.get(vendor=order.vendor, asset=order.asset)
                 if order.type == Order.BUY:
-                    order.pay_instructions = rate.bank_details or order.pay_instructions
+                    # Prefer default saved bank detail
+                    from accounts.models import BankDetail
+                    bd = BankDetail._default_manager.filter(vendor=order.vendor).order_by('-is_default','-created_at').first()
+                    if bd:
+                        order.pay_instructions = (f"Bank: {bd.bank_name}\nAccount Name: {bd.account_name}\nAccount Number: {bd.account_number}\n" + (f"Instructions: {bd.instructions}" if bd.instructions else ""))
+                    else:
+                        from rates.models import Rate
+                        rate = Rate._default_manager.get(vendor=order.vendor, asset=order.asset)
+                        order.pay_instructions = rate.bank_details or order.pay_instructions
                 else:
+                    from rates.models import Rate
+                    rate = Rate._default_manager.get(vendor=order.vendor, asset=order.asset)
                     order.send_instructions = rate.contract_address or order.send_instructions
             except Exception:
                 pass

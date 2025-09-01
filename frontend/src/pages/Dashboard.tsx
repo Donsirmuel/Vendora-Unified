@@ -16,7 +16,7 @@ import {
   Clock
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { listOrders, expireOverdueOrders } from "@/lib/orders";
+import { listOrders } from "@/lib/orders";
 import { listTransactions } from "@/lib/transactions";
 import { listQueries } from "@/lib/queries";
 import { listBroadcasts } from "@/lib/broadcast";
@@ -113,19 +113,7 @@ const Dashboard = () => {
     }
   };
 
-  const handleExpireOverdue = async () => {
-    try {
-      const res = await expireOverdueOrders();
-      toast({
-        title: "Expired overdue orders",
-        description: `${res.expired} order(s) marked as expired`,
-        className: "bg-success text-success-foreground",
-      });
-      await loadDashboardData();
-    } catch (error: any) {
-      toast({ title: "Action failed", description: error.message || String(error), variant: "destructive" });
-    }
-  };
+  // Expire overdue control removed per request
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -173,7 +161,6 @@ const Dashboard = () => {
           <h1 className="text-3xl font-bold">Dashboard</h1>
           <div className="flex items-center gap-2 ml-auto">
             <Button variant="outline" onClick={loadDashboardData}>Refresh</Button>
-            <Button variant="destructive" onClick={handleExpireOverdue}>Expire Overdue</Button>
           </div>
         </div>
         <p className="text-muted-foreground">

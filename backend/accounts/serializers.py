@@ -3,7 +3,7 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
-from .models import Vendor, BroadcastMessage
+from .models import Vendor, BroadcastMessage, BankDetail
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -56,12 +56,16 @@ class VendorRegistrationSerializer(serializers.ModelSerializer):
 
 class VendorSerializer(serializers.ModelSerializer):
     """Serializer for Vendor accounts with explicit, safe fields."""
+    avatar = serializers.ImageField(required=False, allow_null=True)
+    avatar_url = serializers.SerializerMethodField(read_only=True)
     class Meta:
         model = Vendor
         fields = [
             "id",
             "email",
             "name",
+            "avatar",
+            "avatar_url",
             "bank_details",
             "auto_expire_minutes",
             "is_available",
@@ -88,6 +92,33 @@ class VendorSerializer(serializers.ModelSerializer):
             # Hard cap to 24h to avoid very long pending orders
             raise serializers.ValidationError("Cannot exceed 1440 minutes (24 hours).")
         return ivalue
+
+    def get_avatar_url(self, obj):
+        try:
+            if obj.avatar and hasattr(obj.avatar, "url"):
+                request = self.context.get("request")
+                url = obj.avatar.url
+                if request is not None:
+                    return request.build_absolute_uri(url)
+                return url
+        except Exception:
+            pass
+        return None
+
+
+class BankDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BankDetail
+        fields = [
+            "id",
+            "bank_name",
+            "account_number",
+            "account_name",
+            "instructions",
+            "is_default",
+            "created_at",
+        ]
+        read_only_fields = ["id", "created_at"]
 
 
 class BroadcastMessageSerializer(serializers.ModelSerializer):

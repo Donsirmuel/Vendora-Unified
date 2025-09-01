@@ -23,6 +23,7 @@ class VendorManager(BaseUserManager):
 class Vendor(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True)
     name = models.CharField(max_length=100)
+    avatar = models.ImageField(upload_to="avatars/", null=True, blank=True)
     bank_details = models.TextField(blank=True)
     # Optional per-vendor override for how many minutes before a pending order auto-expires.
     # If null/blank, fallback to global settings.ORDER_AUTO_EXPIRE_MINUTES.
@@ -39,6 +40,25 @@ class Vendor(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.email
+
+
+class BankDetail(models.Model):
+    """Per-vendor saved bank/payment details to share with customers on BUY orders."""
+    vendor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="bank_details_list")
+    bank_name = models.CharField(max_length=120)
+    account_number = models.CharField(max_length=64)
+    account_name = models.CharField(max_length=120)
+    instructions = models.TextField(blank=True)
+    is_default = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-is_default", "-created_at"]
+        verbose_name = "Bank Detail"
+        verbose_name_plural = "Bank Details"
+
+    def __str__(self) -> str:
+        return f"{self.bank_name} • {self.account_number} ({self.account_name})"
 
 
 class BroadcastMessage(models.Model):

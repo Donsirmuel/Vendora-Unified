@@ -1,7 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView
-from .views import VendorViewSet, BroadcastMessageViewSet
+from .views import VendorViewSet, BroadcastMessageViewSet, BankDetailViewSet
 from .auth_views import (
     CustomTokenObtainPairView,
     signup, 
@@ -15,6 +15,7 @@ app_name = "accounts"
 router = DefaultRouter()
 router.register(r"vendors", VendorViewSet, basename="vendor")
 router.register(r"broadcasts", BroadcastMessageViewSet, basename="broadcast")
+router.register(r"bank-details", BankDetailViewSet, basename="bank_detail")
 
 urlpatterns = [
     # Custom JWT authentication with email support

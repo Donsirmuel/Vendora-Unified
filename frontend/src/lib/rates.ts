@@ -1,90 +1,46 @@
 import { http } from './http';
 
+// Align types with backend rates.models.Rate and DRF serialization
 export interface Rate {
   id: number;
-  vendor: number;
   asset: string;
-  buy_rate: string;
-  sell_rate: string;
-  bank_details: string;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
+  buy_rate: string; // DRF DecimalField serializes to string
+  sell_rate: string; // DRF DecimalField serializes to string
+  contract_address?: string;
+  bank_details?: string;
+  vendor?: number; // present in API but not required in UI
 }
 
-export interface CreateRateRequest {
-  asset: string;
-  buy_rate: string;
-  sell_rate: string;
-  bank_details: string;
+export interface Paginated<T> {
+  results: T[];
+  count?: number;
+  next?: string | null;
+  previous?: string | null;
 }
 
-export interface UpdateRateRequest extends Partial<CreateRateRequest> {
-  is_active?: boolean;
-}
+export type CreateRateRequest = Omit<Rate, 'id' | 'vendor'>;
+export type UpdateRateRequest = Partial<CreateRateRequest>;
 
-export interface RateListResponse {
-  count: number;
-  next: string | null;
-  previous: string | null;
-  results: Rate[];
-}
-
-export async function listRates(page = 1): Promise<RateListResponse> {
-  try {
-    const response = await http.get<RateListResponse>(`/api/v1/rates/?page=${page}`);
-    return response.data;
-  } catch (error: any) {
-    const message = error.response?.data?.detail || 'Failed to load rates';
-    throw new Error(message);
-  }
+export async function listRates(page = 1): Promise<Paginated<Rate>> {
+  const response = await http.get<Paginated<Rate>>(`/api/v1/rates/?page=${page}`);
+  return response.data;
 }
 
 export async function getRate(id: number): Promise<Rate> {
-  try {
-    const response = await http.get<Rate>(`/api/v1/rates/${id}/`);
-    return response.data;
-  } catch (error: any) {
-    const message = error.response?.data?.detail || 'Failed to load rate';
-    throw new Error(message);
-  }
+  const response = await http.get<Rate>(`/api/v1/rates/${id}/`);
+  return response.data;
 }
 
 export async function createRate(data: CreateRateRequest): Promise<Rate> {
-  try {
-    const response = await http.post<Rate>('/api/v1/rates/', data);
-    return response.data;
-  } catch (error: any) {
-    const message = error.response?.data?.detail || 'Failed to create rate';
-    throw new Error(message);
-  }
+  const response = await http.post<Rate>('/api/v1/rates/', data);
+  return response.data;
 }
 
 export async function updateRate(id: number, data: UpdateRateRequest): Promise<Rate> {
-  try {
-    const response = await http.patch<Rate>(`/api/v1/rates/${id}/`, data);
-    return response.data;
-  } catch (error: any) {
-    const message = error.response?.data?.detail || 'Failed to update rate';
-    throw new Error(message);
-  }
+  const response = await http.patch<Rate>(`/api/v1/rates/${id}/`, data);
+  return response.data;
 }
 
 export async function deleteRate(id: number): Promise<void> {
-  try {
-    await http.delete(`/api/v1/rates/${id}/`);
-  } catch (error: any) {
-    const message = error.response?.data?.detail || 'Failed to delete rate';
-    throw new Error(message);
-  }
-}
-
-export async function toggleRateStatus(id: number, isActive: boolean): Promise<Rate> {
-  try {
-    const response = await http.patch<Rate>(`/api/v1/rates/${id}/`, { is_active: isActive });
-    return response.data;
-  } catch (error: any) {
-    const message = error.response?.data?.detail || 'Failed to update rate status';
-    throw new Error(message);
-  }
+  await http.delete(`/api/v1/rates/${id}/`);
 }

@@ -13,7 +13,7 @@ class RateSerializer(serializers.ModelSerializer):
             "contract_address",
             "bank_details",
         ]
-        read_only_fields = ["id"]
+        read_only_fields = ["id", "vendor"]
 
     def validate_buy_rate(self, value):
         if value <= 0:

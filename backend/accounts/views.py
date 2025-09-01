@@ -2,18 +2,21 @@ from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticated
 from django.db.models import QuerySet
 from typing import Any, cast
-from .models import Vendor, BroadcastMessage
-from .serializers import VendorSerializer, BroadcastMessageSerializer
+from .models import Vendor, BroadcastMessage, BankDetail
+from .serializers import VendorSerializer, BroadcastMessageSerializer, BankDetailSerializer
 from api.permissions import IsOwner, IsVendorAdmin
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import CustomTokenObtainPairSerializer
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 
 
 class VendorViewSet(ModelViewSet):
     permission_classes = [IsAuthenticated, IsOwner | IsVendorAdmin]
+    # Support JSON for normal updates and multipart for avatar uploads
+    parser_classes = [JSONParser, MultiPartParser, FormParser]
     
     def get_queryset(self) -> QuerySet[Any]:
         from .models import Vendor
@@ -24,6 +27,11 @@ class VendorViewSet(ModelViewSet):
         from .serializers import VendorSerializer
 
         return VendorSerializer
+
+    def get_serializer_context(self):
+        ctx = super().get_serializer_context()
+        ctx.update({"request": self.request})
+        return ctx
 
     @action(detail=False, methods=["get", "patch"], url_path="me")
     def me(self, request):
@@ -42,6 +50,33 @@ class VendorViewSet(ModelViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
+
+
+class BankDetailViewSet(ModelViewSet):
+    serializer_class = BankDetailSerializer
+    permission_classes = [IsAuthenticated, IsOwner | IsVendorAdmin]
+
+    def get_queryset(self) -> QuerySet[Any]:
+        qs = cast(QuerySet[Any], cast(Any, BankDetail).objects.all())
+        user = self.request.user
+        if user and user.is_authenticated:
+            qs = qs.filter(vendor=user)
+        return qs
+
+    def perform_create(self, serializer):
+        # If setting default, clear existing defaults for this vendor
+        is_default = bool(serializer.validated_data.get("is_default", False))
+        if is_default:
+            BankDetail.objects.filter(vendor=self.request.user, is_default=True).update(is_default=False)
+        serializer.save(vendor=self.request.user)
+
+    def perform_update(self, serializer):
+        instance = self.get_object()
+        # Determine if the updated instance should be default
+        is_default = bool(serializer.validated_data.get("is_default", instance.is_default))
+        if is_default and not instance.is_default:
+            BankDetail.objects.filter(vendor=self.request.user, is_default=True).exclude(pk=instance.pk).update(is_default=False)
+        serializer.save()
 
 
 class BroadcastMessageViewSet(ModelViewSet):

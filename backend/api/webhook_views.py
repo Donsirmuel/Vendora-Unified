@@ -14,6 +14,16 @@ logger = logging.getLogger(__name__)
 def telegram_webhook(request):
     """Handle incoming webhooks from Telegram Bot."""
     try:
+        # Optional: verify Telegram secret token header
+        try:
+            expected = str(getattr(settings, "TELEGRAM_WEBHOOK_SECRET", "") or "").strip()
+            if expected:
+                got = str(request.headers.get("X-Telegram-Bot-Api-Secret-Token") or "").strip()
+                if got != expected:
+                    return JsonResponse({"status": "forbidden"}, status=403)
+        except Exception:
+            pass
+
         # Parse the incoming update
         update_data = json.loads(request.body)
         logger.info(f"Received Telegram webhook: {update_data}")

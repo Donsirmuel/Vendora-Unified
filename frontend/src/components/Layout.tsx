@@ -11,6 +11,8 @@ import {
   MessageCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Moon, Sun } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -23,6 +25,15 @@ const Layout = ({ children, title }: LayoutProps) => {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { user, logout } = useAuth();
+  const [theme, setTheme] = useState<string>(() => localStorage.getItem("vendora_theme") || "dark");
+
+  const toggleTheme = () => {
+    const next = theme === 'dark' ? 'light' : 'dark';
+    setTheme(next);
+    localStorage.setItem('vendora_theme', next);
+    const root = document.documentElement;
+    if (next === 'dark') root.classList.add('dark'); else root.classList.remove('dark');
+  };
 
   const navigation = [
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -67,9 +78,30 @@ const Layout = ({ children, title }: LayoutProps) => {
           {/* User Info */}
           {user && (
             <div className="px-4 py-3 border-b border-border">
-              <div className="text-sm">
-                <p className="font-medium text-foreground">{user.name}</p>
-                <p className="text-muted-foreground">{user.email}</p>
+              <div className="flex items-center gap-3">
+                <Avatar className="h-10 w-10">
+                  {(() => {
+                    const avatarUrl = (user as any)?.avatar_url as string | undefined;
+                    const name = user.name || '';
+                    const parts = name.trim().split(/\s+/).filter(Boolean);
+                    const first = parts[0]?.[0] || '';
+                    const last = parts.length > 1 ? parts[parts.length - 1][0] : (parts[0]?.[1] || '');
+                    const initials = (first + last).toUpperCase() || '?';
+                    return (
+                      <>
+                        <AvatarImage src={avatarUrl || undefined} alt={name || 'User'} />
+                        <AvatarFallback>{initials}</AvatarFallback>
+                      </>
+                    );
+                  })()}
+                </Avatar>
+                <div className="text-sm">
+                  <p className="font-medium text-foreground">{user.name}</p>
+                  <p className="text-muted-foreground">{user.email}</p>
+                </div>
+                <Button variant="ghost" size="icon" className="ml-auto" onClick={toggleTheme}>
+                  {theme === 'dark' ? <Sun className="h-4 w-4"/> : <Moon className="h-4 w-4"/>}
+                </Button>
               </div>
             </div>
           )}
@@ -129,7 +161,7 @@ const Layout = ({ children, title }: LayoutProps) => {
           )}
 
           {/* Page content */}
-          <main className="p-6">
+          <main className="p-6 pb-24">
             {children}
           </main>
         </div>

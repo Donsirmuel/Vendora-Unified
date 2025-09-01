@@ -24,3 +24,13 @@ class RateViewSet(ModelViewSet):
         from .serializers import RateSerializer
 
         return RateSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(vendor=self.request.user)
+
+    def perform_update(self, serializer):
+        instance = self.get_object()
+        if instance.vendor != self.request.user and not self.request.user.is_staff:
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied("Forbidden")
+        serializer.save()

@@ -115,6 +115,10 @@ class TelegramBotService:
         
         try:
             payload = {"url": webhook_url}
+            # Optionally include a secret token so Telegram signs requests
+            secret = str(getattr(settings, "TELEGRAM_WEBHOOK_SECRET", "") or "").strip()
+            if secret:
+                payload["secret_token"] = secret
             response = requests.post(
                 f"{self.base_url}/setWebhook",
                 json=payload,

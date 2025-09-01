@@ -17,7 +17,7 @@ class Command(BaseCommand):
                 if order.customer_chat_id:
                     from api.telegram_service import TelegramBotService
                     tgs = TelegramBotService()
-                    tgs.send_message(f"⏰ Order {order.order_code or order.id} has expired.", chat_id=str(order.customer_chat_id))
+                    tgs.send_message(f"⏰ Order {order.order_code or order.pk} has expired.", chat_id=str(order.customer_chat_id))
             except Exception:
                 pass
             count += 1

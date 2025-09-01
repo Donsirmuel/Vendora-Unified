@@ -43,6 +43,11 @@ TELEGRAM_WEBHOOK_URL = str(config('TELEGRAM_WEBHOOK_URL', default='')).strip()
 # Global fallback for auto-expiry (minutes) used when a Vendor has not set a preference
 ORDER_AUTO_EXPIRE_MINUTES = int(config('ORDER_AUTO_EXPIRE_MINUTES', default=30))
 
+# Web Push (VAPID) configuration
+VAPID_PUBLIC_KEY = str(config('VAPID_PUBLIC_KEY', default='')).strip()
+VAPID_PRIVATE_KEY = str(config('VAPID_PRIVATE_KEY', default='')).strip()
+VAPID_EMAIL = str(config('VAPID_EMAIL', default='admin@example.com')).strip()
+
 # Application definition
 
 INSTALLED_APPS = [

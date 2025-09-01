@@ -37,7 +37,12 @@ class OrderViewSet(ModelViewSet):
 
     def perform_create(self, serializer):
         # Set vendor from authenticated user
-        serializer.save(vendor=self.request.user)
+        order = serializer.save(vendor=self.request.user)
+        try:
+            from notifications.views import send_web_push_to_vendor
+            send_web_push_to_vendor(self.request.user, "New pending order", f"Order {order.order_code or order.pk} created")
+        except Exception:
+            pass
 
     @action(detail=True, methods=["post"], url_path="accept")
     def accept(self, request, pk=None):
@@ -87,6 +92,12 @@ class OrderViewSet(ModelViewSet):
             if not created and txn.status not in {"uncompleted", "declined", "completed"}:
                 txn.status = "uncompleted"
                 txn.save(update_fields=["status"])
+            # Notify vendor for uncompleted transaction to review
+            try:
+                from notifications.views import send_web_push_to_vendor
+                send_web_push_to_vendor(request.user, "Uncompleted transaction", f"Order {order.order_code or order.pk} has an uncompleted transaction")
+            except Exception:
+                pass
         except Exception:
             pass
         

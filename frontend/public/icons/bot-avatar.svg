@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Vendora Bot">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0ea5b7"/>
+      <stop offset="1" stop-color="#3b82f6"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffcc33"/>
+      <stop offset="1" stop-color="#f59e0b"/>
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="512" height="512" rx="128" ry="128" fill="url(#bg)"/>
+  <!-- bot head -->
+  <rect x="116" y="144" width="280" height="204" rx="64" ry="64" fill="#0f172a"/>
+  <!-- antenna -->
+  <rect x="246" y="96" width="20" height="44" rx="10" fill="#0f172a"/>
+  <circle cx="256" cy="92" r="12" fill="url(#gold)"/>
+  <!-- eyes -->
+  <circle cx="200" cy="236" r="18" fill="#0ea5b7"/>
+  <circle cx="312" cy="236" r="18" fill="#0ea5b7"/>
+  <!-- smile -->
+  <path d="M196 292c22 28 98 28 120 0" fill="none" stroke="#22d3ee" stroke-width="16" stroke-linecap="round"/>
+  <!-- Vendora V badge -->
+  <circle cx="412" cy="364" r="44" fill="url(#gold)"/>
+  <path d="M392 354l16 28h8l14-22 14 22h8l16-28h-9l-11 18-13-20h-10l-13 20-11-18z" fill="#0f172a"/>
+</svg>

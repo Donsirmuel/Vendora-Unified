@@ -439,8 +439,8 @@ const Settings = () => {
         </Card>
 
         {/* Save Button */}
-        <div className="h-4" />
-        <div className="sticky bottom-4 z-10">
+  <div className="h-4" />
+  <div className="sticky z-10" style={{ bottom: 'calc(var(--safe-area-bottom, 0px) + 1rem)' }}>
           <div className="flex justify-end">
             <Button onClick={handleSave} className="bg-gradient-primary hover:opacity-90 shadow-md" disabled={saving}>
               Save All Settings

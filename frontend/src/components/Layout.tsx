@@ -40,7 +40,8 @@ const Layout = ({ children, title }: LayoutProps) => {
     { name: "Orders", href: "/orders", icon: ShoppingCart },
     { name: "Transactions", href: "/transactions", icon: ArrowLeftRight },
     { name: "Queries", href: "/queries", icon: MessageCircle },
-    { name: "Settings", href: "/settings", icon: Settings },
+  { name: "Settings", href: "/settings", icon: Settings },
+  { name: "Logout", href: "#logout", icon: LogOut, action: 'logout' as const },
   ];
 
   const isActive = (path: string) => location.pathname === path;
@@ -50,7 +51,7 @@ const Layout = ({ children, title }: LayoutProps) => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+  <div className="min-h-dvh bg-background safe-pt">
       {/* Mobile menu button */}
       <div className="lg:hidden fixed top-4 left-4 z-50">
         <Button
@@ -64,10 +65,10 @@ const Layout = ({ children, title }: LayoutProps) => {
       </div>
 
       {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-40 w-64 bg-card border-r border-border transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${
+      <div className={`fixed inset-y-0 left-0 z-40 w-64 bg-card border-r border-border transform transition-transform duration-300 ease-in-out lg:translate-x-0 overflow-y-auto ${
         isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
-        <div className="flex flex-col h-full">
+        <div className="flex flex-col h-full pb-6">
           {/* Logo */}
           <div className="flex items-center justify-center h-16 border-b border-border">
             <h1 className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
@@ -110,6 +111,18 @@ const Layout = ({ children, title }: LayoutProps) => {
           <nav className="flex-1 px-4 py-6 space-y-2">
             {navigation.map((item) => {
               const Icon = item.icon;
+              if ((item as any).action === 'logout') {
+                return (
+                  <button
+                    key={item.name}
+                    onClick={() => { setIsMobileMenuOpen(false); handleLogout(); }}
+                    className={`w-full text-left flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors text-muted-foreground hover:text-foreground hover:bg-secondary`}
+                  >
+                    <Icon className="mr-3 h-5 w-5" />
+                    {item.name}
+                  </button>
+                );
+              }
               return (
                 <Link
                   key={item.name}
@@ -127,18 +140,7 @@ const Layout = ({ children, title }: LayoutProps) => {
               );
             })}
           </nav>
-
-          {/* Logout */}
-          <div className="p-4 border-t border-border">
-            <Button
-              variant="ghost"
-              onClick={handleLogout}
-              className="w-full justify-start text-muted-foreground hover:text-foreground hover:bg-secondary"
-            >
-              <LogOut className="mr-3 h-5 w-5" />
-              Logout
-            </Button>
-          </div>
+          
         </div>
       </div>
 
@@ -151,7 +153,7 @@ const Layout = ({ children, title }: LayoutProps) => {
       )}
 
       {/* Main content */}
-      <div className="lg:ml-64">
+  <div className="lg:ml-64">
         <div className="flex-1">
           {/* Header */}
           {title && (
@@ -161,7 +163,7 @@ const Layout = ({ children, title }: LayoutProps) => {
           )}
 
           {/* Page content */}
-          <main className="p-6 pb-24">
+          <main className="p-6 pb-24 safe-pb">
             {children}
           </main>
         </div>

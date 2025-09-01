@@ -3,18 +3,31 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vendora - Crypto Vendor Platform</title>
-    <meta name="description" content="Professional cryptocurrency vendor platform for managing orders, transactions, and crypto trading business" />
-    <meta name="author" content="Lovable" />
+  <meta name="theme-color" content="#0ea5b7" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="icon" href="/icons/icon-192.png" type="image/png" />
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon-180.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <title>Vendora — Crypto Vendor PWA</title>
+  <meta name="description" content="Vendora: professional crypto vendor PWA for managing orders and transactions." />
+  <meta name="author" content="Vendora" />
 
-    <meta property="og:title" content="trade-lane-pro" />
-    <meta property="og:description" content="Lovable Generated Project" />
-    <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+  <meta property="og:title" content="Vendora" />
+  <meta property="og:description" content="Crypto vendor PWA for orders and transactions." />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="/icons/icon-512.png" />
 
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@lovable_dev" />
-    <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:site" content="@vendora" />
+  <meta name="twitter:image" content="/icons/icon-512.png" />
+    <script>
+      try {
+        const t = localStorage.getItem('vendora_theme') || 'dark';
+        if (t === 'dark') document.documentElement.classList.add('dark');
+        else document.documentElement.classList.remove('dark');
+      } catch {}
+    </script>
   </head>
 
   <body>

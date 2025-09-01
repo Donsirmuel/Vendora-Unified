@@ -1,0 +1,32 @@
+{
+  "name": "Vendora",
+  "short_name": "Vendora",
+  "description": "Crypto vendor platform for managing orders and transactions.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0ea5b7",
+  "orientation": "portrait",
+  "screenshots": [
+    {
+      "src": "https://dummyimage.com/1280x720/0ea5b7/ffffff.png&text=Vendora+Dashboard",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Vendora Dashboard"
+    },
+    {
+      "src": "https://dummyimage.com/750x1334/0ea5b7/ffffff.png&text=Vendora+Mobile",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "label": "Vendora Mobile"
+    }
+  ],
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icons/icon-maskable.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ],
+  "categories": ["business", "productivity"]
+}

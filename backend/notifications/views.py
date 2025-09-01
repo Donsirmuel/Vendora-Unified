@@ -1,4 +1,5 @@
 from rest_framework.decorators import action
+import json
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.viewsets import ModelViewSet
@@ -7,6 +8,9 @@ from django.db.models import QuerySet
 from typing import Any, cast
 from api.permissions import IsOwner, IsVendorAdmin
 from rest_framework import filters
+from .models import PushSubscription
+from django.conf import settings
+from pywebpush import webpush, WebPushException
 
 
 class NotificationViewSet(ModelViewSet):
@@ -36,3 +40,55 @@ class NotificationViewSet(ModelViewSet):
             notification.is_read = True
             notification.save(update_fields=["is_read"])
         return Response({"status": "marked_read"}, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["post"], url_path="subscribe")
+    def subscribe(self, request):
+        """Save/Upsert a push subscription for the current vendor."""
+        user = request.user
+        sub = request.data or {}
+        endpoint = sub.get("endpoint")
+        keys = sub.get("keys") or {}
+        p256dh = keys.get("p256dh")
+        auth = keys.get("auth")
+        if not endpoint or not p256dh or not auth:
+            return Response({"detail": "Invalid subscription"}, status=status.HTTP_400_BAD_REQUEST)
+        obj, _ = PushSubscription.objects.update_or_create(
+            endpoint=endpoint,
+            defaults={"vendor": user, "p256dh": p256dh, "auth": auth, "user_agent": request.META.get("HTTP_USER_AGENT", "")},
+        )
+        return Response({"status": "subscribed"}, status=status.HTTP_201_CREATED)
+
+    @action(detail=False, methods=["post"], url_path="unsubscribe")
+    def unsubscribe(self, request):
+        endpoint = (request.data or {}).get("endpoint")
+        if not endpoint:
+            return Response({"detail": "Endpoint required"}, status=status.HTTP_400_BAD_REQUEST)
+        PushSubscription.objects.filter(endpoint=endpoint, vendor=request.user).delete()
+        return Response({"status": "unsubscribed"}, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["get"], url_path="vapid-key", permission_classes=[IsAuthenticated])
+    def vapid_key(self, request):
+        from django.conf import settings
+        return Response({"publicKey": getattr(settings, "VAPID_PUBLIC_KEY", "")})
+
+
+def send_web_push_to_vendor(vendor, title: str, message: str):
+    subs = PushSubscription.objects.filter(vendor=vendor)
+    vapid = {
+        "vapid_private_key": getattr(settings, "VAPID_PRIVATE_KEY", ""),
+        "vapid_claims": {"sub": f"mailto:{getattr(settings, 'VAPID_EMAIL', 'admin@example.com')}"},
+    }
+    payload = {"title": title, "message": message}
+    for sub in subs:
+        try:
+            webpush(
+                subscription_info={
+                    "endpoint": sub.endpoint,
+                    "keys": {"p256dh": sub.p256dh, "auth": sub.auth},
+                },
+                data=json.dumps(payload),
+                **vapid,
+            )
+        except Exception:
+            # Ignore failures for now
+            continue

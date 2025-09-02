@@ -12,11 +12,9 @@ services:
     volumes:
       - ./backend/media:/app/backend/media
       - ./backend/static:/app/backend/static
-      - ./frontend/dist:/app/frontend/dist
     expose:
       - "8000"
-    depends_on:
-      - caddy
+    
 
   caddy:
     image: caddy:2

@@ -41,13 +41,27 @@ def telegram_webhook(request):
             if text.startswith("/start"):
                 # Parse vendor ID from start command: /start vendor_123
                 vendor_id = None
+                vendor_obj = None
                 if " " in text:
                     parts = text.split(" ")
                     if len(parts) > 1 and parts[1].startswith("vendor_"):
-                        try:
-                            vendor_id = int(parts[1].replace("vendor_", ""))
-                        except ValueError:
-                            vendor_id = None
+                        token = parts[1].replace("vendor_", "").strip()
+                        if token.isdigit():
+                            try:
+                                vendor_id = int(token)
+                            except ValueError:
+                                vendor_id = None
+                        else:
+                            # Try resolve by external_vendor_id code
+                            try:
+                                from accounts.models import Vendor as _Vendor
+                                vendor_obj = _Vendor.objects.get(external_vendor_id=token)
+                                try:
+                                    vendor_id = int(getattr(vendor_obj, "id", None) or 0)
+                                except Exception:
+                                    vendor_id = None
+                            except Exception:
+                                vendor_id = None
                 
                 # Subscribe or update the BotUser
                 try:
@@ -60,12 +74,27 @@ def telegram_webhook(request):
                         defaults={"is_subscribed": True}
                     )
                     
-                    # Link to vendor if provided
+                    # Link to vendor if provided (only if vendor is active/allowed)
                     if vendor_id:
                         try:
-                            vendor = cast(Any, Vendor).objects.get(id=vendor_id)
-                            bot_user.vendor = vendor
-                            bot_user.save(update_fields=["vendor"])
+                            vendor = vendor_obj or cast(Any, Vendor).objects.get(id=vendor_id)
+                            # Check manual gating flags
+                            from django.utils import timezone
+                            now = timezone.now()
+                            allowed = True
+                            if not getattr(vendor, "is_service_active", True):
+                                allowed = False
+                            else:
+                                texp = getattr(vendor, "trial_expires_at", None)
+                                if getattr(vendor, "is_trial", False) and texp and texp < now:
+                                    allowed = False
+                                elif getattr(vendor, "plan", "trial") not in {"trial", "perpetual"}:
+                                    pea = getattr(vendor, "plan_expires_at", None)
+                                    if pea and pea < now:
+                                        allowed = False
+                            if allowed:
+                                bot_user.vendor = vendor
+                                bot_user.save(update_fields=["vendor"])
                         except Vendor.DoesNotExist:
                             pass
                     
@@ -183,7 +212,30 @@ def telegram_webhook(request):
                         bu = cast(Any, BotUser)._default_manager.get(chat_id=str(chat_id))
                         if bu.state == "awaiting_amount" and bu.temp_asset and bu.temp_type:
                             amt = text.strip().replace(",", "")
-                            response_text, reply_markup = bot_handlers.handle_amount_confirmation(bu.temp_asset, bu.temp_type, amt, bu.vendor.id if bu.vendor else None, str(chat_id))
+                            # Only proceed if vendor is active/subscribed
+                            vendor_id = bu.vendor.id if bu.vendor else None
+                            allowed = True
+                            try:
+                                if bu.vendor:
+                                    from django.utils import timezone
+                                    now = timezone.now()
+                                    v = bu.vendor
+                                    if not getattr(v, "is_service_active", True):
+                                        allowed = False
+                                    else:
+                                        texp = getattr(v, "trial_expires_at", None)
+                                        if getattr(v, "is_trial", False) and texp and texp < now:
+                                            allowed = False
+                                        elif getattr(v, "plan", "trial") not in {"trial", "perpetual"}:
+                                            pea = getattr(v, "plan_expires_at", None)
+                                            if pea and pea < now:
+                                                allowed = False
+                            except Exception:
+                                pass
+                            if not allowed:
+                                response_text, reply_markup = ("Vendor subscription inactive. Please contact the vendor.", None)
+                            else:
+                                response_text, reply_markup = bot_handlers.handle_amount_confirmation(bu.temp_asset, bu.temp_type, amt, vendor_id, str(chat_id))
                             # Clear awaiting_amount to avoid reusing on next message
                             bu.state = ""
                             bu.save(update_fields=["state"])

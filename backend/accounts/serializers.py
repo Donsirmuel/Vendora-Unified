@@ -58,6 +58,7 @@ class VendorSerializer(serializers.ModelSerializer):
     """Serializer for Vendor accounts with explicit, safe fields."""
     avatar = serializers.ImageField(required=False, allow_null=True)
     avatar_url = serializers.SerializerMethodField(read_only=True)
+    subscription_status = serializers.SerializerMethodField(read_only=True)
     class Meta:
         model = Vendor
         fields = [
@@ -71,6 +72,7 @@ class VendorSerializer(serializers.ModelSerializer):
             "is_available",
             "is_staff",
             "is_superuser",
+            "subscription_status",
         ]
         read_only_fields = ["id", "is_staff", "is_superuser"]
 
@@ -104,6 +106,26 @@ class VendorSerializer(serializers.ModelSerializer):
         except Exception:
             pass
         return None
+
+    def get_subscription_status(self, obj):
+        try:
+            from django.utils import timezone
+            now = timezone.now()
+            status = {
+                "active": bool(getattr(obj, "is_service_active", True)),
+                "plan": getattr(obj, "plan", "trial"),
+                "is_trial": bool(getattr(obj, "is_trial", False)),
+                "trial_expires_at": getattr(obj, "trial_expires_at", None),
+                "plan_expires_at": getattr(obj, "plan_expires_at", None),
+                "expired": False,
+            }
+            if status["is_trial"] and status["trial_expires_at"] and status["trial_expires_at"] < now:
+                status["expired"] = True
+            if status["plan"] not in {"trial", "perpetual"} and status["plan_expires_at"] and status["plan_expires_at"] < now:
+                status["expired"] = True
+            return status
+        except Exception:
+            return {"active": True, "plan": "trial", "is_trial": True}
 
 
 class BankDetailSerializer(serializers.ModelSerializer):

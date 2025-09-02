@@ -37,7 +37,26 @@ class OrderViewSet(ModelViewSet):
 
     def perform_create(self, serializer):
         # Set vendor from authenticated user
-        order = serializer.save(vendor=self.request.user)
+        vendor = self.request.user
+        # Manual gating
+        try:
+            from django.utils import timezone
+            now = timezone.now()
+            if not getattr(vendor, "is_service_active", True):
+                from rest_framework.exceptions import PermissionDenied
+                raise PermissionDenied("Service disabled. Contact support.")
+            if getattr(vendor, "is_trial", False) and getattr(vendor, "trial_expires_at", None) and vendor.trial_expires_at < now:
+                from rest_framework.exceptions import PermissionDenied
+                raise PermissionDenied("Trial expired. Contact vendor to activate.")
+            if getattr(vendor, "plan", "trial") not in {"trial", "perpetual"}:
+                pea = getattr(vendor, "plan_expires_at", None)
+                if pea and pea < now:
+                    from rest_framework.exceptions import PermissionDenied
+                    raise PermissionDenied("Subscription expired. Contact vendor to renew.")
+        except Exception:
+            pass
+
+        order = serializer.save(vendor=vendor)
         try:
             from notifications.views import send_web_push_to_vendor
             send_web_push_to_vendor(self.request.user, "New pending order", f"Order {order.order_code or order.pk} created")
@@ -51,6 +70,21 @@ class OrderViewSet(ModelViewSet):
         order = self.get_object()
         if order.vendor != request.user and not request.user.is_staff:
             return Response({"detail": "Forbidden"}, status=status.HTTP_403_FORBIDDEN)
+        # Manual gating on accept
+        try:
+            vendor = request.user
+            from django.utils import timezone
+            now = timezone.now()
+            if not getattr(vendor, "is_service_active", True):
+                return Response({"detail": "Service disabled."}, status=status.HTTP_403_FORBIDDEN)
+            if getattr(vendor, "is_trial", False) and getattr(vendor, "trial_expires_at", None) and vendor.trial_expires_at < now:
+                return Response({"detail": "Trial expired."}, status=status.HTTP_403_FORBIDDEN)
+            if getattr(vendor, "plan", "trial") not in {"trial", "perpetual"}:
+                pea = getattr(vendor, "plan_expires_at", None)
+                if pea and pea < now:
+                    return Response({"detail": "Subscription expired."}, status=status.HTTP_403_FORBIDDEN)
+        except Exception:
+            pass
         
         # Get acceptance note from request
         acceptance_note = request.data.get("acceptance_note", "")

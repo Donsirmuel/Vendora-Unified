@@ -33,6 +33,31 @@ class Vendor(AbstractBaseUser, PermissionsMixin):
     is_superuser = models.BooleanField(default=cast(Any, False))
     is_active = models.BooleanField(default=cast(Any, True))
 
+    # Manual subscription/trial controls (no automated billing)
+    is_trial = models.BooleanField(default=cast(Any, True))
+    trial_started_at = models.DateTimeField(null=True, blank=True)
+    trial_expires_at = models.DateTimeField(null=True, blank=True)
+    PLAN_CHOICES = [
+        ("trial", "Trial"),
+        ("monthly", "Monthly"),
+        ("yearly", "Yearly"),
+        ("perpetual", "Perpetual"),
+        ("none", "None"),
+    ]
+    plan = models.CharField(max_length=20, choices=PLAN_CHOICES, default="trial")
+    plan_expires_at = models.DateTimeField(null=True, blank=True)
+    # Service gate separate from Django is_active (login)
+    is_service_active = models.BooleanField(default=cast(Any, True))
+    # Public ID used by customers to connect via bot (/start vendor_<idOrCode>)
+    external_vendor_id = models.CharField(max_length=64, null=True, blank=True, unique=True)
+    # Optional manual crypto payment metadata
+    last_payment_provider = models.CharField(max_length=50, null=True, blank=True)
+    last_payment_currency = models.CharField(max_length=16, null=True, blank=True)
+    last_payment_amount = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True)
+    last_payment_network = models.CharField(max_length=32, null=True, blank=True)
+    last_payment_tx_hash = models.CharField(max_length=120, null=True, blank=True)
+    last_payment_confirmed_at = models.DateTimeField(null=True, blank=True)
+
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["name"]
 

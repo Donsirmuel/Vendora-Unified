@@ -252,6 +252,21 @@ def handle_amount_confirmation(asset: str, order_type: str, amount: str, vendor_
         # Get rate and calculate total
         if vendor_id:
             try:
+                # Check vendor gating before proceeding
+                from accounts.models import Vendor as _Vendor
+                from django.utils import timezone
+                v = cast(Any, _Vendor).objects.get(id=vendor_id)
+                now = timezone.now()
+                if not getattr(v, "is_service_active", True):
+                    return ("Vendor service inactive. Please contact the vendor.", {})
+                texp = getattr(v, "trial_expires_at", None)
+                if getattr(v, "is_trial", False) and texp and texp < now:
+                    return ("Vendor trial expired. Please contact the vendor.", {})
+                if getattr(v, "plan", "trial") not in {"trial", "perpetual"}:
+                    pea = getattr(v, "plan_expires_at", None)
+                    if pea and pea < now:
+                        return ("Vendor subscription expired. Please contact the vendor.", {})
+
                 rate_obj = cast(Any, Rate).objects.get(vendor_id=vendor_id, asset=asset)
                 if order_type == "buy":
                     rate = rate_obj.buy_rate

@@ -45,6 +45,8 @@ A professional Progressive Web App for crypto vendors to manage orders, transact
    ```env
    VITE_API_BASE=http://127.0.0.1:8000
    VITE_JWT_STORAGE_KEY=vendora_jwt
+   # Optional: Banner DM link for upgrades (Telegram handle or any URL)
+   VITE_DM_URL=https://t.me/your_username
    ```
 
 3. **Start development server**:

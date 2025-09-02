@@ -32,6 +32,15 @@ export interface SignupResponse {
   };
 }
 
+export interface SubscriptionStatus {
+  active: boolean;
+  plan: 'trial' | 'monthly' | 'yearly' | 'perpetual' | 'none';
+  is_trial: boolean;
+  trial_expires_at?: string | null;
+  plan_expires_at?: string | null;
+  expired: boolean;
+}
+
 export interface VendorProfile {
   id: number;
   email: string;
@@ -42,6 +51,8 @@ export interface VendorProfile {
   is_staff: boolean;
   is_superuser: boolean;
   is_active: boolean;
+  // Provided by backend serializer for licensing/trial UI
+  subscription_status?: SubscriptionStatus;
 }
 
 export interface PasswordResetRequest {

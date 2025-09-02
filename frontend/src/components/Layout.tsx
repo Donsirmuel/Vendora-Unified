@@ -15,6 +15,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Moon, Sun } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import TrialBanner from "@/components/TrialBanner";
 
 interface LayoutProps {
   children: ReactNode;
@@ -164,6 +165,8 @@ const Layout = ({ children, title }: LayoutProps) => {
 
           {/* Page content */}
           <main className="p-6 pb-24 safe-pb">
+            {/* Subscription/Trial banner */}
+            <TrialBanner />
             {children}
           </main>
         </div>

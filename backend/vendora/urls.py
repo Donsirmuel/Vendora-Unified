@@ -19,6 +19,7 @@ from django.urls import path, include, re_path
 from django.conf import settings
 from django.conf.urls.static import static
 from django.views.generic import TemplateView
+from django.http import JsonResponse
 from django.views.static import serve as static_serve
 
 urlpatterns = [
@@ -34,6 +35,9 @@ urlpatterns = [
     
     # Telegram Bot Webhooks
     path("api/v1/telegram/", include("api.urls")),
+
+    # Health endpoint (for uptime checks and container healthchecks)
+    path("healthz/", lambda request: JsonResponse({"status": "ok"})),
 ]
 
 if settings.DEBUG:

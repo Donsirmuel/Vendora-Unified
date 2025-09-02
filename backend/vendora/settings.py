@@ -14,6 +14,7 @@ from pathlib import Path
 import os
 from decouple import config
 from datetime import timedelta
+from urllib.parse import urlparse
 
 
 
@@ -25,14 +26,12 @@ FRONTEND_DIST = (BASE_DIR.parent / 'frontend' / 'dist').resolve()
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-2$m+wi9f1)bnxyb8=r1z1e@)*k=^@b91ajy1t&rf%&*a$1$o=b'
+# SECURITY: secrets and environment-driven config
+SECRET_KEY = config('SECRET_KEY', default='CHANGE_ME_DEV_ONLY')
+DEBUG = config('DEBUG', cast=bool, default=True)
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = ['51b78c512b9c.ngrok-free.app', '127.0.0.1', 'localhost']
-CSRF_TRUSTED_ORIGINS = ["http://127.0.0.1:8000", "https://51b78c512b9c.ngrok-free.app"]
+ALLOWED_HOSTS = [h.strip() for h in str(config('ALLOWED_HOSTS', default='127.0.0.1,localhost')).split(',') if h.strip()]
+CSRF_TRUSTED_ORIGINS = [o.strip() for o in str(config('CSRF_TRUSTED_ORIGINS', default='http://127.0.0.1:8000')).split(',') if o.strip()]
 
 # Telegram Bot Configuration
 TELEGRAM_BOT_TOKEN = str(config('TELEGRAM_BOT_TOKEN', default='')).strip()
@@ -74,13 +73,14 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
 ]
 
 ROOT_URLCONF = 'vendora.urls'
@@ -106,12 +106,35 @@ WSGI_APPLICATION = 'vendora.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+# Database: prefer DATABASE_URL (e.g., Postgres) else fallback to SQLite for dev
+DATABASE_URL = str(config('DATABASE_URL', default=''))
+if DATABASE_URL:
+    # Basic parsing; rely on dj-database-url if present, else manual
+    # Example: postgres://user:pass@host:5432/dbname
+    url = urlparse(str(DATABASE_URL))
+    ENGINE_MAP = {
+        'postgres': 'django.db.backends.postgresql',
+        'postgresql': 'django.db.backends.postgresql',
+        'postgresql_psycopg2': 'django.db.backends.postgresql',
+        'mysql': 'django.db.backends.mysql',
     }
-}
+    DATABASES = {
+        'default': {
+            'ENGINE': ENGINE_MAP.get(url.scheme, 'django.db.backends.postgresql'),
+            'NAME': url.path.lstrip('/'),
+            'USER': url.username or '',
+            'PASSWORD': url.password or '',
+            'HOST': url.hostname or '',
+            'PORT': str(url.port or ''),
+        }
+    }
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 
 # Password validation
@@ -149,10 +172,15 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'static'
 STATICFILES_DIRS = [
     # Serve built frontend assets (JS/CSS) under /static when present
     str(FRONTEND_DIST / 'assets')
 ]
+
+# Efficient static files in production
+if not DEBUG:
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Media files (for uploads like avatars)
 MEDIA_URL = '/media/'
@@ -192,15 +220,9 @@ REST_FRAMEWORK = {
 }
 
 # CORS settings
-CORS_ALLOW_ALL_ORIGINS = False  # More secure for production
-CORS_ALLOWED_ORIGINS = [
-    "http://127.0.0.1:3000",
-    "http://localhost:3000",
-    "http://127.0.0.1:8080",
-    "http://localhost:8080",  # Vite dev server
-    "http://127.0.0.1:5173",  # Default Vite port
-    "http://localhost:5173",   # Default Vite port
-]
+CORS_ALLOW_ALL_ORIGINS = config('CORS_ALLOW_ALL_ORIGINS', cast=bool, default=False)
+_cors = str(config('CORS_ALLOWED_ORIGINS', default='http://127.0.0.1:5173,http://localhost:5173'))
+CORS_ALLOWED_ORIGINS = [o.strip() for o in str(_cors).split(',') if o.strip()]
 
 CORS_ALLOW_CREDENTIALS = True
 
@@ -232,9 +254,19 @@ SIMPLE_JWT = {
 }
 
 # Email Configuration
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # For development
-DEFAULT_FROM_EMAIL = 'noreply@vendora.com'
-FRONTEND_URL = 'http://localhost:5173'  # React app URL
+EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@vendora.com')
+FRONTEND_URL = config('FRONTEND_URL', default='http://localhost:5173')
+
+# Security headers (applied when DEBUG=False)
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', cast=bool, default=True)
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = int(config('SECURE_HSTS_SECONDS', default=31536000))
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [

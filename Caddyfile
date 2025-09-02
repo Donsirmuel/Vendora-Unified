@@ -13,6 +13,11 @@ yourdomain.com {
         reverse_proxy app:8000
     }
 
+    # Explicit health passthrough
+    handle_path /healthz* {
+        reverse_proxy app:8000
+    }
+
     log {
         output stdout
         format console

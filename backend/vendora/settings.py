@@ -19,6 +19,7 @@ from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+FRONTEND_DIST = (BASE_DIR.parent / 'frontend' / 'dist').resolve()
 
 
 # Quick-start development settings - unsuitable for production
@@ -38,6 +39,7 @@ TELEGRAM_BOT_TOKEN = str(config('TELEGRAM_BOT_TOKEN', default='')).strip()
 TELEGRAM_BOT_USERNAME = str(config('TELEGRAM_BOT_USERNAME', default='VendoraBot')).strip()
 TELEGRAM_CHAT_ID = str(config('TELEGRAM_CHAT_ID', default='')).strip()
 TELEGRAM_WEBHOOK_URL = str(config('TELEGRAM_WEBHOOK_URL', default='')).strip()
+TELEGRAM_WEBHOOK_SECRET = str(config('TELEGRAM_WEBHOOK_SECRET', default='')).strip()
 
 # Orders configuration
 # Global fallback for auto-expiry (minutes) used when a Vendor has not set a preference
@@ -86,7 +88,7 @@ ROOT_URLCONF = 'vendora.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+    'DIRS': [str(FRONTEND_DIST)],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -146,7 +148,11 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+STATICFILES_DIRS = [
+    # Serve built frontend assets (JS/CSS) under /static when present
+    str(FRONTEND_DIST / 'assets')
+]
 
 # Media files (for uploads like avatars)
 MEDIA_URL = '/media/'

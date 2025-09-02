@@ -19,6 +19,13 @@ class TelegramBotService:
         self.token = str(raw_token).strip()
         self.chat_id = str(raw_chat).strip() or None
         self.base_url = f"https://api.telegram.org/bot{self.token}"
+        try:
+            if self.token:
+                # Log a short fingerprint to help diagnose env vs .env issues without leaking the token
+                fp = f"{self.token[:5]}...{self.token[-5:]}"
+                logger.debug(f"Telegram token fingerprint in use: {fp}")
+        except Exception:
+            pass
     
     def send_message(self, text: str, parse_mode: str = "HTML", chat_id: str | None = None, reply_markup: dict | None = None) -> Dict[str, Any]:
         """Send a message to the configured Telegram chat."""

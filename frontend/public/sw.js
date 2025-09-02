@@ -42,22 +42,26 @@ self.addEventListener('fetch', (event) => {
   }
 
   // Static assets: cache-first
-  const dest = req.destination;
-  if (['style', 'script', 'worker', 'image', 'font'].includes(dest)) {
-    event.respondWith((async () => {
-      const cache = await caches.open(CACHE_NAME);
-      const cached = await cache.match(req);
-      if (cached) return cached;
-      try {
-        const res = await fetch(req);
+const dest = req.destination;
+if (['style', 'script', 'worker', 'image', 'font'].includes(dest)) {
+  event.respondWith((async () => {
+    const cache = await caches.open(CACHE_NAME);
+    const cached = await cache.match(req);
+    if (cached) return cached;
+    try {
+      const res = await fetch(req);
+      const url = new URL(req.url);
+      if (url.protocol === 'http:' || url.protocol === 'https:') {
         cache.put(req, res.clone());
-        return res;
-      } catch (_) {
-        return caches.match('/offline.html');
       }
-    })());
-    return;
-  }
+      return res;
+    } catch (_) {
+      return caches.match('/offline.html');
+    }
+  })());
+  return;
+}
+
 
   // Fallback: network-first
   event.respondWith(

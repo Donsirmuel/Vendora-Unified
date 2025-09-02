@@ -74,9 +74,17 @@ class NotificationViewSet(ModelViewSet):
 
 def send_web_push_to_vendor(vendor, title: str, message: str):
     subs = PushSubscription.objects.filter(vendor=vendor)
+    # Build VAPID claims, accepting either plain email or pre-prefixed "mailto:..."
+    sub = getattr(settings, "VAPID_EMAIL", "admin@example.com")
+    try:
+        sub = str(sub).strip()
+    except Exception:
+        sub = "admin@example.com"
+    if not sub.lower().startswith("mailto:"):
+        sub = f"mailto:{sub}"
     vapid = {
         "vapid_private_key": getattr(settings, "VAPID_PRIVATE_KEY", ""),
-        "vapid_claims": {"sub": f"mailto:{getattr(settings, 'VAPID_EMAIL', 'admin@example.com')}"},
+        "vapid_claims": {"sub": sub},
     }
     payload = {"title": title, "message": message}
     for sub in subs:

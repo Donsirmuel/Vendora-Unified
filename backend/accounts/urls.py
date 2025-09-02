@@ -15,6 +15,7 @@ app_name = "accounts"
 router = DefaultRouter()
 router.register(r"vendors", VendorViewSet, basename="vendor")
 router.register(r"broadcasts", BroadcastMessageViewSet, basename="broadcast")
+router.register(r"broadcast-messages", BroadcastMessageViewSet, basename="broadcast_messages")  # Alias to match frontend
 router.register(r"bank-details", BankDetailViewSet, basename="bank_detail")
 
 urlpatterns = [

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Check, X, Building2, Wallet, Copy, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Check, X, Building2, Wallet, Copy, AlertTriangle, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const OrderDetails = () => {
@@ -111,6 +111,30 @@ const OrderDetails = () => {
     }
   };
 
+  const handleDownloadPDF = async () => {
+    try {
+      if (!id) return;
+      const resp = await fetch(`/api/v1/orders/${id}/pdf/`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token') || ''}` },
+      });
+      if (!resp.ok) {
+        const text = await resp.text();
+        throw new Error(text || 'Failed to generate PDF');
+      }
+      const blob = await resp.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `order_${id}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (e: any) {
+      toast({ title: 'PDF Error', description: e.message || 'Failed to download PDF', variant: 'destructive' });
+    }
+  };
+
   return (
     <Layout>
       <div className="space-y-6">
@@ -126,6 +150,12 @@ const OrderDetails = () => {
           <div>
             <h1 className="text-2xl font-bold">Order Details</h1>
             <p className="text-muted-foreground">Review and respond to this order</p>
+          </div>
+          <div className="ml-auto">
+            <Button variant="outline" onClick={handleDownloadPDF} className="border-border">
+              <Download className="h-4 w-4 mr-2" />
+              Download PDF
+            </Button>
           </div>
         </div>
 

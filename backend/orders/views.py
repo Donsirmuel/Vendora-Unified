@@ -7,6 +7,7 @@ from rest_framework import filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import status
+from django.http import HttpResponse
 
 
 class OrderViewSet(ModelViewSet):
@@ -45,7 +46,8 @@ class OrderViewSet(ModelViewSet):
             if not getattr(vendor, "is_service_active", True):
                 from rest_framework.exceptions import PermissionDenied
                 raise PermissionDenied("Service disabled. Contact support.")
-            if getattr(vendor, "is_trial", False) and getattr(vendor, "trial_expires_at", None) and vendor.trial_expires_at < now:
+            tea = getattr(vendor, "trial_expires_at", None)
+            if getattr(vendor, "is_trial", False) and tea and tea < now:
                 from rest_framework.exceptions import PermissionDenied
                 raise PermissionDenied("Trial expired. Contact vendor to activate.")
             if getattr(vendor, "plan", "trial") not in {"trial", "perpetual"}:
@@ -77,7 +79,8 @@ class OrderViewSet(ModelViewSet):
             now = timezone.now()
             if not getattr(vendor, "is_service_active", True):
                 return Response({"detail": "Service disabled."}, status=status.HTTP_403_FORBIDDEN)
-            if getattr(vendor, "is_trial", False) and getattr(vendor, "trial_expires_at", None) and vendor.trial_expires_at < now:
+            tea = getattr(vendor, "trial_expires_at", None)
+            if getattr(vendor, "is_trial", False) and tea and tea < now:
                 return Response({"detail": "Trial expired."}, status=status.HTTP_403_FORBIDDEN)
             if getattr(vendor, "plan", "trial") not in {"trial", "perpetual"}:
                 pea = getattr(vendor, "plan_expires_at", None)
@@ -224,3 +227,59 @@ class OrderViewSet(ModelViewSet):
                 pass
             updated += 1
         return Response({"expired": updated}, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=["get"], url_path="pdf")
+    def download_pdf(self, request, pk=None):
+        """Generate a simple PDF summary for the order."""
+        order = self.get_object()
+        if order.vendor != request.user and not request.user.is_staff:
+            return Response({"detail": "Forbidden"}, status=status.HTTP_403_FORBIDDEN)
+
+        try:
+            # Attempt to use reportlab if available
+            from reportlab.lib.pagesizes import letter
+            from reportlab.pdfgen import canvas
+            from io import BytesIO
+
+            buffer = BytesIO()
+            p = canvas.Canvas(buffer, pagesize=letter)
+            width, height = letter
+
+            y = height - 50
+            p.setFont("Helvetica-Bold", 14)
+            p.drawString(50, y, "Vendora Order Summary")
+            y -= 25
+            p.setFont("Helvetica", 10)
+
+            lines = [
+                f"Order: {order.order_code or order.id}",
+                f"Asset: {order.asset}",
+                f"Type: {order.type}",
+                f"Amount: {order.amount}",
+                f"Rate: {order.rate}",
+                f"Total Value: {order.total_value}",
+                f"Status: {order.status}",
+                f"Customer: {order.customer_name or ''}",
+                f"Customer Chat ID: {order.customer_chat_id or ''}",
+                f"Pay Instructions: {(order.pay_instructions or '').splitlines()[0] if order.pay_instructions else ''}",
+                f"Send Instructions: {(order.send_instructions or '').splitlines()[0] if order.send_instructions else ''}",
+            ]
+
+            for line in lines:
+                p.drawString(50, y, str(line))
+                y -= 15
+                if y < 50:
+                    p.showPage()
+                    y = height - 50
+
+            p.showPage()
+            p.save()
+            pdf = buffer.getvalue()
+            buffer.close()
+
+            response = HttpResponse(pdf, content_type="application/pdf")
+            filename = f"order_{order.id}.pdf"
+            response["Content-Disposition"] = f"attachment; filename=\"{filename}\""
+            return response
+        except Exception as e:
+            return Response({"detail": f"PDF generation failed: {e}. Install 'reportlab' to enable PDFs."}, status=status.HTTP_501_NOT_IMPLEMENTED)

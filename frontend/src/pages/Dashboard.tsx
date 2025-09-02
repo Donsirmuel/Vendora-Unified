@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,10 +17,26 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { listOrders } from "@/lib/orders";
-import { listTransactions } from "@/lib/transactions";
+import { listTransactions, type Transaction } from "@/lib/transactions";
 import { listQueries } from "@/lib/queries";
 import { listBroadcasts } from "@/lib/broadcast";
 import { useToast } from "@/hooks/use-toast";
+import {
+  ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Line,
+  LineChart,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 interface DashboardStats {
   totalOrders: number;
@@ -56,6 +72,7 @@ const Dashboard = () => {
     broadcasts: []
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [completedTx, setCompletedTx] = useState<Transaction[]>([]);
 
   useEffect(() => {
     loadDashboardData();
@@ -71,10 +88,15 @@ const Dashboard = () => {
       const pendingOrders = allOrders.filter((order: any) => order.status === 'pending');
       const completedOrders = allOrders.filter((order: any) => order.status === 'completed');
       
-      // Load transactions
-      const transactionsResponse = await listTransactions(1);
-      const allTransactions = transactionsResponse.results;
-      const completedTransactions = allTransactions.filter((tx: any) => tx.status === 'completed');
+      // Load transactions (grab a few pages to have enough data for charts)
+      const allTransactions: Transaction[] = [];
+      // fetch up to 3 pages for a quick overview
+      for (let page = 1; page <= 3; page++) {
+        const res = await listTransactions(page);
+        allTransactions.push(...res.results);
+        if (!res.next) break;
+      }
+      const completedTransactions = allTransactions.filter((tx) => tx.status === 'completed');
       
       // Load queries
       const queriesResponse = await listQueries(1);
@@ -98,6 +120,7 @@ const Dashboard = () => {
         totalTransactions: allTransactions.length,
         pendingQueries: pendingQueries.length
       });
+  setCompletedTx(completedTransactions);
       
       setRecentActivity({
         orders: pendingOrders.slice(0, 3),
@@ -139,6 +162,45 @@ const Dashboard = () => {
       </Badge>
     );
   };
+
+  // Build insights from completed transactions
+  const insights = useMemo(() => {
+    // last 14 days timeline
+    const days = 14;
+    const today = new Date();
+    const byDay: Record<string, { revenue: number; count: number }> = {};
+    for (let i = days - 1; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(today.getDate() - i);
+      const key = d.toISOString().slice(0, 10);
+      byDay[key] = { revenue: 0, count: 0 };
+    }
+
+    let statusCounts = { completed: 0, pending: 0, failed: 0 };
+
+    // We only have completedTx here; for statusCounts, estimate from stats
+    statusCounts.completed = completedTx.length;
+    statusCounts.pending = Math.max(stats.totalTransactions - stats.completedOrders, 0);
+    // failed count best-effort (unknown without dedicated fetch). Leave as 0 if not present
+
+    for (const tx of completedTx) {
+      if (!tx.completed_at) continue;
+      const dayKey = tx.completed_at.slice(0, 10);
+      if (!(dayKey in byDay)) continue; // only chart last 14 days
+      const amt = parseFloat(tx.amount || "0") || 0;
+      byDay[dayKey].revenue += amt;
+      byDay[dayKey].count += 1;
+    }
+
+    const series = Object.entries(byDay).map(([date, v]) => ({ date, ...v }));
+
+    const totals = series.reduce(
+      (acc, d) => ({ revenue: acc.revenue + d.revenue, count: acc.count + d.count }),
+      { revenue: 0, count: 0 }
+    );
+
+    return { series, statusCounts, totals };
+  }, [completedTx, stats.totalTransactions, stats.completedOrders]);
 
   if (isLoading) {
     return (
@@ -335,6 +397,82 @@ const Dashboard = () => {
             </CardContent>
           </Card>
         )}
+
+        {/* Insights: simple charts based on completed transactions */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Revenue (last 14 days)</CardTitle>
+              <CardDescription>Sum of completed transactions per day</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {insights.series.length > 0 ? (
+                <ChartContainer
+                  config={{
+                    revenue: { label: "Revenue", color: "hsl(var(--primary))" },
+                    count: { label: "Completed", color: "hsl(var(--muted-foreground))" },
+                  }}
+                  className="w-full h-72"
+                >
+                  <LineChart data={insights.series} margin={{ left: 12, right: 12 }}>
+                    <CartesianGrid vertical={false} />
+                    <XAxis
+                      dataKey="date"
+                      tickLine={false}
+                      axisLine={false}
+                      tickMargin={8}
+                      minTickGap={24}
+                    />
+                    <YAxis tickLine={false} axisLine={false} tickMargin={8} />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Line type="monotone" dataKey="revenue" stroke="var(--color-revenue)" strokeWidth={2} dot={false} />
+                    <Line type="monotone" dataKey="count" stroke="var(--color-count)" strokeWidth={1} dot={false} />
+                  </LineChart>
+                </ChartContainer>
+              ) : (
+                <div className="text-center py-6 text-muted-foreground">
+                  <p>No data yet</p>
+                </div>
+              )}
+              <div className="mt-4 text-sm text-muted-foreground">
+                Total: {formatCurrency(insights.totals.revenue)} • {insights.totals.count} completed
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Status breakdown</CardTitle>
+              <CardDescription>Recent transactions by status</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ChartContainer
+                config={{
+                  Completed: { label: "Completed", color: "#22c55e" },
+                  Pending: { label: "Pending", color: "#eab308" },
+                  Failed: { label: "Failed", color: "#ef4444" },
+                }}
+                className="w-full h-72"
+              >
+                <BarChart
+                  data={[
+                    { name: "Completed", value: insights.statusCounts.completed, fill: "var(--color-Completed)" },
+                    { name: "Pending", value: insights.statusCounts.pending, fill: "var(--color-Pending)" },
+                    { name: "Failed", value: insights.statusCounts.failed, fill: "var(--color-Failed)" },
+                  ]}
+                  margin={{ left: 12, right: 12 }}
+                >
+                  <CartesianGrid vertical={false} />
+                  <XAxis dataKey="name" tickLine={false} axisLine={false} tickMargin={8} />
+                  <YAxis allowDecimals={false} tickLine={false} axisLine={false} tickMargin={8} />
+                  <ChartTooltip content={<ChartTooltipContent nameKey="name" />} />
+                  <Bar dataKey="value" radius={4} />
+                </BarChart>
+              </ChartContainer>
+              <div className="mt-4 text-xs text-muted-foreground">Approximate counts based on recent data</div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </Layout>
   );

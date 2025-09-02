@@ -1,0 +1,36 @@
+version: "3.9"
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    env_file:
+      - backend/.env.prod
+    command: gunicorn vendora.wsgi:application -w 3 -b 0.0.0.0:8000 --timeout 120
+    working_dir: /app/backend
+    volumes:
+      - ./backend/media:/app/backend/media
+      - ./backend/static:/app/backend/static
+      - ./frontend/dist:/app/frontend/dist
+    expose:
+      - "8000"
+    depends_on:
+      - caddy
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - app
+
+volumes:
+  caddy_data:
+  caddy_config:

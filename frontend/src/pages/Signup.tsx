@@ -11,11 +11,11 @@ import { Smartphone, Laptop, Tablet, Monitor } from "lucide-react";
 
 export default function SignupPage() {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState<SignupCredentials>({
+  const [formData, setFormData] = useState<any>({
     email: '',
     password: '',
     password_confirm: '',
-    name: ''
+    username: ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -44,8 +44,14 @@ export default function SignupPage() {
       setError('Passwords do not match');
       return false;
     }
-    if (!formData.name.trim()) {
-      setError('Name is required');
+    if (!formData.username.trim()) {
+      setError('Username is required');
+      return false;
+    }
+    // Username rules: 3-64 chars, letters/numbers/underscore/hyphen
+    const re = /^[A-Za-z0-9_-]{3,64}$/;
+    if (!re.test(formData.username)) {
+      setError('Username must be 3-64 chars: letters, numbers, underscores, or hyphens');
       return false;
     }
     return true;
@@ -153,16 +159,17 @@ export default function SignupPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="name">Full Name</Label>
+                  <Label htmlFor="username">Username</Label>
                   <Input
-                    id="name"
-                    name="name"
+                    id="username"
+                    name="username"
                     type="text"
-                    value={formData.name}
+                    value={formData.username}
                     onChange={handleInputChange}
-                    placeholder="Enter your full name"
+                    placeholder="Choose a username (for display & bot link)"
                     required
                   />
+                  <p className="text-xs text-gray-500">Letters, numbers, underscores, or hyphens. Example: crypto_king</p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="password">Password</Label>

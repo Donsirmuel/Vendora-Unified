@@ -25,7 +25,7 @@ export default function PasswordResetPage() {
     setError('');
 
     try {
-      await requestPasswordReset(email);
+      await requestPasswordReset({ email });
       setSuccess('Password reset instructions have been sent to your email.');
     } catch (err: any) {
       setError(err.message || 'Failed to send reset email. Please try again.');

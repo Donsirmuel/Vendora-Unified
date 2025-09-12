@@ -11,3 +11,7 @@ class Query(models.Model):
 
     def __str__(self):
         return f"Query on Order #{self.order}"
+
+    class Meta:
+        # Default ordering ensures stable pagination and newest-first display
+        ordering = ["-timestamp", "id"]

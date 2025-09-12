@@ -56,7 +56,7 @@ class TelegramBotService:
                     response = requests.post(
                         f"{self.base_url}/sendMessage",
                         json=payload,
-                        timeout=30
+                        timeout=30,
                     )
                     if response.status_code == 200:
                         result = response.json()
@@ -129,7 +129,7 @@ class TelegramBotService:
             response = requests.post(
                 f"{self.base_url}/setWebhook",
                 json=payload,
-                timeout=10
+                timeout=10,
             )
             
             if response.status_code == 200:

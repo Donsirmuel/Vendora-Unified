@@ -13,7 +13,8 @@ export default function PasswordResetConfirmPage() {
   const [formData, setFormData] = useState({
     password: '',
     password_confirm: '',
-    token: ''
+    token: '',
+    uid: ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -21,10 +22,11 @@ export default function PasswordResetConfirmPage() {
 
   useEffect(() => {
     const token = searchParams.get('token');
-    if (token) {
-      setFormData(prev => ({ ...prev, token }));
+    const uid = searchParams.get('uid');
+    if (token && uid) {
+      setFormData(prev => ({ ...prev, token, uid }));
     } else {
-      setError('Invalid or missing reset token. Please request a new password reset.');
+      setError('Invalid or missing reset link. Please request a new password reset.');
     }
   }, [searchParams]);
 
@@ -49,7 +51,7 @@ export default function PasswordResetConfirmPage() {
       return false;
     }
 
-    if (!formData.token) {
+    if (!formData.token || !formData.uid) {
       setError('Invalid reset token');
       return false;
     }
@@ -68,7 +70,11 @@ export default function PasswordResetConfirmPage() {
     setError('');
 
     try {
-      await confirmPasswordReset(formData);
+      await confirmPasswordReset({
+        uid: formData.uid,
+        token: formData.token,
+        new_password: formData.password
+      });
       setSuccess('Password reset successful! Redirecting to login...');
       
       setTimeout(() => {

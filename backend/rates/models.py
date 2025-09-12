@@ -15,3 +15,5 @@ class Rate(models.Model):
 
     class Meta:
         unique_together = ("vendor", "asset")
+        # Deterministic pagination and consistent display
+        ordering = ["asset", "id"]

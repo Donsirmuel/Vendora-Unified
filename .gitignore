@@ -24,6 +24,8 @@ coverage.xml
 # Database
 *.db
 *.sqlite3
+backend/static/
+backend/media/
 
 # Environment variables
 .env
@@ -33,6 +35,7 @@ coverage.xml
 # Keep examples tracked
 !backend/.env.prod.example
 !frontend/.env.production.example
+!backend/.env.example
 .venv
 env/
 venv/

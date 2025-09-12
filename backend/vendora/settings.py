@@ -14,7 +14,7 @@ from pathlib import Path
 import os
 from decouple import config
 from datetime import timedelta
-from urllib.parse import urlparse
+from urllib.parse import urlparse, parse_qs
 
 
 
@@ -118,6 +118,13 @@ if DATABASE_URL:
         'postgresql_psycopg2': 'django.db.backends.postgresql',
         'mysql': 'django.db.backends.mysql',
     }
+    # Parse query string options (e.g., sslmode=require)
+    query_params = {k: v[0] for k, v in parse_qs(url.query).items()}
+    # Default to SSL for remote Postgres if not explicitly set
+    host = (url.hostname or '').lower()
+    if not query_params.get('sslmode') and host not in ('localhost', '127.0.0.1'):
+        query_params['sslmode'] = 'require'
+
     DATABASES = {
         'default': {
             'ENGINE': ENGINE_MAP.get(url.scheme, 'django.db.backends.postgresql'),
@@ -126,6 +133,10 @@ if DATABASE_URL:
             'PASSWORD': url.password or '',
             'HOST': url.hostname or '',
             'PORT': str(url.port or ''),
+            # Pass through connection options like sslmode
+            'OPTIONS': query_params,
+            # Keep connections alive for performance (seconds)
+            'CONN_MAX_AGE': int(config('DB_CONN_MAX_AGE', default=60)),
         }
     }
 else:
@@ -256,6 +267,17 @@ SIMPLE_JWT = {
 # Email Configuration
 EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@vendora.com')
+
+# Optional SMTP settings for production
+# Set EMAIL_BACKEND to 'django.core.mail.backends.smtp.EmailBackend' and configure the following:
+EMAIL_HOST = config('EMAIL_HOST', default='')
+EMAIL_PORT = config('EMAIL_PORT', cast=int, default=587)
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+EMAIL_USE_TLS = config('EMAIL_USE_TLS', cast=bool, default=True)
+EMAIL_USE_SSL = config('EMAIL_USE_SSL', cast=bool, default=False)
+EMAIL_TIMEOUT = config('EMAIL_TIMEOUT', cast=int, default=10)
+
 FRONTEND_URL = config('FRONTEND_URL', default='http://localhost:5173')
 
 # Security headers (applied when DEBUG=False)

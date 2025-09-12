@@ -4,6 +4,8 @@ from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from .models import Vendor, BroadcastMessage, BankDetail
+from django.conf import settings
+import re
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -25,30 +27,53 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
 
 class VendorRegistrationSerializer(serializers.ModelSerializer):
-    """Serializer for vendor registration/signup"""
+    """Serializer for vendor registration/signup using username for display and bot link.
+
+    Backend will set:
+    - vendor.name = username (for display in PWA)
+    - vendor.external_vendor_id = username (for public bot link)
+    """
+    username = serializers.CharField(write_only=True)
     password = serializers.CharField(write_only=True, validators=[validate_password])
     password_confirm = serializers.CharField(write_only=True)
-    
+
     class Meta:
         model = Vendor
-        fields = ['email', 'name', 'password', 'password_confirm']
-    
+        fields = ['email', 'username', 'password', 'password_confirm']
+
     def validate(self, attrs):
         if attrs['password'] != attrs['password_confirm']:
             raise serializers.ValidationError({
                 'password_confirm': 'Passwords do not match.'
             })
         return attrs
-    
+
     def validate_email(self, value):
         if Vendor.objects.filter(email=value).exists():
             raise serializers.ValidationError('A vendor with this email already exists.')
         return value
-    
+
+    def validate_username(self, value: str) -> str:
+        value = (value or '').strip()
+        if not value:
+            raise serializers.ValidationError('Username is required.')
+        if len(value) < 3 or len(value) > 64:
+            raise serializers.ValidationError('Username must be 3-64 characters long.')
+        # Allow letters, numbers, underscores, and hyphens
+        if not re.fullmatch(r'[A-Za-z0-9_\-]+', value):
+            raise serializers.ValidationError('Use letters, numbers, underscores or hyphens only.')
+        if Vendor.objects.filter(external_vendor_id=value).exists():
+            raise serializers.ValidationError('This username is already taken.')
+        return value
+
     def create(self, validated_data):
+        username = validated_data.pop('username')
         validated_data.pop('password_confirm')
         password = validated_data.pop('password')
         vendor = Vendor(**validated_data)
+        # Set display name and public code from username
+        vendor.name = username
+        vendor.external_vendor_id = username
         vendor.set_password(password)
         vendor.save()
         return vendor
@@ -59,6 +84,8 @@ class VendorSerializer(serializers.ModelSerializer):
     avatar = serializers.ImageField(required=False, allow_null=True)
     avatar_url = serializers.SerializerMethodField(read_only=True)
     subscription_status = serializers.SerializerMethodField(read_only=True)
+    bot_username = serializers.SerializerMethodField(read_only=True)
+    bot_link = serializers.SerializerMethodField(read_only=True)
     class Meta:
         model = Vendor
         fields = [
@@ -73,6 +100,8 @@ class VendorSerializer(serializers.ModelSerializer):
             "is_staff",
             "is_superuser",
             "subscription_status",
+            "bot_username",
+            "bot_link",
         ]
         read_only_fields = ["id", "is_staff", "is_superuser"]
 
@@ -126,6 +155,25 @@ class VendorSerializer(serializers.ModelSerializer):
             return status
         except Exception:
             return {"active": True, "plan": "trial", "is_trial": True}
+
+    def get_bot_username(self, obj) -> str | None:
+        try:
+            u = str(getattr(settings, 'TELEGRAM_BOT_USERNAME', '') or '').strip()
+            return u or None
+        except Exception:
+            return None
+
+    def get_bot_link(self, obj) -> str | None:
+        try:
+            bot_user = self.get_bot_username(obj)
+            if not bot_user:
+                return None
+            code = obj.external_vendor_id or str(getattr(obj, 'id', ''))
+            if not code:
+                return None
+            return f"https://t.me/{bot_user}?start=vendor_{code}"
+        except Exception:
+            return None
 
 
 class BankDetailSerializer(serializers.ModelSerializer):

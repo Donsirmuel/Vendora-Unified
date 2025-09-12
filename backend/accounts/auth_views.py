@@ -143,8 +143,9 @@ def send_welcome_email(vendor):
     """Send welcome email to new vendor"""
     subject = 'Welcome to Vendora - Your Crypto Trading Platform'
     
-    # Create bot link for vendor
-    bot_link = f"https://t.me/{settings.TELEGRAM_BOT_USERNAME}?start=vendor_{vendor.id}"
+    # Create bot link for vendor (prefer external_vendor_id)
+    code = getattr(vendor, 'external_vendor_id', None) or getattr(vendor, 'id', None)
+    bot_link = f"https://t.me/{settings.TELEGRAM_BOT_USERNAME}?start=vendor_{code}"
     
     message = f"""
 Welcome to Vendora, {vendor.name}!
@@ -175,7 +176,8 @@ def send_password_reset_email(vendor, uid, token):
     """Send password reset email"""
     subject = 'Reset Your Vendora Password'
     
-    reset_link = f"{settings.FRONTEND_URL}/reset-password/{uid}/{token}/"
+    # Align with frontend route: /password-reset/confirm?uid=...&token=...
+    reset_link = f"{settings.FRONTEND_URL}/password-reset/confirm?uid={uid}&token={token}"
     
     message = f"""
 Hi {vendor.name},

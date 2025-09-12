@@ -1,8 +1,9 @@
-{
-    email you@example.com
+   {
+    email admin@vendora.page
 }
 
-yourdomain.com {
+# App subdomain
+app.vendora.page {
     encode zstd gzip
     @static path /static/* /media/* /manifest.webmanifest /sw.js /icons/* /assets/*
     handle @static {
@@ -22,4 +23,10 @@ yourdomain.com {
         output stdout
         format console
     }
+}
+
+# Optional: redirect root to app
+vendora.page {
+    @root path /*
+    redir https://app.vendora.page{uri} permanent
 }

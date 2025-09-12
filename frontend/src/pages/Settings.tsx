@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { User, DollarSign, Moon, Sun, Settings as SettingsIcon, Plus, Trash2, Pencil } from "lucide-react";
+import { User, DollarSign, Moon, Sun, Settings as SettingsIcon, Plus, Trash2, Pencil, Copy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { getVendorProfile, updateVendorProfile, VendorProfile } from "@/lib/auth";
 import { listBankDetails, createBankDetail, updateBankDetail, deleteBankDetail, BankDetail } from "@/lib/bankDetails";
@@ -34,6 +34,8 @@ const Settings = () => {
   const [rateForm, setRateForm] = useState<Partial<Rate>>({ asset: "", buy_rate: "", sell_rate: "", contract_address: "", bank_details: "" });
   const [editingRateId, setEditingRateId] = useState<number | null>(null);
 
+  const [botLink, setBotLink] = useState<string>("");
+
   useEffect(() => {
     const load = async () => {
       try {
@@ -42,6 +44,7 @@ const Settings = () => {
         setUserName(profile.name || "");
         setBankDetails(profile.bank_details || "");
         if ((profile as any).avatar_url) setProfileImage((profile as any).avatar_url);
+        if ((profile as any).bot_link) setBotLink((profile as any).bot_link);
         setAutoExpireMinutes(
           typeof profile.auto_expire_minutes === "number" ? profile.auto_expire_minutes : ""
         );
@@ -176,6 +179,32 @@ const Settings = () => {
   return (
     <Layout title="Settings">
       <div className="space-y-8">
+        {/* Bot Link Card */}
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <SettingsIcon className="w-5 h-5" /> Telegram Bot Link
+            </CardTitle>
+            <CardDescription>
+              Share this link with customers to start orders in Telegram. Your username controls the public link.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {botLink ? (
+              <div className="flex items-center gap-2">
+                <Input readOnly value={botLink} className="flex-1" />
+                <Button variant="secondary" onClick={() => { navigator.clipboard.writeText(botLink); toast({ title: "Copied", description: "Bot link copied to clipboard." }); }}>
+                  <Copy className="w-4 h-4 mr-1" /> Copy
+                </Button>
+                <Button asChild>
+                  <a href={botLink} target="_blank" rel="noreferrer">Open</a>
+                </Button>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">Set TELEGRAM_BOT_USERNAME in backend and refresh to see your link.</p>
+            )}
+          </CardContent>
+        </Card>
         
   {/* Profile Settings */}
         <Card className="bg-gradient-card border-border">

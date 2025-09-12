@@ -7,7 +7,7 @@ export interface LoginCredentials {
 
 export interface SignupCredentials {
   email: string;
-  name: string;
+  username: string;
   password: string;
   password_confirm: string;
 }
@@ -28,7 +28,7 @@ export interface SignupResponse {
   user: {
     id: number;
     email: string;
-    name: string;
+  name: string;
   };
 }
 

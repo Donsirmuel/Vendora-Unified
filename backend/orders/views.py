@@ -17,8 +17,7 @@ class OrderViewSet(ModelViewSet):
     ordering_fields = ["created_at", "amount", "rate"]
     def get_queryset(self) -> QuerySet[Any]:
         from .models import Order
-
-        qs = cast(QuerySet[Any], cast(Any, Order).objects.all())
+        qs = cast(QuerySet[Any], cast(Any, Order).objects.select_related("vendor").all())
         user = self.request.user
         if user and user.is_authenticated:
             qs = qs.filter(vendor=user)
@@ -27,6 +26,9 @@ class OrderViewSet(ModelViewSet):
             status_param = (self.request.GET.get("status") or "").strip()
             if status_param:
                 qs = qs.filter(status=status_param)
+            else:
+                # Default to showing only pending orders if no explicit status provided
+                qs = qs.filter(status=Order.PENDING)
         except Exception:
             pass
         return qs
@@ -43,6 +45,11 @@ class OrderViewSet(ModelViewSet):
         try:
             from django.utils import timezone
             now = timezone.now()
+            # Respect vendor availability toggle
+            if getattr(vendor, "is_available", True) is False:
+                from rest_framework.exceptions import PermissionDenied
+                msg = getattr(vendor, "unavailable_message", "Vendor is currently unavailable.") or "Vendor is currently unavailable."
+                raise PermissionDenied(msg)
             if not getattr(vendor, "is_service_active", True):
                 from rest_framework.exceptions import PermissionDenied
                 raise PermissionDenied("Service disabled. Contact support.")
@@ -72,6 +79,7 @@ class OrderViewSet(ModelViewSet):
         order = self.get_object()
         if order.vendor != request.user and not request.user.is_staff:
             return Response({"detail": "Forbidden"}, status=status.HTTP_403_FORBIDDEN)
+
         # Manual gating on accept
         try:
             vendor = request.user
@@ -88,24 +96,33 @@ class OrderViewSet(ModelViewSet):
                     return Response({"detail": "Subscription expired."}, status=status.HTTP_403_FORBIDDEN)
         except Exception:
             pass
-        
+
         # Get acceptance note from request
         acceptance_note = request.data.get("acceptance_note", "")
         # Optionally override instructions from request
         pay_instructions = request.data.get("pay_instructions")
         send_instructions = request.data.get("send_instructions")
-        
+
         order.status = Order.ACCEPTED
+        try:
+            from django.utils import timezone
+            order.accepted_at = timezone.now()
+        except Exception:
+            order.accepted_at = None
         order.acceptance_note = acceptance_note
+
         # Set instructions: prefer vendor's default BankDetail for BUY, or Rate.contract_address for SELL, if not provided
         if not pay_instructions and not send_instructions:
             try:
                 if order.type == Order.BUY:
                     # Prefer default saved bank detail
                     from accounts.models import BankDetail
-                    bd = BankDetail._default_manager.filter(vendor=order.vendor).order_by('-is_default','-created_at').first()
+                    bd = BankDetail._default_manager.filter(vendor=order.vendor).order_by('-is_default', '-created_at').first()
                     if bd:
-                        order.pay_instructions = (f"Bank: {bd.bank_name}\nAccount Name: {bd.account_name}\nAccount Number: {bd.account_number}\n" + (f"Instructions: {bd.instructions}" if bd.instructions else ""))
+                        order.pay_instructions = (
+                            f"Bank: {bd.bank_name}\nAccount Name: {bd.account_name}\nAccount Number: {bd.account_number}\n"
+                            + (f"Instructions: {bd.instructions}" if bd.instructions else "")
+                        )
                     else:
                         from rates.models import Rate
                         rate = Rate._default_manager.get(vendor=order.vendor, asset=order.asset)
@@ -116,12 +133,14 @@ class OrderViewSet(ModelViewSet):
                     order.send_instructions = rate.contract_address or order.send_instructions
             except Exception:
                 pass
+
         if pay_instructions is not None:
             order.pay_instructions = pay_instructions
         if send_instructions is not None:
             order.send_instructions = send_instructions
-        order.save(update_fields=["status", "acceptance_note", "pay_instructions", "send_instructions"])
-        
+
+        order.save(update_fields=["status", "acceptance_note", "pay_instructions", "send_instructions", "accepted_at"])
+
         # Ensure a transaction exists and is set to 'uncompleted' for vendor processing
         try:
             from transactions.models import Transaction
@@ -137,7 +156,7 @@ class OrderViewSet(ModelViewSet):
                 pass
         except Exception:
             pass
-        
+
         # Notify customer via Telegram
         try:
             if order.customer_chat_id:
@@ -152,11 +171,13 @@ class OrderViewSet(ModelViewSet):
                 note = f"\n\nNote: {acceptance_note}" if acceptance_note else ""
                 msg = (
                     f"✅ Your order with Order ID: {code_or_id} has been accepted.\n\n"
-                    f"{details}{note}\n\nTap Continue to upload your proof."
+                    f"{details}{note}\n\nNext steps:\n1) Make the transfer/send asset\n2) Upload payment/on-chain proof\n3) Enter your receiving details\n4) Add optional notes\n\nTap the button below to continue."
                 )
-                # Provide an inline button to guide the user
+                # Ask for receiving details first per requested flow
                 reply_markup = {
-                    "inline_keyboard": [[{"text": "Continue", "callback_data": f"cont_upload_{order.id}"}]]
+                    "inline_keyboard": [[
+                        {"text": "Enter Receiving Details", "callback_data": f"cont_recv_{order.id}"}
+                    ]]
                 }
                 tgs.send_message(msg, chat_id=str(order.customer_chat_id), reply_markup=reply_markup)
         except Exception:
@@ -183,8 +204,13 @@ class OrderViewSet(ModelViewSet):
             )
         
         order.status = Order.DECLINED
+        try:
+            from django.utils import timezone
+            order.declined_at = timezone.now()
+        except Exception:
+            order.declined_at = None
         order.rejection_reason = rejection_reason
-        order.save(update_fields=["status", "rejection_reason"])
+        order.save(update_fields=["status", "rejection_reason", "declined_at"])
         
         # Create a declined transaction entry for read-only history
         try:

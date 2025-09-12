@@ -46,7 +46,7 @@ export async function createBroadcast(payload: CreateBroadcastRequest): Promise<
 
 export async function sendBroadcast(id: number): Promise<{ success: boolean; message?: string; error?: string }> {
   try {
-    const response = await http.post(`/api/v1/accounts/broadcast-messages/${id}/send_to_bot/`);
+  const response = await http.post(`/api/v1/accounts/broadcast-messages/${id}/send-to-bot/`);
     return { success: true, message: 'Broadcast sent successfully' };
   } catch (error: any) {
     const message = error.response?.data?.detail || 'Failed to send broadcast';

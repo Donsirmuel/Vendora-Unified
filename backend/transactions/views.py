@@ -92,16 +92,18 @@ class TransactionViewSet(ModelViewSet):
                         f"Asset: {transaction.order.asset}\n"
                         f"Amount: {transaction.order.amount}\n"
                     )
+                    reply_markup = {"inline_keyboard": [[{"text": "🏠 Main Menu", "callback_data": "back_to_menu"}]]}
                     # Prefer sending vendor proof as a document if available
                     if transaction.vendor_proof and transaction.vendor_proof.name:
                         try:
                             with transaction.vendor_proof.open("rb") as f:
                                 file_bytes = f.read()
                             tgs.send_document(file_bytes, filename=transaction.vendor_proof.name.split("/")[-1], caption=caption, chat_id=chat_id)
+                            tgs.send_message("Tap to return to menu.", chat_id=chat_id, reply_markup=reply_markup)
                         except Exception:
-                            tgs.send_message(caption, chat_id=chat_id)
+                            tgs.send_message(caption, chat_id=chat_id, reply_markup=reply_markup)
                     else:
-                        tgs.send_message(caption, chat_id=chat_id)
+                        tgs.send_message(caption, chat_id=chat_id, reply_markup=reply_markup)
                 else:
                     tgs.send_message(
                         f"❌ Order {transaction.order.order_code or transaction.order.id} marked declined by vendor.",

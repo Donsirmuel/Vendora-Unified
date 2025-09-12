@@ -97,6 +97,7 @@ class VendorSerializer(serializers.ModelSerializer):
             "bank_details",
             "auto_expire_minutes",
             "is_available",
+            "unavailable_message",
             "is_staff",
             "is_superuser",
             "subscription_status",

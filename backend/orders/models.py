@@ -34,11 +34,20 @@ class Order(models.Model):
     auto_expire_at = models.DateTimeField(null=True, blank=True)  # Auto expiry time
     rejection_reason = models.TextField(blank=True)  # Reason for decline
     acceptance_note = models.TextField(blank=True)   # Note on acceptance
+    # Timestamps for lifecycle
+    accepted_at = models.DateTimeField(null=True, blank=True)
+    declined_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["vendor", "status", "created_at"], name="ord_vsc_idx"),
+            models.Index(fields=["status", "created_at"], name="ord_sc_idx"),
+            models.Index(fields=["created_at"], name="ord_c_idx"),
+            models.Index(fields=["auto_expire_at"], name="ord_exp_idx"),
+        ]
 
     def save(self, *args, **kwargs):
         # Auto-calculate total value
@@ -69,17 +78,36 @@ class Order(models.Model):
                 self.auto_expire_at = base_time + timedelta(minutes=ttl_min)
             except Exception:
                 pass
-        # Generate order_code once
+        # Generate order_code once — globally unique format to avoid UNIQUE collisions
+        # Format: ORD-<typeCode>-<DDMMYYYY>-<vendorId>-<seq>
         if not self.order_code:
             from django.utils import timezone
             today = timezone.localdate()
             type_code = "01" if self.type == self.BUY else "02"
             day_str = today.strftime("%d%m%Y")  # DDMMYYYY
-            # Daily count for this vendor and day
-            today_count = Order.objects.filter(vendor=self.vendor, created_at__date=today).count() + 1
-            seq = f"{today_count:03d}"
-            # Final format: ORD-<typeCode>-<DDMMYYYY>-<seq>
-            self.order_code = f"ORD-{type_code}-{day_str}-{seq}"
+            vendor_id = getattr(self.vendor, "id", None) or getattr(self.vendor, "pk", None) or 0
+            base = f"ORD-{type_code}-{day_str}-{vendor_id}"
+            # Start sequence based on this vendor's count for the day
+            seq_num = Order.objects.filter(vendor=self.vendor, created_at__date=today).count() + 1
+            # Try save with collision handling for concurrent requests
+            from django.db import IntegrityError
+            for _ in range(5):
+                code = f"{base}-{seq_num:03d}"
+                # Ensure not used in DB before trying
+                if Order.objects.filter(order_code=code).exists():
+                    seq_num += 1
+                    continue
+                self.order_code = code
+                try:
+                    super().save(*args, **kwargs)
+                    return
+                except IntegrityError:
+                    # Bump sequence and retry
+                    seq_num += 1
+            # Final attempt after retries with a high sequence
+            self.order_code = f"{base}-{seq_num:03d}"
+            super().save(*args, **kwargs)
+            return
         super().save(*args, **kwargs)
 
     def __str__(self):

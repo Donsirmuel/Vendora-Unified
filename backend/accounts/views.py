@@ -51,6 +51,31 @@ class VendorViewSet(ModelViewSet):
         serializer.save()
         return Response(serializer.data)
 
+    @action(detail=False, methods=["post"], url_path="toggle-availability")
+    def toggle_availability(self, request):
+        """Toggle vendor availability and set optional unavailable message.
+
+        Payload: { "is_available": bool, "unavailable_message": str? }
+        """
+        user = request.user
+        is_available = request.data.get("is_available")
+        message = request.data.get("unavailable_message", "")
+        try:
+            if isinstance(is_available, bool):
+                user.is_available = is_available
+            elif isinstance(is_available, str) and is_available.lower() in {"true","false"}:
+                user.is_available = (is_available.lower() == "true")
+            if not user.is_available:
+                user.unavailable_message = str(message or "").strip()
+            else:
+                # Clear message when available
+                user.unavailable_message = ""
+            user.save(update_fields=["is_available", "unavailable_message", "updated_at"] if hasattr(user, "updated_at") else ["is_available", "unavailable_message"]) 
+        except Exception:
+            return Response({"detail": "Failed to update availability"}, status=status.HTTP_400_BAD_REQUEST)
+        serializer = self.get_serializer(user)
+        return Response(serializer.data)
+
 
 class BankDetailViewSet(ModelViewSet):
     serializer_class = BankDetailSerializer

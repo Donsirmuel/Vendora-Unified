@@ -175,11 +175,15 @@ const TransactionDetails = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <div>
                 <p className="text-sm text-muted-foreground">Order ID</p>
-                <p className="font-semibold">{txn.order_code || txn.order}</p>
+                <p className="font-semibold">{txn.order_code || String(txn.order).padStart(4, '0')}</p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Date</p>
-                <p className="font-semibold">{order?.created_at ? new Date(order.created_at).toLocaleString() : "—"}</p>
+                <p className="font-semibold">{
+                  order?.created_at
+                    ? new Date(order.created_at).toLocaleString()
+                    : (txn.completed_at ? new Date(txn.completed_at).toLocaleString() : "—")
+                }</p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Asset</p>
@@ -191,7 +195,13 @@ const TransactionDetails = () => {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Value</p>
-                <p className="font-semibold text-lg">{order?.total_value != null ? `₦${Number(order.total_value).toLocaleString()}` : "—"}</p>
+                <p className="font-semibold text-lg">{
+                  (() => {
+                    const v = (order?.total_value ?? txn.order_total_value);
+                    const n = v != null ? Number(v) : NaN;
+                    return isFinite(n) ? `₦${n.toLocaleString()}` : "—";
+                  })()
+                }</p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Type</p>
@@ -321,7 +331,7 @@ const TransactionDetails = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <div>
                 <p className="text-sm text-muted-foreground">Created</p>
-                <p className="font-medium">{order?.created_at ? new Date(order.created_at).toLocaleString() : "—"}</p>
+                <p className="font-medium">{order?.created_at ? new Date(order.created_at).toLocaleString() : (txn.completed_at ? new Date(txn.completed_at).toLocaleString() : "—")}</p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Accepted</p>

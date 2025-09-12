@@ -118,7 +118,7 @@ const Transactions = () => {
                       <TableRow key={t.id} className="hover:bg-muted/40">
                         <TableCell>
                           <Link to={`/transactions/${t.id}`} className="text-primary underline">
-                            {t.id}
+                            {String(t.id).padStart(4, '0')}
                           </Link>
                         </TableCell>
                         <TableCell className="capitalize">{t.order_type || "—"}</TableCell>

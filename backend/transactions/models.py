@@ -24,6 +24,12 @@ class Transaction(models.Model):
 
     class Meta:
         ordering = ["-completed_at", "-id"]
+        constraints = [
+            models.UniqueConstraint(fields=["order"], name="unique_transaction_per_order"),
+        ]
+        indexes = [
+            models.Index(fields=["status", "completed_at"], name="txn_sc_idx"),
+        ]
 
     def __str__(self):
         return f"Transaction for Order {self.order}"

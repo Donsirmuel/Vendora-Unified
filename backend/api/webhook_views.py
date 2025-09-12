@@ -25,18 +25,21 @@ def telegram_webhook(request):
             pass
 
         # Parse the incoming update
-        update_data = json.loads(request.body)
+        update_data = json.loads(request.body or b"{}")
         logger.info(f"Received Telegram webhook: {update_data}")
-        
+
+        response_text = None
+        reply_markup = None
+
         # Extract message information
         if "message" in update_data:
+            from . import bot_handlers
             message = update_data["message"]
             chat_id = message.get("chat", {}).get("id")
-            text = message.get("text", "")
-            user = message.get("from", {})
-            
+            text = (message.get("text", "") or "").strip()
+
             logger.info(f"Message from chat {chat_id}: {text}")
-            
+
             # Handle different types of messages
             if text.startswith("/start"):
                 # Parse vendor ID from start command: /start vendor_123
@@ -62,18 +65,18 @@ def telegram_webhook(request):
                                     vendor_id = None
                             except Exception:
                                 vendor_id = None
-                
+
                 # Subscribe or update the BotUser
                 try:
                     from .models import BotUser
                     from accounts.models import Vendor
                     from typing import Any, cast
-                    
+
                     bot_user, created = cast(Any, BotUser).objects.update_or_create(
-                        chat_id=str(chat_id), 
-                        defaults={"is_subscribed": True}
+                        chat_id=str(chat_id),
+                        defaults={"is_subscribed": True},
                     )
-                    
+
                     # Link to vendor if provided (only if vendor is active/allowed)
                     if vendor_id:
                         try:
@@ -97,24 +100,21 @@ def telegram_webhook(request):
                                 bot_user.save(update_fields=["vendor"])
                         except Vendor.DoesNotExist:
                             pass
-                    
+
                 except Exception as e:
                     logger.error(f"Failed to update or create BotUser: {e}")
-                
+
                 # Call the proper start command handler
-                from . import bot_handlers
                 response_text, reply_markup = bot_handlers.handle_start_command()
-                
+
             elif text.startswith("/help"):
-                from . import bot_handlers
                 response_text, reply_markup = bot_handlers.handle_help_command()
-                
+
             elif text.startswith("/status"):
                 response_text = "Bot is running and connected to Vendora PWA!"
                 reply_markup = {}
-                
+
             else:
-                from . import bot_handlers
                 # Handle image/document uploads as proof first
                 if message.get("photo") or message.get("document"):
                     try:
@@ -184,17 +184,11 @@ def telegram_webhook(request):
                                             if updates:
                                                 txn.save(update_fields=updates)
 
-                                    # Reset immediate state, but keep linking to the current order for next steps
+                                    # Reset immediate state and keep current order reference
                                     bu.state = ""
                                     bu.temp_order_id = str(order.id)
                                     bu.save(update_fields=["state", "temp_order_id"])
 
-                                    # Confirm receipt and set status for vendor to complete later
-                                    try:
-                                        bu.state = ""
-                                        bu.save(update_fields=["state"])
-                                    except Exception:
-                                        pass
                                     if order.status in {Order.ACCEPTED, Order.COMPLETED}:
                                         code_or_id = order.order_code or str(order.id)
                                         response_text = (
@@ -207,14 +201,14 @@ def telegram_webhook(request):
                         response_text = "An error occurred while processing your file. Please try again."
                         reply_markup = None
 
-                elif text and text.strip() and not text.startswith("/"):
-                    # Possibly freeform amount entry
+                elif text and not text.startswith("/"):
+                    # Possibly freeform amount/receiving/note entry
                     try:
                         from .models import BotUser
                         from typing import Any, cast
                         bu = cast(Any, BotUser)._default_manager.get(chat_id=str(chat_id))
                         if bu.state == "awaiting_amount" and bu.temp_asset and bu.temp_type:
-                            amt = text.strip().replace(",", "")
+                            amt = text.replace(",", "")
                             # Only proceed if vendor is active/subscribed
                             vendor_id = bu.vendor.id if bu.vendor else None
                             allowed = True
@@ -245,8 +239,8 @@ def telegram_webhook(request):
                         elif bu.state == "awaiting_receiving" and bu.temp_order_id:
                             # Save receiving details then prompt for optional note
                             from transactions.models import Transaction
-                            from typing import cast as _cast
-                            txn = _cast(Any, Transaction)._default_manager.filter(order_id=int(bu.temp_order_id)).first()
+                            from typing import Any as _Any, cast as _cast
+                            txn = _cast(_Any, Transaction)._default_manager.filter(order_id=int(bu.temp_order_id)).first()
                             if txn:
                                 txn.customer_receiving_details = text.strip()
                                 txn.save(update_fields=["customer_receiving_details"])
@@ -298,37 +292,34 @@ def telegram_webhook(request):
                 else:
                     response_text = "I received your message. Use /help to see commands."
                     reply_markup = None
-            
+
             # Send response back to Telegram
             from .telegram_service import TelegramBotService
             telegram_service = TelegramBotService()
-            
-            # Override chat_id for response
-            original_chat_id = telegram_service.chat_id
             telegram_service.chat_id = str(chat_id)
-            
+
             result = telegram_service.send_message(
-                response_text, 
+                response_text or "",
                 chat_id=str(chat_id),
-                reply_markup=reply_markup
+                reply_markup=reply_markup,
             )
-            
+
             if not result["success"]:
                 logger.error(f"Failed to send response to Telegram: {result.get('error')}")
-        
-    elif "callback_query" in update_data:
+
+        elif "callback_query" in update_data:
             # Handle button callbacks
             callback_query = update_data["callback_query"]
             logger.info(f"Callback query: {callback_query}")
-            
+
             # Handle callback queries for inline keyboards
             from . import bot_handlers
             from .models import BotUser
             from typing import Any, cast
-            
+
             chat_id = callback_query["message"]["chat"]["id"]
             data = callback_query["data"]
-            
+
             # Get vendor information from BotUser
             vendor_id = None
             try:
@@ -336,13 +327,13 @@ def telegram_webhook(request):
                 vendor_id = bot_user.vendor.id if bot_user.vendor else None
             except BotUser.DoesNotExist:
                 pass
-            
+
             # Special flow: continue to receive details then proof after vendor acceptance
             if data.startswith("cont_recv_"):
                 try:
                     order_id = int(data.replace("cont_recv_", ""))
-                    from .models import BotUser
-                    bu = cast(Any, BotUser)._default_manager.get(chat_id=str(chat_id))
+                    from .models import BotUser as _BU
+                    bu = cast(Any, _BU)._default_manager.get(chat_id=str(chat_id))
                     bu.state = "awaiting_receiving"
                     bu.temp_order_id = str(order_id)
                     bu.save(update_fields=["state", "temp_order_id"])
@@ -353,8 +344,8 @@ def telegram_webhook(request):
             elif data.startswith("cont_upload_"):
                 try:
                     order_id = int(data.replace("cont_upload_", ""))
-                    from .models import BotUser
-                    bu = cast(Any, BotUser)._default_manager.get(chat_id=str(chat_id))
+                    from .models import BotUser as _BU
+                    bu = cast(Any, _BU)._default_manager.get(chat_id=str(chat_id))
                     bu.state = "awaiting_proof"
                     bu.temp_order_id = str(order_id)
                     bu.save(update_fields=["state", "temp_order_id"])
@@ -364,23 +355,26 @@ def telegram_webhook(request):
                     response_text, reply_markup = ("Invalid state. Please try again.", None)
             else:
                 response_text, reply_markup = bot_handlers.handle_callback_query(data, vendor_id, str(chat_id))
-            
+
             # Send response back to Telegram
             from .telegram_service import TelegramBotService
             telegram_service = TelegramBotService()
             telegram_service.chat_id = str(chat_id)
-            
+
             result = telegram_service.send_message(
-                response_text, 
+                response_text or "",
                 chat_id=str(chat_id),
-                reply_markup=reply_markup
+                reply_markup=reply_markup,
             )
-            
+
             if not result["success"]:
                 logger.error(f"Failed to send response to Telegram: {result.get('error')}")
-        
+
+        else:
+            logger.info("Unknown Telegram update type")
+
         return JsonResponse({"status": "ok"})
-        
+
     except Exception as e:
         logger.error(f"Error in telegram_webhook: {e}")
         return JsonResponse({"status": "error", "message": str(e)}, status=500)

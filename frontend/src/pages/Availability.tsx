@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,19 +8,39 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { ArrowLeft, Clock, MessageSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { getVendorProfile, updateVendorProfile } from "@/lib/auth";
+import { http } from "@/lib/http";
 
 const Availability = () => {
   const { toast } = useToast();
   const [isAvailable, setIsAvailable] = useState(true);
   const [unavailableMessage, setUnavailableMessage] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  useEffect(() => {
+    (async () => {
+      try {
+        const profile = await getVendorProfile();
+        setIsAvailable(!!profile.is_available);
+        // @ts-ignore
+        setUnavailableMessage((profile as any).unavailable_message || "");
+      } catch {}
+    })();
+  }, []);
 
   const handleSave = async () => {
     setIsSaving(true);
-    
-    // Simulate API call
-    setTimeout(() => {
-      setIsSaving(false);
+    try {
+      const res = await http.post('/api/v1/accounts/vendors/toggle-availability/', {
+        is_available: isAvailable,
+        unavailable_message: unavailableMessage,
+      });
+      // Pull server state back to UI for accuracy
+      try {
+        const profile = await getVendorProfile();
+        setIsAvailable(!!profile.is_available);
+        // @ts-ignore
+        setUnavailableMessage((profile as any).unavailable_message || "");
+      } catch {}
       toast({
         title: "Availability Updated",
         description: isAvailable 
@@ -28,7 +48,11 @@ const Availability = () => {
           : "You are now unavailable. Customers will see your custom message.",
         className: "bg-success text-success-foreground"
       });
-    }, 1500);
+    } catch (e: any) {
+      toast({ title: "Update failed", description: e.message || "Could not update availability", variant: "destructive" });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (

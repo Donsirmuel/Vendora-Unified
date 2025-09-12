@@ -1,4 +1,4 @@
-import axios, { AxiosResponse } from 'axios';
+import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
 
 // Token interface
 export interface Tokens {
@@ -52,6 +52,20 @@ const http = axios.create({
   },
 });
 
+// Single-flight refresh management
+let isRefreshing = false;
+let refreshPromise: Promise<string> | null = null;
+const pendingQueue: Array<{ resolve: (token: string) => void; reject: (err: any) => void }> = [];
+
+function processQueue(error: any, token: string | null) {
+  while (pendingQueue.length) {
+    const { resolve, reject } = pendingQueue.shift()!;
+    if (error) reject(error);
+    else if (token) resolve(token);
+    else reject(new Error('No token available'));
+  }
+}
+
 // Request interceptor to add auth token
 http.interceptors.request.use(
   (config) => {
@@ -72,40 +86,61 @@ http.interceptors.response.use(
     return response;
   },
   async (error) => {
-    const originalRequest = error.config;
+    const originalRequest: AxiosRequestConfig & { _retry?: boolean } = error.config || {};
 
     // If token is expired and we haven't already tried to refresh
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
       const refreshToken = tokenStore.getRefreshToken();
-      if (refreshToken) {
-        try {
-          const baseURL = import.meta.env.VITE_API_BASE || 'http://127.0.0.1:8000';
-          const refreshResponse = await axios.post(`${baseURL}/api/v1/accounts/token/refresh/`, {
-            refresh: refreshToken,
-          });
-
-          const newTokens = {
-            access: refreshResponse.data.access,
-            refresh: refreshToken, // Keep the same refresh token
-          };
-
-          tokenStore.set(newTokens);
-
-          // Retry the original request with new token
-          originalRequest.headers.Authorization = `Bearer ${newTokens.access}`;
-          return http(originalRequest);
-        } catch (refreshError) {
-          // Refresh failed, clear tokens and redirect to login
-          tokenStore.clear();
-          window.location.href = '/login';
-          return Promise.reject(refreshError);
-        }
-      } else {
-        // No refresh token, redirect to login
+      if (!refreshToken) {
         tokenStore.clear();
         window.location.href = '/login';
+        return Promise.reject(error);
+      }
+
+      if (isRefreshing) {
+        // Queue the request until refresh completes
+        return new Promise((resolve, reject) => {
+          pendingQueue.push({
+            resolve: (newAccess: string) => {
+              if (!originalRequest.headers) originalRequest.headers = {};
+              (originalRequest.headers as any).Authorization = `Bearer ${newAccess}`;
+              resolve(http(originalRequest));
+            },
+            reject,
+          });
+        });
+      }
+
+      isRefreshing = true;
+      const baseURL = import.meta.env.VITE_API_BASE || 'http://127.0.0.1:8000';
+      refreshPromise = axios
+        .post(`${baseURL}/api/v1/accounts/token/refresh/`, { refresh: refreshToken })
+        .then((refreshResponse) => {
+          const newAccess = refreshResponse.data.access as string;
+          tokenStore.set({ access: newAccess, refresh: refreshToken });
+          processQueue(null, newAccess);
+          return newAccess;
+        })
+        .catch((refreshError) => {
+          processQueue(refreshError, null);
+          tokenStore.clear();
+          window.location.href = '/login';
+          throw refreshError;
+        })
+        .finally(() => {
+          isRefreshing = false;
+          refreshPromise = null;
+        });
+
+      try {
+        const newAccess = await refreshPromise;
+        if (!originalRequest.headers) originalRequest.headers = {};
+        (originalRequest.headers as any).Authorization = `Bearer ${newAccess}`;
+        return http(originalRequest);
+      } catch (e) {
+        return Promise.reject(e);
       }
     }
 

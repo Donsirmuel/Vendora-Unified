@@ -10,6 +10,17 @@ async function registerPush() {
 	if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
 	try {
 		const reg = await navigator.serviceWorker.register('/sw.js');
+		// If there's a waiting service worker, ask it to activate
+		if (reg.waiting) {
+			reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+		}
+		// When a new SW takes control, reload once to use fresh assets
+		navigator.serviceWorker.addEventListener('controllerchange', () => {
+			if (!(window as any).__reloaded_for_sw__) {
+				(window as any).__reloaded_for_sw__ = true;
+				window.location.reload();
+			}
+		});
 	// Ask for permission
 	const perm = await Notification.requestPermission();
 	if (perm !== 'granted') return;

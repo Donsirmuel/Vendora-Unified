@@ -57,7 +57,22 @@ class TransactionSerializer(serializers.ModelSerializer):
 
     def get_order_total_value(self, obj: Transaction):
         try:
-            return obj.order.total_value
+            # Prefer stored total_value
+            tv = getattr(obj.order, "total_value", None)
+            if tv not in (None, "", "null"):
+                return tv
+            # Fallback: compute from amount * rate if available
+            from decimal import Decimal
+            amt = getattr(obj.order, "amount", None)
+            rt = getattr(obj.order, "rate", None)
+            if amt is not None and rt is not None:
+                try:
+                    amt_d = amt if isinstance(amt, Decimal) else Decimal(str(amt))
+                    rt_d = rt if isinstance(rt, Decimal) else Decimal(str(rt))
+                    return amt_d * rt_d
+                except Exception:
+                    return float(amt) * float(rt)
+            return None
         except Exception:
             return None
 

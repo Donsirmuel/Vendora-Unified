@@ -16,7 +16,7 @@ import {
   Filter,
   Plus
 } from "lucide-react";
-import { listOrders, Order } from "@/lib/orders";
+import { listOrders, acceptOrder, declineOrder, Order } from "@/lib/orders";
 import { useToast } from "@/hooks/use-toast";
 
 const Orders = () => {
@@ -28,6 +28,7 @@ const Orders = () => {
   const [statusFilter, setStatusFilter] = useState<string>("pending");
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const [isActingId, setIsActingId] = useState<number | null>(null);
 
   useEffect(() => {
     loadOrders();
@@ -40,7 +41,7 @@ const Orders = () => {
   const loadOrders = async () => {
     try {
       setIsLoading(true);
-      const response = await listOrders(page);
+  const response = await listOrders(page, 'pending');
       
       if (page === 1) {
         setOrders(response.results);
@@ -64,9 +65,8 @@ const Orders = () => {
     let filtered = [...orders];
 
     // Apply status filter
-    if (statusFilter !== "all") {
-      filtered = filtered.filter(order => order.status === statusFilter);
-    }
+  // We always load pending; keep filter UI but default pending
+  if (statusFilter !== "all") filtered = filtered.filter(order => order.status === statusFilter);
 
     // Apply search filter
     if (searchTerm) {
@@ -123,6 +123,34 @@ const Orders = () => {
     setSearchTerm("");
   setStatusFilter("pending");
     loadOrders();
+  };
+
+  const handleAccept = async (order: Order) => {
+    try {
+      setIsActingId(order.id);
+      const updated = await acceptOrder(order.id, {});
+      // Remove from current pending list to avoid confusion; it moves to Transactions
+      setOrders(prev => prev.filter(o => o.id !== order.id));
+      toast({ title: "Accepted", description: "Order accepted and customer notified." });
+    } catch (e: any) {
+      toast({ title: "Accept failed", description: e.message || "Could not accept order", variant: "destructive" });
+    } finally {
+      setIsActingId(null);
+    }
+  };
+
+  const handleDecline = async (order: Order) => {
+    try {
+      setIsActingId(order.id);
+      const reason = window.prompt("Enter reason for declining:") || "No reason provided";
+      const updated = await declineOrder(order.id, { rejection_reason: reason });
+      setOrders(prev => prev.map(o => (o.id === order.id ? updated : o)));
+      toast({ title: "Declined", description: "Customer notified of decline." });
+    } catch (e: any) {
+      toast({ title: "Decline failed", description: e.message || "Could not decline order", variant: "destructive" });
+    } finally {
+      setIsActingId(null);
+    }
   };
 
   if (isLoading && page === 1) {
@@ -230,11 +258,11 @@ const Orders = () => {
                           </div>
                           <div>
                             <span className="text-muted-foreground">Rate:</span>
-            <p className="font-medium">₦{Number(order.rate).toLocaleString()}</p>
+            <p className="font-medium">₦{Number(order.rate || 0).toLocaleString()}</p>
                           </div>
                           <div>
                             <span className="text-muted-foreground">Total Value:</span>
-            <p className="font-medium">{order.total_value != null ? `₦${Number(order.total_value).toLocaleString()}` : '—'}</p>
+            <p className="font-medium">{order.total_value != null ? `₦${Number(order.total_value || 0).toLocaleString()}` : '—'}</p>
                           </div>
                           <div>
                             <span className="text-muted-foreground">Created:</span>
@@ -259,12 +287,12 @@ const Orders = () => {
                         </Button>
                       </Link>
                       
-                      {order.status === 'pending' && (
+            {order.status === 'pending' && (
                         <div className="flex space-x-2">
-                          <Button size="sm" className="bg-green-600 hover:bg-green-700">
+              <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => handleAccept(order)} disabled={isActingId === order.id}>
                             Accept
                           </Button>
-                          <Button size="sm" variant="destructive">
+              <Button size="sm" variant="destructive" onClick={() => handleDecline(order)} disabled={isActingId === order.id}>
                             Decline
                           </Button>
                         </div>

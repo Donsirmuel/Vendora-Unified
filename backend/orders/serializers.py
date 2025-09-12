@@ -39,6 +39,21 @@ class OrderSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance: Order):
         data = super().to_representation(instance)
+        # Ensure total_value is populated even for legacy rows
+        try:
+            if data.get("total_value") in (None, "", "null"):
+                from decimal import Decimal
+                amt = instance.amount
+                rt = instance.rate
+                if amt is not None and rt is not None:
+                    try:
+                        amt_d = amt if isinstance(amt, Decimal) else Decimal(str(amt))
+                        rt_d = rt if isinstance(rt, Decimal) else Decimal(str(rt))
+                        data["total_value"] = amt_d * rt_d
+                    except Exception:
+                        data["total_value"] = float(amt) * float(rt)
+        except Exception:
+            pass
         # If instructions are empty, enrich from vendor defaults
         try:
             if instance.type == Order.BUY and not instance.pay_instructions:

@@ -7,7 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import { 
   TrendingUp, 
   TrendingDown, 
-  DollarSign, 
   ShoppingCart, 
   ArrowLeftRight, 
   MessageCircle,
@@ -109,7 +108,7 @@ const Dashboard = () => {
       // Calculate revenue from NGN totals exposed via order_total_value
       const totalRevenue = completedTransactions.reduce((sum: number, tx: any) => {
         const v = (tx as any).order_total_value;
-        const n = v != null ? Number(v) : 0;
+        const n = v != null ? Number(v) : NaN;
         return sum + (isFinite(n) ? n : 0);
       }, 0);
       
@@ -240,10 +239,10 @@ const Dashboard = () => {
             </CardContent>
           </Card>
 
-          <Card>
+      <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Total Revenue (₦)</CardTitle>
+        <span className="sr-only">NGN</span>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{formatCurrency(stats.totalRevenue)}</div>

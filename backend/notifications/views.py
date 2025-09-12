@@ -3,7 +3,7 @@ import json
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.viewsets import ModelViewSet
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.db.models import QuerySet
 from typing import Any, cast
 from api.permissions import IsOwner, IsVendorAdmin
@@ -66,7 +66,7 @@ class NotificationViewSet(ModelViewSet):
         PushSubscription.objects.filter(endpoint=endpoint, vendor=request.user).delete()
         return Response({"status": "unsubscribed"}, status=status.HTTP_200_OK)
 
-    @action(detail=False, methods=["get"], url_path="vapid-key", permission_classes=[IsAuthenticated])
+    @action(detail=False, methods=["get"], url_path="vapid-key", permission_classes=[AllowAny])
     def vapid_key(self, request):
         from django.conf import settings
         return Response({"publicKey": getattr(settings, "VAPID_PUBLIC_KEY", "")})

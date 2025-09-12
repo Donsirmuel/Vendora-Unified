@@ -27,8 +27,8 @@ class Command(BaseCommand):
         parser.add_argument(
             "--timeout",
             type=int,
-            default=30,
-            help="Long-poll timeout seconds for getUpdates (default 30).",
+            default=15,
+            help="Long-poll timeout seconds for getUpdates (default 15).",
         )
         parser.add_argument(
             "--local-url",
@@ -72,18 +72,57 @@ class Command(BaseCommand):
         self.stdout.write(f"Forwarding updates to: {local_url}")
 
         try:
+            last_expire_check = 0.0
             while True:
+                # Periodic auto-expire tick (every ~60s)
+                try:
+                    now_ts = time.time()
+                    if now_ts - last_expire_check >= 60:
+                        last_expire_check = now_ts
+                        try:
+                            from django.utils import timezone
+                            from orders.models import Order
+                            from api.telegram_service import TelegramBotService
+                            now = timezone.now()
+                            qs = Order.objects.filter(status=Order.PENDING, auto_expire_at__isnull=False, auto_expire_at__lt=now)
+                            for o in qs.iterator():
+                                o.status = Order.EXPIRED
+                                o.save(update_fields=["status"])
+                                # Ensure an 'expired' transaction exists for history/UI
+                                try:
+                                    from transactions.models import Transaction
+                                    Transaction._default_manager.get_or_create(order=o, defaults={"status": "expired"})
+                                except Exception:
+                                    pass
+                                try:
+                                    if o.customer_chat_id:
+                                        TelegramBotService().send_message(
+                                            f"⏰ Order {o.order_code or o.pk} has expired.",
+                                            chat_id=str(o.customer_chat_id),
+                                        )
+                                except Exception:
+                                    pass
+                        except Exception:
+                            pass
+                except Exception:
+                    pass
+
                 params = {"timeout": timeout}
                 if offset:
                     params["offset"] = offset
 
                 try:
-                    resp = requests.get(f"{base_url}/getUpdates", params=params, timeout=timeout + 5)
+                    # Keep connection timeout short to avoid long hangs
+                    resp = requests.get(
+                        f"{base_url}/getUpdates",
+                        params=params,
+                        timeout=(5, timeout + 2),  # (connect, read)
+                    )
                     resp.raise_for_status()
                     payload = resp.json()
                 except Exception as e:
                     self.stderr.write(self.style.WARNING(f"getUpdates failed: {e}"))
-                    time.sleep(3)
+                    time.sleep(2)
                     continue
 
                 if not payload.get("ok"):
@@ -103,7 +142,8 @@ class Command(BaseCommand):
                         headers = {"Content-Type": "application/json"}
                         if secret:
                             headers["X-Telegram-Bot-Api-Secret-Token"] = secret
-                        requests.post(local_url, data=json.dumps(upd), headers=headers, timeout=15)
+                        # Short connect timeout to local server, modest read timeout
+                        requests.post(local_url, data=json.dumps(upd), headers=headers, timeout=(3, 8))
                     except Exception as e:
                         self.stderr.write(self.style.WARNING(f"Failed forwarding update: {e}"))
 

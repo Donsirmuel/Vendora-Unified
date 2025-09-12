@@ -4,12 +4,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search } from "lucide-react";
+import { Search, RefreshCw } from "lucide-react";
 import { http } from "@/lib/http";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 type ApiTransaction = {
   id: number;
   order: number;
+  order_code?: string;
+  order_type?: string;
+  order_asset?: string;
+  order_amount?: number;
   status: string;
   completed_at: string | null;
   proof?: string | null;
@@ -27,18 +33,19 @@ const Transactions = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
 
+  const load = async () => {
+    try {
+      setLoading(true);
+      const res = await http.get<ListResponse>("/api/v1/transactions/");
+      setItems(res.data.results || []);
+    } catch (e) {
+      setItems([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const load = async () => {
-      try {
-        setLoading(true);
-        const res = await http.get<ListResponse>("/api/v1/transactions/");
-        setItems(res.data.results || []);
-      } catch (e) {
-        setItems([]);
-      } finally {
-        setLoading(false);
-      }
-    };
     load();
   }, []);
 
@@ -46,8 +53,10 @@ const Transactions = () => {
     const q = search.toLowerCase();
     return (
       String(t.id).includes(q) ||
-      String(t.order).includes(q) ||
-      (t.status || "").toLowerCase().includes(q)
+      (t.order_code || String(t.order)).toLowerCase().includes(q) ||
+      (t.status || "").toLowerCase().includes(q) ||
+      (t.order_type || "").toLowerCase().includes(q) ||
+      (t.order_asset || "").toLowerCase().includes(q)
     );
   });
 
@@ -56,6 +65,7 @@ const Transactions = () => {
       uncompleted: "bg-warning/20 text-warning",
       completed: "bg-crypto-green/20 text-crypto-green",
       declined: "bg-destructive/20 text-destructive",
+  expired: "bg-gray-100 text-gray-800",
     };
     return <Badge className={map[status] || "bg-secondary text-secondary-foreground"}>{status}</Badge>;
   };
@@ -64,8 +74,12 @@ const Transactions = () => {
     <Layout title="Transactions">
       <div className="space-y-6">
         <Card>
-          <CardHeader>
+          <CardHeader className="flex items-center justify-between">
             <CardTitle>Transactions</CardTitle>
+            <Button variant="outline" size="sm" onClick={load} disabled={loading}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              {loading ? "Refreshing..." : "Refresh"}
+            </Button>
           </CardHeader>
           <CardContent>
             <div className="max-w-md relative mb-4">
@@ -88,7 +102,10 @@ const Transactions = () => {
                   <TableHeader>
                     <TableRow>
                       <TableHead>ID</TableHead>
-                      <TableHead>Order</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Order Code</TableHead>
+                      <TableHead>Asset</TableHead>
+                      <TableHead>Amount</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Completed At</TableHead>
                       <TableHead>Proof</TableHead>
@@ -96,9 +113,16 @@ const Transactions = () => {
                   </TableHeader>
                   <TableBody>
                     {filtered.map((t) => (
-                      <TableRow key={t.id}>
-                        <TableCell>{t.id}</TableCell>
-                        <TableCell>{t.order}</TableCell>
+                      <TableRow key={t.id} className="hover:bg-muted/40">
+                        <TableCell>
+                          <Link to={`/transactions/${t.id}`} className="text-primary underline">
+                            {t.id}
+                          </Link>
+                        </TableCell>
+                        <TableCell className="capitalize">{t.order_type || "—"}</TableCell>
+                        <TableCell>{t.order_code || t.order}</TableCell>
+                        <TableCell>{t.order_asset || "—"}</TableCell>
+                        <TableCell>{t.order_amount ?? "—"}</TableCell>
                         <TableCell>{statusBadge(t.status)}</TableCell>
                         <TableCell className="text-muted-foreground">
                           {t.completed_at ? new Date(t.completed_at).toLocaleString() : "—"}

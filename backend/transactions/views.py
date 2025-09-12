@@ -21,7 +21,7 @@ class TransactionViewSet(ModelViewSet):
         qs = cast(QuerySet[Any], cast(Any, Transaction).objects.all())
         user = self.request.user
         if user and user.is_authenticated:
-            qs = qs.filter(order__vendor=user)
+            qs = qs.filter(order__vendor=user).exclude(order__status="pending")
         return qs
 
     def get_serializer_class(self):
@@ -31,14 +31,14 @@ class TransactionViewSet(ModelViewSet):
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
-        if instance.status == "declined":
-            return Response({"detail": "This transaction is declined and cannot be modified."}, status=status.HTTP_400_BAD_REQUEST)
+        if instance.status in {"declined", "expired"}:
+            return Response({"detail": "This transaction is read-only and cannot be modified."}, status=status.HTTP_400_BAD_REQUEST)
         return super().update(request, *args, **kwargs)
 
     def partial_update(self, request, *args, **kwargs):
         instance = self.get_object()
-        if instance.status == "declined":
-            return Response({"detail": "This transaction is declined and cannot be modified."}, status=status.HTTP_400_BAD_REQUEST)
+        if instance.status in {"declined", "expired"}:
+            return Response({"detail": "This transaction is read-only and cannot be modified."}, status=status.HTTP_400_BAD_REQUEST)
         return super().partial_update(request, *args, **kwargs)
 
     @action(detail=True, methods=["post"], url_path="complete")

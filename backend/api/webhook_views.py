@@ -165,39 +165,42 @@ def telegram_webhook(request):
                                         # Find existing transaction (if any) for this order
                                         order_id = int(bu.temp_order_id)
                                         order = cast(Any, Order)._default_manager.get(id=order_id)
-                                        txn = cast(Any, Transaction)._default_manager.filter(order=order).first()
-                                        if not txn:
-                                            txn = Transaction(order=order, status="uncompleted")
+                                        # Only allow transaction/proof after vendor acceptance
+                                        if order.status not in {Order.ACCEPTED, Order.COMPLETED}:
+                                            response_text = "The vendor hasn't accepted your order yet. Please wait for acceptance and tap Continue before uploading your proof."
+                                            reply_markup = None
+                                        else:
+                                            txn = cast(Any, Transaction)._default_manager.filter(order=order).first()
+                                            if not txn:
+                                                txn = Transaction(order=order, status="uncompleted")
 
-                                        # Save to FileField (this will save the instance as well)
-                                        txn.proof.save(filename, ContentFile(bytes(content)), save=True)
-                                        # Ensure status is uncompleted; vendor will complete later
-                                        updates = []
-                                        if txn.status != "uncompleted":
-                                            txn.status = "uncompleted"
-                                            updates.append("status")
-                                        if updates:
-                                            txn.save(update_fields=updates)
+                                            # Save to FileField (this will save the instance as well)
+                                            txn.proof.save(filename, ContentFile(bytes(content)), save=True)
+                                            # Ensure status is uncompleted; vendor will complete later
+                                            updates = []
+                                            if txn.status != "uncompleted":
+                                                txn.status = "uncompleted"
+                                                updates.append("status")
+                                            if updates:
+                                                txn.save(update_fields=updates)
 
                                     # Reset immediate state, but keep linking to the current order for next steps
                                     bu.state = ""
                                     bu.temp_order_id = str(order.id)
                                     bu.save(update_fields=["state", "temp_order_id"])
 
-                                    # Ask for receiving details depending on order type
+                                    # Confirm receipt and set status for vendor to complete later
                                     try:
-                                        # Update state to await receiving details
-                                        bu.state = "awaiting_receiving"
+                                        bu.state = ""
                                         bu.save(update_fields=["state"])
-                                        from django.utils.html import escape
-                                        if order.type == order.BUY:
-                                            ask = "Please enter your receiving wallet address (to receive the asset)."
-                                        else:
-                                            ask = "Please enter your bank details (Account Name, Number, Bank)."
-                                        response_text = f"✅ Proof received!\n\n{ask}"
-                                        reply_markup = None
                                     except Exception:
-                                        response_text = "✅ Proof received! The vendor will review and update the order shortly."
+                                        pass
+                                    if order.status in {Order.ACCEPTED, Order.COMPLETED}:
+                                        code_or_id = order.order_code or str(order.id)
+                                        response_text = (
+                                            f"✅ Your transaction with Order ID: {code_or_id} has been received. "
+                                            f"Please await completion by the vendor."
+                                        )
                                         reply_markup = None
                     except Exception as e:
                         logger.error(f"Error handling file upload: {e}")
@@ -334,7 +337,21 @@ def telegram_webhook(request):
             except BotUser.DoesNotExist:
                 pass
             
-            response_text, reply_markup = bot_handlers.handle_callback_query(data, vendor_id, str(chat_id))
+            # Special flow: continue to upload proof after vendor acceptance
+            if data.startswith("cont_upload_"):
+                try:
+                    order_id = int(data.replace("cont_upload_", ""))
+                    from .models import BotUser
+                    bu = cast(Any, BotUser)._default_manager.get(chat_id=str(chat_id))
+                    bu.state = "awaiting_proof"
+                    bu.temp_order_id = str(order_id)
+                    bu.save(update_fields=["state", "temp_order_id"])
+                    response_text = "Please upload your payment/on-chain proof now (image or document)."
+                    reply_markup = None
+                except Exception:
+                    response_text, reply_markup = ("Invalid state. Please try again.", None)
+            else:
+                response_text, reply_markup = bot_handlers.handle_callback_query(data, vendor_id, str(chat_id))
             
             # Send response back to Telegram
             from .telegram_service import TelegramBotService

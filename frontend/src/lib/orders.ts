@@ -4,6 +4,7 @@ export interface Order {
   id: number;
   vendor: number;
   customer_chat_id: string;
+  order_code?: string;
   type: 'buy' | 'sell';
   asset: string;
   amount: number;
@@ -11,6 +12,8 @@ export interface Order {
   total_value: number | null;
   status: 'pending' | 'accepted' | 'declined' | 'expired' | 'completed';
   auto_expire_at: string;
+  pay_instructions?: string;
+  send_instructions?: string;
   rejection_reason?: string;
   created_at: string;
   updated_at: string;

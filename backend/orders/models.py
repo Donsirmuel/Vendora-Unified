@@ -43,7 +43,15 @@ class Order(models.Model):
     def save(self, *args, **kwargs):
         # Auto-calculate total value
         if self.amount and self.rate:
-            self.total_value = self.amount * self.rate
+            # Ensure Decimal math even if values were assigned as float/int earlier
+            try:
+                from decimal import Decimal
+                amt = self.amount if isinstance(self.amount, Decimal) else Decimal(str(self.amount))
+                rt = self.rate if isinstance(self.rate, Decimal) else Decimal(str(self.rate))
+                self.total_value = amt * rt
+            except Exception:
+                # Fallback (should rarely happen)
+                self.total_value = self.amount * self.rate
         # Ensure auto_expire_at for pending orders
         if self.status == self.PENDING and not self.auto_expire_at:
             try:
@@ -64,14 +72,14 @@ class Order(models.Model):
         # Generate order_code once
         if not self.order_code:
             from django.utils import timezone
-            from django.db.models import Count
             today = timezone.localdate()
             type_code = "01" if self.type == self.BUY else "02"
-            day_str = today.strftime("%d%m%Y")
+            day_str = today.strftime("%d%m%Y")  # DDMMYYYY
             # Daily count for this vendor and day
             today_count = Order.objects.filter(vendor=self.vendor, created_at__date=today).count() + 1
-            seq = f"{today_count:02d}"
-            self.order_code = f"ORD{type_code}{day_str}{seq}"
+            seq = f"{today_count:03d}"
+            # Final format: ORD-<typeCode>-<DDMMYYYY>-<seq>
+            self.order_code = f"ORD-{type_code}-{day_str}-{seq}"
         super().save(*args, **kwargs)
 
     def __str__(self):

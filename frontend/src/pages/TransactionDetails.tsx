@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,90 +8,81 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, Check, Upload, Download, Clock, CheckCircle2, XCircle, Image as ImageIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { http, tokenStore } from "@/lib/http";
 
 const TransactionDetails = () => {
   const { id } = useParams();
   const { toast } = useToast();
   const [isUploading, setIsUploading] = useState(false);
   const [isMarkingComplete, setIsMarkingComplete] = useState(false);
+  const [txn, setTxn] = useState<any | null>(null);
+  const [order, setOrder] = useState<any | null>(null);
 
-  // Mock data - different transactions based on ID
-  const mockTransactions = {
-    "TX001": {
-      id: "TX001",
-      date: "2024-01-14 16:45:30",
-      asset: "BTC",
-      amount: "0.3",
-      value: "₦14,100,000",
-      status: "Uncompleted",
-      type: "Buy",
-      customerDetails: "First Bank Account: 1234567890, John Doe",
-      remarks: "Please send payment to the provided account details. I will confirm within 30 minutes.",
-      createdAt: "2024-01-14 16:45:30",
-      acceptedAt: "2024-01-14 16:46:15",
-      completedAt: null,
-      declinedAt: null,
-      vendorAccount: "GTBank - 0123456789 - Vendora Trading Ltd"
-    },
-    "TX002": {
-      id: "TX002",
-      date: "2024-01-13 12:20:15",
-      asset: "ETH",
-      amount: "1.5",
-      value: "₦6,300,000",
-      status: "Declined",
-      type: "Sell",
-      customerDetails: "0x742d35Cc6e5f3e1234567890abcdef1234567890",
-      remarks: "Send ETH to my wallet address. Will confirm payment immediately.",
-      createdAt: "2024-01-13 12:20:15",
-      acceptedAt: null,
-      completedAt: null,
-      declinedAt: "2024-01-13 12:25:30",
-      vendorAccount: null
-    }
-  };
-
-  const transaction = mockTransactions[id as keyof typeof mockTransactions] || mockTransactions["TX001"];
-
-  const proofImages = [
-    { id: 1, name: "payment_receipt_1.jpg", url: "/api/proof/1", uploadedBy: "vendor" },
-    { id: 2, name: "bank_confirmation.png", url: "/api/proof/2", uploadedBy: "customer" }
-  ];
+  useEffect(() => {
+    const load = async () => {
+      if (!id) return;
+      try {
+        const res = await http.get(`/api/v1/transactions/${id}/`);
+        setTxn(res.data);
+        if (res.data?.order) {
+          try {
+            const o = await http.get(`/api/v1/orders/${res.data.order}/`);
+            setOrder(o.data);
+          } catch {}
+        }
+      } catch (e: any) {
+        toast({ title: "Load failed", description: e.message || "Could not load transaction", variant: "destructive" });
+      }
+    };
+    load();
+  }, [id]);
 
   const handleMarkComplete = async () => {
     setIsMarkingComplete(true);
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      if (!id) return;
+      const form = new FormData();
+      form.append("status", "completed");
+      // Optional vendor_proof is appended by input handler below
+      const res = await http.post(`/api/v1/transactions/${id}/complete/`, form, { headers: { "Content-Type": "multipart/form-data" } });
+      toast({ title: "Transaction Completed", description: "Marked as completed.", className: "bg-success text-success-foreground" });
+      // Reload
+      const fresh = await http.get(`/api/v1/transactions/${id}/`);
+      setTxn(fresh.data);
+    } catch (e: any) {
+      toast({ title: "Complete failed", description: e.message || "Failed to complete", variant: "destructive" });
+    } finally {
       setIsMarkingComplete(false);
-      toast({
-        title: "Transaction Completed",
-        description: "The transaction has been marked as completed successfully.",
-        className: "bg-success text-success-foreground"
-      });
-    }, 2000);
+    }
   };
 
   const handleUploadProof = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
-
     setIsUploading(true);
-    // Simulate file upload
-    setTimeout(() => {
+    try {
+      if (!id) return;
+      const form = new FormData();
+      form.append("status", "completed");
+      form.append("vendor_proof", files[0]);
+      await http.post(`/api/v1/transactions/${id}/complete/`, form, { headers: { "Content-Type": "multipart/form-data" } });
+      toast({ title: "Proof Uploaded", description: "Vendor proof uploaded and transaction completed.", className: "bg-success text-success-foreground" });
+      const fresh = await http.get(`/api/v1/transactions/${id}/`);
+      setTxn(fresh.data);
+    } catch (e: any) {
+      toast({ title: "Upload failed", description: e.message || "Failed to upload proof", variant: "destructive" });
+    } finally {
       setIsUploading(false);
-      toast({
-        title: "Proof Uploaded",
-        description: "Your proof image has been uploaded successfully.",
-        className: "bg-success text-success-foreground"
-      });
-    }, 2000);
+    }
   };
 
   const handleDownloadPDF = async () => {
     try {
       if (!id) return;
-      const resp = await fetch(`/api/v1/transactions/${id}/pdf/`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token') || ''}` },
+      const base = (import.meta as any).env?.VITE_API_BASE || 'http://127.0.0.1:8000';
+      const token = tokenStore.getAccessToken() || '';
+      const resp = await fetch(`${base}/api/v1/transactions/${id}/pdf/`, {
+        headers: { Authorization: `Bearer ${token}` },
       });
       if (!resp.ok) {
         const text = await resp.text();
@@ -113,24 +104,25 @@ const TransactionDetails = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "Completed": return "bg-crypto-green/20 text-crypto-green";
-      case "Uncompleted": return "bg-warning/20 text-warning";
-      case "Declined": return "bg-destructive/20 text-destructive";
+      case "completed": return "bg-crypto-green/20 text-crypto-green";
+      case "uncompleted": return "bg-warning/20 text-warning";
+      case "declined": return "bg-destructive/20 text-destructive";
+      case "expired": return "bg-gray-100 text-gray-800";
       default: return "bg-secondary text-secondary-foreground";
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case "Completed": return <CheckCircle2 className="h-4 w-4" />;
-      case "Uncompleted": return <Clock className="h-4 w-4" />;
-      case "Declined": return <XCircle className="h-4 w-4" />;
+      case "completed": return <CheckCircle2 className="h-4 w-4" />;
+      case "uncompleted": return <Clock className="h-4 w-4" />;
+      case "declined": return <XCircle className="h-4 w-4" />;
       default: return <Clock className="h-4 w-4" />;
     }
   };
 
   const getTypeColor = (type: string) => {
-    return type === "Buy" ? "bg-crypto-green/20 text-crypto-green" : "bg-crypto-red/20 text-crypto-red";
+    return type === "buy" ? "bg-crypto-green/20 text-crypto-green" : "bg-crypto-red/20 text-crypto-red";
   };
 
   const getAssetColor = (asset: string) => {
@@ -140,6 +132,14 @@ const TransactionDetails = () => {
       default: return "bg-secondary text-secondary-foreground";
     }
   };
+
+  if (!txn) {
+    return (
+      <Layout>
+        <div className="p-8 text-center text-muted-foreground">Loading…</div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
@@ -175,38 +175,34 @@ const TransactionDetails = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <div>
                 <p className="text-sm text-muted-foreground">Order ID</p>
-                <p className="font-semibold">{transaction.id}</p>
+                <p className="font-semibold">{txn.order_code || txn.order}</p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Date</p>
-                <p className="font-semibold">{transaction.date}</p>
+                <p className="font-semibold">{order?.created_at ? new Date(order.created_at).toLocaleString() : "—"}</p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Asset</p>
-                <Badge className={getAssetColor(transaction.asset)}>{transaction.asset}</Badge>
+                <Badge className={getAssetColor(txn.order_asset || "")}>{txn.order_asset || "—"}</Badge>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Amount</p>
-                <p className="font-semibold">{transaction.amount}</p>
+                <p className="font-semibold">{txn.order_amount ?? "—"}</p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Value</p>
-                <p className="font-semibold text-lg">{transaction.value}</p>
+                <p className="font-semibold text-lg">{order?.total_value != null ? `₦${Number(order.total_value).toLocaleString()}` : "—"}</p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Type</p>
-                <Badge className={getTypeColor(transaction.type)}>{transaction.type}</Badge>
+                <Badge className={getTypeColor(txn.order_type || "")}>{(txn.order_type || "").toUpperCase()}</Badge>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Status</p>
-                <Badge className={getStatusColor(transaction.status)}>
-                  {getStatusIcon(transaction.status)}
-                  <span className="ml-1">{transaction.status}</span>
+                <Badge className={getStatusColor(txn.status)}>
+                  {getStatusIcon(txn.status)}
+                  <span className="ml-1">{txn.status}</span>
                 </Badge>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Vendor Account</p>
-                <p className="text-sm">{transaction.vendorAccount}</p>
               </div>
             </div>
           </CardContent>
@@ -219,17 +215,15 @@ const TransactionDetails = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <p className="text-sm text-muted-foreground mb-2">
-                {transaction.type === "Buy" ? "Customer Bank Details" : "Customer Wallet Address"}
-              </p>
+              <p className="text-sm text-muted-foreground mb-2">Customer Receiving Details</p>
               <div className="p-3 bg-secondary/50 rounded-lg">
-                <p className="text-sm">{transaction.customerDetails}</p>
+                <p className="text-sm whitespace-pre-wrap">{txn.customer_receiving_details || "—"}</p>
               </div>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground mb-2">Customer Remarks</p>
+              <p className="text-sm text-muted-foreground mb-2">Customer Note</p>
               <div className="p-3 bg-secondary/50 rounded-lg">
-                <p className="text-sm">{transaction.remarks}</p>
+                <p className="text-sm whitespace-pre-wrap">{txn.customer_note || "—"}</p>
               </div>
             </div>
           </CardContent>
@@ -265,7 +259,7 @@ const TransactionDetails = () => {
           </CardContent>
         </Card>
 
-        {transaction.status !== "Declined" && (
+    {txn.status !== "declined" && (
           /* Vendor Actions */
           <Card className="bg-gradient-card border-border mb-6">
             <CardHeader>
@@ -274,7 +268,7 @@ const TransactionDetails = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               
-              {transaction.status === "Uncompleted" && (
+      {txn.status === "uncompleted" && (
                 <>
                   <Button 
                     onClick={handleMarkComplete}
@@ -308,7 +302,7 @@ const TransactionDetails = () => {
                 </>
               )}
 
-              {transaction.status === "Completed" && (
+              {txn.status === "completed" && (
                 <div className="text-center py-4">
                   <CheckCircle2 className="h-12 w-12 text-success mx-auto mb-2" />
                   <p className="text-sm text-muted-foreground">Transaction completed successfully</p>
@@ -328,52 +322,35 @@ const TransactionDetails = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <div>
                 <p className="text-sm text-muted-foreground">Created</p>
-                <p className="font-medium">{transaction.createdAt}</p>
+                <p className="font-medium">{order?.created_at ? new Date(order.created_at).toLocaleString() : "—"}</p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Accepted</p>
-                <p className="font-medium">{transaction.acceptedAt || "—"}</p>
+                <p className="font-medium">{/* not tracked per txn; show — */}—</p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Completed</p>
-                <p className="font-medium">{transaction.completedAt || "—"}</p>
+                <p className="font-medium">{txn.vendor_completed_at ? new Date(txn.vendor_completed_at).toLocaleString() : "—"}</p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Declined</p>
-                <p className="font-medium">{transaction.declinedAt || "—"}</p>
+                <p className="font-medium">{/* not tracked per txn; show — */}—</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         {/* Vendor Proof of Completion */}
-        {transaction.status !== "Declined" && (
+        {txn.status !== "declined" && (
           <Card className="bg-gradient-card border-border">
             <CardHeader>
               <CardTitle>Vendor Proof of Completion</CardTitle>
               <CardDescription>Proof images uploaded by you</CardDescription>
             </CardHeader>
             <CardContent>
-              {proofImages.filter(proof => proof.uploadedBy === "vendor").length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {proofImages.filter(proof => proof.uploadedBy === "vendor").map((proof) => (
-                    <div key={proof.id} className="p-4 border border-border rounded-lg bg-secondary/30">
-                      <div className="flex items-center space-x-3 mb-2">
-                        <ImageIcon className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm font-medium truncate">{proof.name}</span>
-                      </div>
-                      <Button variant="outline" size="sm" className="w-full border-border">
-                        View Image
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  <ImageIcon className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                  <p>No vendor proof uploaded yet</p>
-                </div>
-              )}
+              <div className="text-sm text-muted-foreground">
+                {txn.vendor_proof ? "Vendor proof uploaded" : "No vendor proof uploaded yet"}
+              </div>
             </CardContent>
           </Card>
         )}

@@ -143,17 +143,22 @@ class OrderViewSet(ModelViewSet):
             if order.customer_chat_id:
                 from api.telegram_service import TelegramBotService
                 tgs = TelegramBotService()
-                msg = (
-                    f"✅ Order {order.order_code or order.id} accepted\n\n"
-                    f"Asset: {order.asset}\nType: {order.type}\nAmount: {order.amount}\nRate: {order.rate}\n"
-                )
+                code_or_id = order.order_code or str(order.id)
+                details = ""
                 if order.type == Order.BUY and order.pay_instructions:
-                    msg += f"\nPayment Details:\n{order.pay_instructions}"
-                if order.type == Order.SELL and order.send_instructions:
-                    msg += f"\nSend to:\n{order.send_instructions}"
-                if acceptance_note:
-                    msg += f"\n\nNote: {acceptance_note}"
-                tgs.send_message(msg, chat_id=str(order.customer_chat_id))
+                    details = f"Please proceed to make payment to:\n{order.pay_instructions}"
+                elif order.type == Order.SELL and order.send_instructions:
+                    details = f"Please send the asset to:\n{order.send_instructions}"
+                note = f"\n\nNote: {acceptance_note}" if acceptance_note else ""
+                msg = (
+                    f"✅ Your order with Order ID: {code_or_id} has been accepted.\n\n"
+                    f"{details}{note}\n\nTap Continue to upload your proof."
+                )
+                # Provide an inline button to guide the user
+                reply_markup = {
+                    "inline_keyboard": [[{"text": "Continue", "callback_data": f"cont_upload_{order.id}"}]]
+                }
+                tgs.send_message(msg, chat_id=str(order.customer_chat_id), reply_markup=reply_markup)
         except Exception:
             pass
 
@@ -218,6 +223,12 @@ class OrderViewSet(ModelViewSet):
         for order in qs.iterator():
             order.status = Order.EXPIRED
             order.save(update_fields=["status"])
+            # Create a transaction entry for expired order
+            try:
+                from transactions.models import Transaction
+                Transaction._default_manager.get_or_create(order=order, defaults={"status": "expired"})
+            except Exception:
+                pass
             # Notify customer via Telegram
             try:
                 if order.customer_chat_id:

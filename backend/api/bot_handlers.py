@@ -77,10 +77,35 @@ def handle_callback_query(data: str, vendor_id: Optional[int] = None, chat_id: O
         parts = data.split("_", 2)
         if len(parts) == 3:
             _, order_type, asset = parts
-            return handle_asset_selection(asset, order_type, vendor_id)
         else:
+            order_type = "buy"
             asset = data.replace("asset_", "")
-            return handle_asset_selection(asset, "buy", vendor_id)
+
+        # If no vendor is linked yet, try to infer from Rate table (single-owner asset)
+        if not vendor_id and asset:
+            try:
+                from rates.models import Rate as _Rate
+                from typing import Any, cast as _cast
+                vendor_ids = list(_cast(Any, _Rate).objects.filter(asset=asset).values_list("vendor_id", flat=True).distinct())
+                if len(vendor_ids) == 1:
+                    vendor_id = int(vendor_ids[0])
+                    # Persist on BotUser for this chat for subsequent steps
+                    if chat_id:
+                        try:
+                            from .models import BotUser as _BotUser
+                            bu = _BotUser._default_manager.filter(chat_id=str(chat_id)).first()
+                            if bu and (not bu.vendor or getattr(bu.vendor, "id", None) != vendor_id):
+                                from accounts.models import Vendor as _Vendor
+                                v = _Vendor.objects.filter(id=vendor_id).first()
+                                if v:
+                                    bu.vendor = v
+                                    bu.save(update_fields=["vendor"])
+                        except Exception:
+                            pass
+            except Exception:
+                pass
+
+        return handle_asset_selection(asset, order_type, vendor_id)
     elif data.startswith("amount_"):
         # Parse: amount_{asset}_{order_type}_{amount}
         parts = data.replace("amount_", "").split("_")
@@ -213,19 +238,22 @@ def handle_asset_selection(asset: str, order_type: str = "buy", vendor_id: Optio
     
     # Get rate information for this asset
     rate_info = "Rate not available"
+    extra_info = ""
     if vendor_id:
         try:
             rate = cast(Any, Rate).objects.get(vendor_id=vendor_id, asset=asset)
             if order_type == "buy":
                 rate_info = f"Buy Rate: ₦{rate.buy_rate:,.2f} per {asset}"
-                bank_details = f"\n\nBank Details:\n{rate.bank_details}" if rate.bank_details else ""
+                if rate.bank_details:
+                    extra_info = f"\n\nBank Details:\n{rate.bank_details}"
             else:  # sell
                 rate_info = f"Sell Rate: ₦{rate.sell_rate:,.2f} per {asset}"
-                contract_info = f"\n\nContract Address:\n{rate.contract_address}" if rate.contract_address else ""
+                if rate.contract_address:
+                    extra_info = f"\n\nContract Address:\n{rate.contract_address}"
         except Rate.DoesNotExist:
             rate_info = f"Rate not available for {asset}"
     
-    text = f"{'🛒 BUY' if order_type == 'buy' else '💰 SELL'} {asset}\n\n{rate_info}\n\nTap Continue to enter amount or Cancel to go back."
+    text = f"{'🛒 BUY' if order_type == 'buy' else '💰 SELL'} {asset}\n\n{rate_info}{extra_info}\n\nTap Continue to enter amount or Cancel to go back."
     buttons = [
         [
             {"text": "✅ Continue", "callback_data": f"cont_{asset}_{order_type}"},
@@ -241,95 +269,85 @@ def handle_asset_selection(asset: str, order_type: str = "buy", vendor_id: Optio
 
 
 def handle_amount_confirmation(asset: str, order_type: str, amount: str, vendor_id: Optional[int] = None, chat_id: Optional[str] = None) -> Tuple[str, dict]:
-    """Handle amount confirmation with order details and creation."""
+    """Handle amount input: show preview with totals and ask to Confirm/Cancel (no creation yet)."""
     from rates.models import Rate
     from typing import Any, cast
     import uuid
+    from decimal import Decimal, InvalidOperation
     
     try:
-        amount_decimal = float(amount)
-        
-        # Get rate and calculate total
-        if vendor_id:
-            try:
-                # Check vendor gating before proceeding
-                from accounts.models import Vendor as _Vendor
-                from django.utils import timezone
-                v = cast(Any, _Vendor).objects.get(id=vendor_id)
-                now = timezone.now()
-                if not getattr(v, "is_service_active", True):
-                    return ("Vendor service inactive. Please contact the vendor.", {})
-                texp = getattr(v, "trial_expires_at", None)
-                if getattr(v, "is_trial", False) and texp and texp < now:
-                    return ("Vendor trial expired. Please contact the vendor.", {})
-                if getattr(v, "plan", "trial") not in {"trial", "perpetual"}:
-                    pea = getattr(v, "plan_expires_at", None)
-                    if pea and pea < now:
-                        return ("Vendor subscription expired. Please contact the vendor.", {})
+        amount_decimal = Decimal(str(amount))
+    except (InvalidOperation, ValueError):
+        return "❌ Invalid amount. Please try again.", {}
 
-                rate_obj = cast(Any, Rate).objects.get(vendor_id=vendor_id, asset=asset)
-                if order_type == "buy":
-                    rate = rate_obj.buy_rate
-                    total_naira = amount_decimal * float(rate)
-                    payment_info = f"\n\n💳 Payment Details:\n{rate_obj.bank_details}" if rate_obj.bank_details else ""
-                else:  # sell
-                    rate = rate_obj.sell_rate
-                    total_naira = amount_decimal * float(rate)
-                    payment_info = f"\n\n📬 Send {asset} to:\n{rate_obj.contract_address}" if rate_obj.contract_address else ""
-                    
-            except Rate.DoesNotExist:
-                return "❌ Rate not found for this asset. Please try again.", {}
+    # Get rate and calculate total
+    if not vendor_id:
+        return "❌ Vendor information missing. Please restart the bot.", {}
+    try:
+        # Check vendor gating before proceeding
+        from accounts.models import Vendor as _Vendor
+        from django.utils import timezone
+        v = cast(Any, _Vendor).objects.get(id=vendor_id)
+        now = timezone.now()
+        if not getattr(v, "is_service_active", True):
+            return ("Vendor service inactive. Please contact the vendor.", {})
+        texp = getattr(v, "trial_expires_at", None)
+        if getattr(v, "is_trial", False) and texp and texp < now:
+            return ("Vendor trial expired. Please contact the vendor.", {})
+        if getattr(v, "plan", "trial") not in {"trial", "perpetual"}:
+            pea = getattr(v, "plan_expires_at", None)
+            if pea and pea < now:
+                return ("Vendor subscription expired. Please contact the vendor.", {})
+
+        rate_obj = cast(Any, Rate).objects.get(vendor_id=vendor_id, asset=asset)
+        if order_type == "buy":
+            rate = Decimal(rate_obj.buy_rate)
         else:
-            return "❌ Vendor information missing. Please restart the bot.", {}
-        
-        # Generate unique order ID
-        order_id = f"VDR-{uuid.uuid4().hex[:8].upper()}"
-        
-        text = f"""
-🔍 ORDER CONFIRMATION
+            rate = Decimal(rate_obj.sell_rate)
+        total_naira = amount_decimal * rate
+    except Rate.DoesNotExist:
+        return "❌ Rate not found for this asset. Please try again.", {}
 
-📋 Order ID: {order_id}
+    text = f"""
+🔍 ORDER PREVIEW
+
 {'🛒' if order_type == 'buy' else '💰'} Type: {order_type.upper()}
 💎 Asset: {asset}
 📊 Amount: {amount_decimal:,.2f} {asset}
 💱 Rate: ₦{rate:,.2f}
 💰 Total: ₦{total_naira:,.2f}
 
-{payment_info}
-
 ⚠️ Please confirm this order to proceed.
 """
         
-        buttons = [
-            [
-                {"text": "✅ Confirm Order", "callback_data": f"confirm_{order_id}_{asset}_{order_type}_{amount}_{vendor_id}"},
-                {"text": "❌ Cancel", "callback_data": "cancel_order"}
-            ],
-            [
-                {"text": "🔙 Back", "callback_data": f"asset_{asset}"},
-                {"text": "🏠 Main Menu", "callback_data": "back_to_menu"}
-            ]
+    buttons = [
+        [
+            {"text": "✅ Confirm Order", "callback_data": f"confirm_{asset}_{order_type}_{amount_decimal}_{vendor_id}"},
+            {"text": "❌ Cancel", "callback_data": "cancel_order"}
+        ],
+        [
+            {"text": "🔙 Back", "callback_data": f"asset_{asset}"},
+            {"text": "🏠 Main Menu", "callback_data": "back_to_menu"}
         ]
-        
-        reply_markup = create_inline_keyboard(buttons)
-        return text, reply_markup
-        
-    except ValueError:
-        return "❌ Invalid amount. Please try again.", {}
+    ]
+
+    reply_markup = create_inline_keyboard(buttons)
+    return text, reply_markup
 
 
 def handle_order_creation(callback_data: str, chat_id: Optional[str] = None) -> Tuple[str, dict]:
-    """Handle actual order creation in database."""
+    """Create the order after user confirms, then tell them it's pending acceptance."""
     from orders.models import Order
     from accounts.models import Vendor
     from .models import BotUser
     from typing import Any, cast
+    from decimal import Decimal
     
     try:
-        # Parse: confirm_{order_id}_{asset}_{order_type}_{amount}_{vendor_id}
+        # Parse: confirm_{asset}_{order_type}_{amount}_{vendor_id}
         parts = callback_data.replace("confirm_", "").split("_")
-        if len(parts) >= 5:
-            order_id, asset, order_type, amount, vendor_id = parts[0], parts[1], parts[2], parts[3], parts[4]
+        if len(parts) >= 4:
+            asset, order_type, amount, vendor_id = parts[0], parts[1], parts[2], parts[3]
             
             # Get vendor
             vendor = cast(Any, Vendor).objects.get(id=int(vendor_id))
@@ -340,27 +358,27 @@ def handle_order_creation(callback_data: str, chat_id: Optional[str] = None) -> 
                 customer_chat_id=chat_id or "",
                 asset=asset,
                 type=order_type,
-                amount=float(amount),
-                rate=0,  # We'll update this based on current rate
+                amount=Decimal(str(amount)),
+                rate=Decimal("0"),  # We'll update this based on current rate
                 status=Order.PENDING,
             )
             
-            # Update rate from current rate table
+            # Update rate from current rate table and ensure instructions will be set on accept
             from rates.models import Rate
             try:
                 rate_obj = cast(Any, Rate).objects.get(vendor=vendor, asset=asset)
                 if order_type == "buy":
-                    order.rate = rate_obj.buy_rate
+                    order.rate = Decimal(rate_obj.buy_rate)
                 else:
-                    order.rate = rate_obj.sell_rate
+                    order.rate = Decimal(rate_obj.sell_rate)
                 order.save(update_fields=["rate"])
             except Rate.DoesNotExist:
                 pass
             
-            # Update BotUser state to expect proof next
+            # Keep context but wait for vendor acceptance before asking for proof
             try:
                 bu = cast(Any, BotUser)._default_manager.get(chat_id=str(chat_id))
-                bu.state = "awaiting_proof"
+                bu.state = ""
                 bu.temp_order_id = str(order.id)
                 bu.temp_type = order_type
                 bu.temp_asset = asset
@@ -370,15 +388,7 @@ def handle_order_creation(callback_data: str, chat_id: Optional[str] = None) -> 
                 pass
 
             text = f"""
-✅ ORDER CREATED!
-
-📋 Order: {order.id}
-{'🛒' if order_type == 'buy' else '💰'} Type: {order_type.upper()}
-💎 Asset: {asset}
-📊 Amount: {amount} {asset}
-📍 Status: Pending Proof
-
-Please send a screenshot/photo of your payment or on-chain transfer proof here. You can upload an image or document.
+Thanks! Your order with Order ID: {order.order_code or order.id} has been created and is pending acceptance from the vendor. You'll be notified when it's accepted.
 """
 
             buttons = [

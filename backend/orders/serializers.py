@@ -12,9 +12,9 @@ class OrderSerializer(serializers.ModelSerializer):
             "id", "order_code", "vendor", "vendor_name", "vendor_email", "customer_chat_id", "customer_name", "asset", 
             "type", "order_type", "amount", "rate", "total_value", "status", 
             "pay_instructions", "send_instructions", "auto_expire_at", "rejection_reason", "acceptance_note",
-            "created_at", "updated_at"
+            "accepted_at", "declined_at", "created_at", "updated_at"
         ]
-        read_only_fields = ["id", "order_code", "total_value", "created_at", "updated_at"]
+        read_only_fields = ["id", "order_code", "total_value", "accepted_at", "declined_at", "created_at", "updated_at"]
         extra_kwargs = {
             "status": {"required": False},
             "vendor": {"required": False},  # Will be set from request.user

@@ -4,10 +4,14 @@ import Layout from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft, Check, X, Download, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { getOrder, acceptOrder, declineOrder, Order } from "@/lib/orders";
+import { listBankDetails, type BankDetail } from "@/lib/bankDetails";
+import { listRates, type Rate } from "@/lib/rates";
 import { tokenStore } from "@/lib/http";
 
 const OrderDetails = () => {
@@ -19,6 +23,10 @@ const OrderDetails = () => {
   const [declineReason, setDeclineReason] = useState("");
   const [acceptNote, setAcceptNote] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [banks, setBanks] = useState<BankDetail[]>([]);
+  const [rates, setRates] = useState<Rate[]>([]);
+  const [selectedBankId, setSelectedBankId] = useState<string>("");
+  const [contractAddress, setContractAddress] = useState<string>("");
 
   useEffect(() => {
     const load = async () => {
@@ -27,6 +35,16 @@ const OrderDetails = () => {
         setLoading(true);
         const o = await getOrder(Number(id));
         setOrder(o);
+        // Prefetch banks and rates for selectors
+        try {
+          const [b, r] = await Promise.all([listBankDetails(1), listRates(1)]);
+          setBanks(b.results || []);
+          setRates(r.results || []);
+          if (o.type === 'sell') {
+            const rr = (r.results || []).find((x: any) => x.asset?.toUpperCase() === o.asset?.toUpperCase());
+            if (rr?.contract_address) setContractAddress(rr.contract_address);
+          }
+        } catch {}
       } catch (e: any) {
         toast({ title: "Load Error", description: e.message || "Failed to load order", variant: "destructive" });
       } finally {
@@ -40,7 +58,18 @@ const OrderDetails = () => {
     try {
       if (!order) return;
       setIsProcessing(true);
-      const updated = await acceptOrder(order.id, acceptNote ? { acceptance_note: acceptNote } : undefined);
+      const payload: any = {};
+      if (acceptNote) payload.acceptance_note = acceptNote;
+      if (order.type === 'buy') {
+        const chosen = banks.find(b => String(b.id) === selectedBankId);
+        if (chosen) {
+          const instr = `${chosen.bank_name}\n${chosen.account_name}\n${chosen.account_number}${chosen.instructions ? `\n${chosen.instructions}` : ''}`;
+          payload.pay_instructions = instr;
+        }
+      } else {
+        if (contractAddress) payload.send_instructions = contractAddress.trim();
+      }
+      const updated = await acceptOrder(order.id, payload);
       setOrder(updated);
       toast({ title: "Accepted", description: "Customer has been notified with payment details." });
     } catch (e: any) {
@@ -207,41 +236,7 @@ const OrderDetails = () => {
           </CardContent>
         </Card>
 
-        {/* Customer Information */}
-        <Card className="bg-gradient-card border-border mb-6">
-          <CardHeader>
-            <CardTitle>Customer Information</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {order.type === 'buy' ? (
-              <div>
-                <p className="text-sm text-muted-foreground mb-2">Payment Instructions</p>
-                {order.pay_instructions ? (
-                  <div className="p-3 bg-secondary/50 rounded-lg whitespace-pre-wrap text-sm">
-                    {order.pay_instructions}
-                  </div>
-                ) : (
-                  <div className="p-3 bg-muted/40 rounded-lg text-sm text-muted-foreground">
-                    No instructions yet. Accept the order to send payment details to the customer.
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div>
-                <p className="text-sm text-muted-foreground mb-2">Send To (Contract/Address)</p>
-                {order.send_instructions ? (
-                  <div className="p-3 bg-secondary/50 rounded-lg whitespace-pre-wrap text-sm">
-                    {order.send_instructions}
-                  </div>
-                ) : (
-                  <div className="p-3 bg-muted/40 rounded-lg text-sm text-muted-foreground">
-                    No address yet. Accept the order to send the destination address to the customer.
-                  </div>
-                )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+  {/* Removed Customer Information section per spec */}
 
         {/* Vendor Actions */}
         <Card className="bg-gradient-card border-border">
@@ -258,6 +253,38 @@ const OrderDetails = () => {
                   <span>Accept Order</span>
                 </h4>
                 
+                {order.type === 'buy' ? (
+                  <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground">Select Bank Account to send as payment instructions</p>
+                    <Select value={selectedBankId} onValueChange={setSelectedBankId}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Choose a bank account" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {banks.map(b => (
+                          <SelectItem key={b.id} value={String(b.id)}>
+                            {b.bank_name} • {b.account_number} • {b.account_name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {selectedBankId && (
+                      <div className="p-3 bg-secondary/40 rounded text-sm whitespace-pre-wrap">
+                        {(() => {
+                          const b = banks.find(x => String(x.id) === selectedBankId);
+                          if (!b) return null;
+                          return `${b.bank_name}\n${b.account_name}\n${b.account_number}${b.instructions ? `\n${b.instructions}` : ''}`;
+                        })()}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground">Destination Address (contract or wallet)</p>
+                    <Input value={contractAddress} onChange={(e) => setContractAddress(e.target.value)} placeholder="0x... or network:address" />
+                  </div>
+                )}
+
                 <div className="space-y-2">
                   <p className="text-sm text-muted-foreground">Optional: Acceptance Note (will be sent to customer)</p>
                   <Textarea value={acceptNote} onChange={(e) => setAcceptNote(e.target.value)} placeholder="Any note for the customer" />

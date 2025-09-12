@@ -236,26 +236,25 @@ const TransactionDetails = () => {
             <CardDescription>Payment proof uploaded by customer</CardDescription>
           </CardHeader>
           <CardContent>
-            {proofImages.filter(proof => proof.uploadedBy === "customer").length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {proofImages.filter(proof => proof.uploadedBy === "customer").map((proof) => (
-                  <div key={proof.id} className="p-4 border border-border rounded-lg bg-secondary/30">
-                    <div className="flex items-center space-x-3 mb-2">
-                      <ImageIcon className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm font-medium truncate">{proof.name}</span>
+            {(() => {
+              const url = (txn as any).proof || (txn as any).proof_of_payment || (txn as any).customer_proof || null;
+              if (url) {
+                return (
+                  <div className="space-y-3">
+                    <div className="p-3 border rounded-lg bg-secondary/30">
+                      <img src={url} alt="Customer proof" className="max-h-96 object-contain mx-auto" />
                     </div>
-                    <Button variant="outline" size="sm" className="w-full border-border">
-                      View Image
-                    </Button>
+                    <a href={url} target="_blank" rel="noreferrer" className="text-sm underline text-primary">Open original</a>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                <ImageIcon className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                <p>No customer proof uploaded yet</p>
-              </div>
-            )}
+                );
+              }
+              return (
+                <div className="text-center py-8 text-muted-foreground">
+                  <ImageIcon className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                  <p>No customer proof uploaded yet</p>
+                </div>
+              );
+            })()}
           </CardContent>
         </Card>
 
@@ -326,7 +325,7 @@ const TransactionDetails = () => {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Accepted</p>
-                <p className="font-medium">{/* not tracked per txn; show — */}—</p>
+                <p className="font-medium">{order?.accepted_at ? new Date(order.accepted_at).toLocaleString() : "—"}</p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Completed</p>
@@ -334,7 +333,7 @@ const TransactionDetails = () => {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Declined</p>
-                <p className="font-medium">{/* not tracked per txn; show — */}—</p>
+                <p className="font-medium">{order?.declined_at ? new Date(order.declined_at).toLocaleString() : "—"}</p>
               </div>
             </div>
           </CardContent>

@@ -11,6 +11,9 @@ from rest_framework import filters
 from .models import PushSubscription
 from django.conf import settings
 from pywebpush import webpush, WebPushException
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class NotificationViewSet(ModelViewSet):
@@ -71,6 +74,18 @@ class NotificationViewSet(ModelViewSet):
         from django.conf import settings
         return Response({"publicKey": getattr(settings, "VAPID_PUBLIC_KEY", "")})
 
+    @action(detail=False, methods=["post"], url_path="test-push")
+    def test_push(self, request):
+        """Send a test push notification to the current vendor to verify setup."""
+        title = (request.data or {}).get("title") or "Vendora Test"
+        message = (request.data or {}).get("message") or "Push notifications are working."
+        try:
+            send_web_push_to_vendor(request.user, title, message)
+            return Response({"status": "sent"}, status=status.HTTP_200_OK)
+        except Exception as e:
+            logger.exception("Failed to send test push: %s", e)
+            return Response({"detail": "Failed to send test push"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 def send_web_push_to_vendor(vendor, title: str, message: str):
     subs = PushSubscription.objects.filter(vendor=vendor)
@@ -87,6 +102,7 @@ def send_web_push_to_vendor(vendor, title: str, message: str):
         "vapid_claims": {"sub": sub},
     }
     payload = {"title": title, "message": message}
+    success, failed = 0, 0
     for sub in subs:
         try:
             webpush(
@@ -97,6 +113,14 @@ def send_web_push_to_vendor(vendor, title: str, message: str):
                 data=json.dumps(payload),
                 **vapid,
             )
-        except Exception:
-            # Ignore failures for now
-            continue
+            success += 1
+        except WebPushException as wpe:
+            failed += 1
+            logger.warning("WebPush failed for %s: %s", sub.endpoint, getattr(wpe, 'message', wpe))
+        except Exception as e:
+            failed += 1
+            logger.exception("Unexpected error sending web push: %s", e)
+    if failed and not success:
+        # Surface a hint when all sends fail (likely VAPID keys missing or invalid)
+        logger.error("All web push sends failed. Check VAPID_PUBLIC_KEY/PRIVATE_KEY and HTTPS context.")
+    return {"sent": success, "failed": failed}

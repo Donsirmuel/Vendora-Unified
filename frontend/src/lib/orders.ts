@@ -14,6 +14,9 @@ export interface Order {
   auto_expire_at: string;
   pay_instructions?: string;
   send_instructions?: string;
+  acceptance_note?: string;
+  accepted_at?: string | null;
+  declined_at?: string | null;
   rejection_reason?: string;
   created_at: string;
   updated_at: string;
@@ -28,6 +31,8 @@ export interface OrderListResponse {
 
 export interface AcceptOrderRequest {
   acceptance_note?: string;
+  pay_instructions?: string;
+  send_instructions?: string;
 }
 
 export interface DeclineOrderRequest {

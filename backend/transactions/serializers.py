@@ -6,6 +6,7 @@ class TransactionSerializer(serializers.ModelSerializer):
     order_type = serializers.SerializerMethodField()
     order_asset = serializers.SerializerMethodField()
     order_amount = serializers.SerializerMethodField()
+    order_total_value = serializers.SerializerMethodField()
     class Meta:
         model = Transaction
         fields = [
@@ -15,6 +16,7 @@ class TransactionSerializer(serializers.ModelSerializer):
             "order_type",
             "order_asset",
             "order_amount",
+            "order_total_value",
             "proof",
             "status",
             "completed_at",
@@ -50,6 +52,12 @@ class TransactionSerializer(serializers.ModelSerializer):
     def get_order_amount(self, obj: Transaction):
         try:
             return obj.order.amount
+        except Exception:
+            return None
+
+    def get_order_total_value(self, obj: Transaction):
+        try:
+            return obj.order.total_value
         except Exception:
             return None
 

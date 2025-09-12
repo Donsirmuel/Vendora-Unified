@@ -25,7 +25,7 @@ const Orders = () => {
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("pending");
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
 
@@ -121,7 +121,7 @@ const Orders = () => {
   const handleRefresh = () => {
     setPage(1);
     setSearchTerm("");
-    setStatusFilter("all");
+  setStatusFilter("pending");
     loadOrders();
   };
 
@@ -230,11 +230,11 @@ const Orders = () => {
                           </div>
                           <div>
                             <span className="text-muted-foreground">Rate:</span>
-            <p className="font-medium">${order.rate}</p>
+            <p className="font-medium">₦{Number(order.rate).toLocaleString()}</p>
                           </div>
                           <div>
                             <span className="text-muted-foreground">Total Value:</span>
-            <p className="font-medium">{order.total_value != null ? `$${order.total_value}` : '-'}</p>
+            <p className="font-medium">{order.total_value != null ? `₦${Number(order.total_value).toLocaleString()}` : '—'}</p>
                           </div>
                           <div>
                             <span className="text-muted-foreground">Created:</span>

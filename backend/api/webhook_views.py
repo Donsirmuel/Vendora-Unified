@@ -316,7 +316,7 @@ def telegram_webhook(request):
             if not result["success"]:
                 logger.error(f"Failed to send response to Telegram: {result.get('error')}")
         
-        elif "callback_query" in update_data:
+    elif "callback_query" in update_data:
             # Handle button callbacks
             callback_query = update_data["callback_query"]
             logger.info(f"Callback query: {callback_query}")
@@ -337,8 +337,20 @@ def telegram_webhook(request):
             except BotUser.DoesNotExist:
                 pass
             
-            # Special flow: continue to upload proof after vendor acceptance
-            if data.startswith("cont_upload_"):
+            # Special flow: continue to receive details then proof after vendor acceptance
+            if data.startswith("cont_recv_"):
+                try:
+                    order_id = int(data.replace("cont_recv_", ""))
+                    from .models import BotUser
+                    bu = cast(Any, BotUser)._default_manager.get(chat_id=str(chat_id))
+                    bu.state = "awaiting_receiving"
+                    bu.temp_order_id = str(order_id)
+                    bu.save(update_fields=["state", "temp_order_id"])
+                    response_text = "Please enter your receiving details (bank account or wallet address)."
+                    reply_markup = None
+                except Exception:
+                    response_text, reply_markup = ("Invalid state. Please try again.", None)
+            elif data.startswith("cont_upload_"):
                 try:
                     order_id = int(data.replace("cont_upload_", ""))
                     from .models import BotUser

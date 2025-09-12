@@ -16,6 +16,7 @@ type ApiTransaction = {
   order_type?: string;
   order_asset?: string;
   order_amount?: number;
+  order_total_value?: number | null;
   status: string;
   completed_at: string | null;
   proof?: string | null;
@@ -99,13 +100,14 @@ const Transactions = () => {
             ) : (
               <div className="overflow-x-auto">
                 <Table>
-                  <TableHeader>
+          <TableHeader>
                     <TableRow>
                       <TableHead>ID</TableHead>
                       <TableHead>Type</TableHead>
                       <TableHead>Order Code</TableHead>
                       <TableHead>Asset</TableHead>
                       <TableHead>Amount</TableHead>
+            <TableHead>Value (₦)</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Completed At</TableHead>
                       <TableHead>Proof</TableHead>
@@ -123,6 +125,9 @@ const Transactions = () => {
                         <TableCell>{t.order_code || t.order}</TableCell>
                         <TableCell>{t.order_asset || "—"}</TableCell>
                         <TableCell>{t.order_amount ?? "—"}</TableCell>
+                        <TableCell>
+                          {t.order_total_value != null ? `₦${Number(t.order_total_value).toLocaleString()}` : "—"}
+                        </TableCell>
                         <TableCell>{statusBadge(t.status)}</TableCell>
                         <TableCell className="text-muted-foreground">
                           {t.completed_at ? new Date(t.completed_at).toLocaleString() : "—"}

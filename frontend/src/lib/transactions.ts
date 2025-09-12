@@ -10,6 +10,12 @@ export interface Transaction {
   status: 'pending' | 'completed' | 'failed';
   proof_of_payment: string | null;
   completed_at: string | null;
+  vendor_completed_at?: string | null;
+  order_code?: string;
+  order_type?: string;
+  order_asset?: string;
+  order_amount?: number;
+  order_total_value?: number | null;
   created_at: string;
   updated_at: string;
 }

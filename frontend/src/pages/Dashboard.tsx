@@ -106,10 +106,11 @@ const Dashboard = () => {
       const broadcastsResponse = await listBroadcasts(1);
       const recentBroadcasts = broadcastsResponse.results.slice(0, 2);
       
-      // Calculate revenue (you'll need to implement this based on your business logic)
+      // Calculate revenue from NGN totals exposed via order_total_value
       const totalRevenue = completedTransactions.reduce((sum: number, tx: any) => {
-        // This is a placeholder - implement your actual revenue calculation
-        return sum + parseFloat(tx.amount || 0);
+        const v = (tx as any).order_total_value;
+        const n = v != null ? Number(v) : 0;
+        return sum + (isFinite(n) ? n : 0);
       }, 0);
       
       setStats({
@@ -138,12 +139,7 @@ const Dashboard = () => {
 
   // Expire overdue control removed per request
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount);
-  };
+  const formatCurrency = (amount: number) => `₦${Number(amount || 0).toLocaleString()}`;
 
   const getStatusBadge = (status: string) => {
     const statusConfig: { [key: string]: { color: string; icon: any } } = {
@@ -187,8 +183,8 @@ const Dashboard = () => {
       if (!tx.completed_at) continue;
       const dayKey = tx.completed_at.slice(0, 10);
       if (!(dayKey in byDay)) continue; // only chart last 14 days
-      const amt = parseFloat(tx.amount || "0") || 0;
-      byDay[dayKey].revenue += amt;
+  const amt = (tx as any).order_total_value != null ? Number((tx as any).order_total_value) : 0;
+  byDay[dayKey].revenue += isFinite(amt) ? amt : 0;
       byDay[dayKey].count += 1;
     }
 

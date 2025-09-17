@@ -14,7 +14,7 @@ class DynamicUserRateThrottle(SimpleRateThrottle):
 
     def get_cache_key(self, request, view) -> Optional[str]:  # type: ignore[override]
         if request.user and request.user.is_authenticated:
-            # Separate trial users so changing plan resets counters naturally
+            # Separate bucket for trial users so stricter trial rate does not share counter
             suffix = ':trial' if getattr(request.user, 'is_trial', False) else ''
             ident = f"user:{request.user.pk}{suffix}"
         else:

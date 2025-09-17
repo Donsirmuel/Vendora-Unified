@@ -51,49 +51,53 @@ def test_rate_write_throttle(auth_client, vendor_user, settings):
         assert res.status_code in (200,201), res.content
     # 3rd should throttle
     res = auth_client.post(url, {
-            @pytest.mark.django_db
-            def test_trial_vs_user_throttle_difference(settings, django_user_model):
-                """Trial users have lower per-minute read rate than upgraded users."""
-                # Distinct small limits for fast test
-                settings.THROTTLE_TRIAL_USER = '2/min'
-                settings.THROTTLE_USER = '5/min'
-                settings.REST_FRAMEWORK['DEFAULT_THROTTLE_RATES']['user'] = settings.THROTTLE_USER
-                settings.REST_FRAMEWORK['DEFAULT_THROTTLE_CLASSES'] = [
-                    'vendora.throttling.DynamicUserRateThrottle'
-                ]
-                from django.core.cache import caches
-                try:
-                    caches['default'].clear()
-                except Exception:
-                    pass
-                # Create trial user
-                trial_user = django_user_model.objects.create_user(email='trialdiff@example.com', password='pass1234', name='Trial Diff')
-                assert trial_user.is_trial is True
-                from rest_framework_simplejwt.tokens import RefreshToken
-                client = APIClient()
-                token = RefreshToken.for_user(trial_user)
-                client.credentials(HTTP_AUTHORIZATION=f'Bearer {str(token.access_token)}')
-                url = reverse('rates:rate-list')
-                # Allow 2 requests
-                for _ in range(2):
-                    assert client.get(url).status_code == 200
-                # 3rd throttled
-                assert client.get(url).status_code == 429
-                # Upgrade
-                trial_user.is_trial = False
-                trial_user.plan = 'perpetual'
-                trial_user.save(update_fields=['is_trial','plan'])
-                try:
-                    caches['default'].clear()
-                except Exception:
-                    pass
-                upgraded_client = APIClient()
-                upgraded_token = RefreshToken.for_user(trial_user)
-                upgraded_client.credentials(HTTP_AUTHORIZATION=f'Bearer {str(upgraded_token.access_token)}')
-                # Allow 5 requests, 6th throttled
-                for _ in range(5):
-                    assert upgraded_client.get(url).status_code == 200
-                assert upgraded_client.get(url).status_code == 429
+        'vendor': vendor_user.id,
+        'asset': 'AST3',
+        'buy_rate': '100.00',
+        'sell_rate': '90.00'
+    }, format='json')
+    assert res.status_code == 429
+
+@pytest.mark.django_db
+def test_trial_vs_user_throttle_difference(settings, django_user_model):
+    """Lower trial throttle should apply when user is_trial=True versus upgraded plan."""
+    # Set distinct rates
+    settings.THROTTLE_TRIAL_USER = '4/min'
+    settings.THROTTLE_USER = '8/min'
+    # Inject base user rate (will be superseded for trial via dynamic throttle)
+    settings.REST_FRAMEWORK['DEFAULT_THROTTLE_RATES']['user'] = settings.THROTTLE_USER
+    # Isolate to user throttle only
+    settings.REST_FRAMEWORK['DEFAULT_THROTTLE_CLASSES'] = [
+        'vendora.throttling.DynamicUserRateThrottle'
+    ]
+    from django.core.cache import caches
+    try:
+        caches['default'].clear()
+    except Exception:
+        pass
+    # Fresh trial user (avoid prior throttle counters)
+    trial_user = django_user_model.objects.create_user(email='trialuser@example.com', password='pass1234', name='Trial User')
+    client = APIClient()
+    from rest_framework_simplejwt.tokens import RefreshToken
+    token = RefreshToken.for_user(trial_user)
+    client.credentials(HTTP_AUTHORIZATION=f'Bearer {str(token.access_token)}')
+
+    url = reverse('rates:rate-list')
+    # For trial user with limit 4/min (THROTTLE_TRIAL_USER)
+    for i in range(4):
+        res = client.get(url, format='json')
+        # debug: show iteration and status
+        print('trial loop', i+1, res.status_code)
+        assert res.status_code == 200
+    res = client.get(url)
+    print('trial attempt 5 status', res.status_code)
+    assert res.status_code == 429  # 5th exceeds trial limit
+
+    # Upgrade user (simulate plan change)
+    trial_user.is_trial = False
+    trial_user.plan = 'perpetual'
+    trial_user.save(update_fields=['is_trial','plan'])
+    from django.core.cache import caches
     try:
         caches['default'].clear()
     except Exception:

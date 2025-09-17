@@ -106,7 +106,7 @@ class NotificationLog(models.Model):
         ordering = ["-created_at"]
 
     def __str__(self):  # pragma: no cover
-        return f"{self.vendor_id}:{self.kind}"
+        return f"{self.vendor.id}:{self.kind}"
 
 
 class BankDetail(models.Model):

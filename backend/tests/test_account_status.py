@@ -17,7 +17,7 @@ def test_expired_trial_gated(django_user_model):
     url = reverse('rates:rate-list')
     res = client.get(url)
     assert res.status_code == 403
-    assert res.data.get('trial_expired') is True
+    assert res.json().get('trial_expired') is True
 
 @pytest.mark.django_db
 def test_active_trial_allows_access(django_user_model):

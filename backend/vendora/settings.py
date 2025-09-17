@@ -93,7 +93,7 @@ MIDDLEWARE = [
     'vendora.settings.SecurityHeadersMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    # Must run after authentication so request.user is populated
+    # Account status gating AFTER auth so request.user is populated
     'vendora.settings.AccountStatusMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -304,11 +304,32 @@ class SecurityHeadersMiddleware(MiddlewareMixin):  # type: ignore
 # Account status enforcement middleware
 class AccountStatusMiddleware(MiddlewareMixin):  # type: ignore
     ALLOW_PATH_SUFFIXES = {"/api/v1/accounts/token/", "/api/v1/accounts/signup/", "/api/v1/accounts/password-reset/", "/api/v1/accounts/password-reset/confirm/"}
+
+    def _maybe_authenticate_jwt(self, request):
+        """If AuthenticationMiddleware hasn't populated an authenticated user yet but an
+        Authorization header with Bearer token exists, attempt JWT auth manually.
+        This helps in tests or edge ordering cases. Swallow errors silently.
+        """
+        try:
+            user = getattr(request, 'user', None)
+            if user and getattr(user, 'is_authenticated', False):
+                return
+            auth = request.META.get('HTTP_AUTHORIZATION', '')
+            if not auth.lower().startswith('bearer '):
+                return
+            from rest_framework_simplejwt.authentication import JWTAuthentication
+            jwt_auth = JWTAuthentication()
+            validated = jwt_auth.authenticate(request)
+            if validated:
+                request.user = validated[0]  # type: ignore[attr-defined]
+        except Exception:
+            pass
+
     def process_view(self, request, view_func, view_args, view_kwargs):  # type: ignore[override]
+        self._maybe_authenticate_jwt(request)
         user = getattr(request, 'user', None)
         if not user or not getattr(user, 'is_authenticated', False):
             return None
-        # Allow safe methods for expired plan? Still block writes.
         from django.utils import timezone
         now = timezone.now()
         trial_expired = bool(getattr(user, 'is_trial', False) and getattr(user, 'trial_expires_at', None) and user.trial_expires_at < now)
@@ -316,8 +337,7 @@ class AccountStatusMiddleware(MiddlewareMixin):  # type: ignore
         suspended = not bool(getattr(user, 'is_service_active', True))
         if not (trial_expired or plan_expired or suspended):
             return None
-        # Whitelist some endpoints
-        path = request.path
+        path = request.path or ''
         if any(path.endswith(suf) for suf in self.ALLOW_PATH_SUFFIXES):
             return None
         from rest_framework.response import Response

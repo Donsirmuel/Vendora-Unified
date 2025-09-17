@@ -1,5 +1,6 @@
 // Bump this version when deploying to force old caches to be purged
-const CACHE_NAME = 'vendora-cache-v4';
+const CACHE_NAME = 'vendora-cache-v8';
+const API_CACHE = 'vendora-api-v1';
 const APP_SHELL = [
   '/',
   '/index.html',
@@ -71,6 +72,24 @@ self.addEventListener('fetch', (event) => {
   }
 
 
+  // API GETs: network-first with cache fallback for resilience
+  const url = new URL(req.url);
+  if (url.pathname.startsWith('/api/') && req.method === 'GET') {
+    event.respondWith((async () => {
+      try {
+        const fresh = await fetch(req);
+        const cache = await caches.open(API_CACHE);
+        cache.put(req, fresh.clone());
+        return fresh;
+      } catch (e) {
+        const cache = await caches.open(API_CACHE);
+        const cached = await cache.match(req);
+        return cached || (await caches.match('/offline.html'));
+      }
+    })());
+    return;
+  }
+
   // Fallback: network-first
   event.respondWith(
     fetch(req).catch(() => caches.match(req).then((res) => res || caches.match('/offline.html')))
@@ -82,6 +101,11 @@ self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
   }
+  if (event.data && event.data.type === 'BADGE' && 'setAppBadge' in navigator) {
+    const n = Number(event.data.value || 0);
+    if (n > 0) navigator.setAppBadge(n).catch(() => {});
+    else navigator.clearAppBadge && navigator.clearAppBadge().catch(() => {});
+  }
 });
 
 self.addEventListener('push', function(event) {
@@ -91,18 +115,58 @@ self.addEventListener('push', function(event) {
   const body = data.message || 'You have a new notification';
   const options = {
     body,
-    icon: '/favicon.ico',
-    badge: '/favicon.ico'
+    icon: data.icon || '/favicon.ico',
+    badge: '/favicon.ico',
+    data: { url: data.url || '/dashboard' }
   };
   event.waitUntil(self.registration.showNotification(title, options));
+  // Attempt to set a badge on supported platforms
+  try {
+    if ('setAppBadge' in navigator) navigator.setAppBadge(1);
+  } catch {}
 });
 
 self.addEventListener('notificationclick', function(event) {
+  const targetUrl = (event.notification && event.notification.data && event.notification.data.url) || '/dashboard';
   event.notification.close();
-  event.waitUntil(clients.matchAll({ type: 'window' }).then(clientList => {
+  event.waitUntil(clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
     for (const client of clientList) {
-      if ('focus' in client) return client.focus();
+      try {
+        const url = new URL(client.url);
+        if (url.pathname === targetUrl && 'focus' in client) return client.focus();
+      } catch (e) {}
     }
-    if (clients.openWindow) return clients.openWindow('/dashboard');
+    if (clients.openWindow) return clients.openWindow(targetUrl);
   }));
+});
+
+// Background Sync (one-off) handler — expects queued requests in IndexedDB (not implemented here)
+self.addEventListener('sync', (event) => {
+  if (event.tag === 'vendora-sync') {
+    event.waitUntil((async () => {
+      // Placeholder: process queued POSTs if implemented
+      return true;
+    })());
+  }
+});
+
+// Periodic Background Sync — refreshes key cached API GETs
+self.addEventListener('periodicsync', (event) => {
+  if (event.tag === 'vendora-periodic') {
+    event.waitUntil((async () => {
+      try {
+        const cache = await caches.open(API_CACHE);
+        const endpoints = ['/api/v1/orders/?status=pending', '/api/v1/transactions/?status=uncompleted'];
+        for (const ep of endpoints) {
+          const res = await fetch(ep, { cache: 'no-store' });
+          cache.put(ep, res.clone());
+        }
+      } catch {}
+    })());
+  }
+});
+
+// Background Fetch API — demo hook (no-op by default)
+self.addEventListener('backgroundfetchsuccess', (event) => {
+  // Could consume fetched records and cache; keeping minimal for now
 });

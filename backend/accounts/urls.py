@@ -32,6 +32,7 @@ urlpatterns = [
     path('vendors/', VendorViewSet.as_view({'get': 'list', 'post': 'create'}), name='vendor_list'),
     path('vendors/me/', VendorViewSet.as_view({'get': 'me', 'patch': 'me'}), name='vendor_me'),
     path('vendors/<int:pk>/', VendorViewSet.as_view({'get': 'retrieve', 'put': 'update', 'patch': 'partial_update', 'delete': 'destroy'}), name='vendor_detail'),
+    path('vendors/onboarding/', VendorViewSet.as_view({'get': 'onboarding'}), name='vendor_onboarding'),
     # Convenience explicit route for broadcast send-to-bot (kebab-case)
     path('broadcast-messages/<int:pk>/send-to-bot/', BroadcastMessageViewSet.as_view({'post': 'send_to_bot'}), name='broadcast-send-to-bot'),
 

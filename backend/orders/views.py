@@ -68,12 +68,14 @@ class OrderViewSet(ModelViewSet):
         order = serializer.save(vendor=vendor)
         try:
             from notifications.views import send_web_push_to_vendor
-            send_web_push_to_vendor(self.request.user, "New pending order", f"Order {order.order_code or order.pk} created")
+            send_web_push_to_vendor(self.request.user, "New pending order", f"Order {order.order_code or order.pk} created", url="/orders")
         except Exception:
             pass
 
     @action(detail=True, methods=["post"], url_path="accept")
     def accept(self, request, pk=None):
+        # Throttle scope for DRF ScopedRateThrottle subclass (order_write)
+        self.throttle_scope = 'order_write'
         from .models import Order
 
         order = self.get_object()
@@ -151,7 +153,7 @@ class OrderViewSet(ModelViewSet):
             # Notify vendor for uncompleted transaction to review
             try:
                 from notifications.views import send_web_push_to_vendor
-                send_web_push_to_vendor(request.user, "Uncompleted transaction", f"Order {order.order_code or order.pk} has an uncompleted transaction")
+                send_web_push_to_vendor(request.user, "Uncompleted transaction", f"Order {order.order_code or order.pk} has an uncompleted transaction", url="/transactions")
             except Exception:
                 pass
         except Exception:
@@ -171,12 +173,12 @@ class OrderViewSet(ModelViewSet):
                 note = f"\n\nNote: {acceptance_note}" if acceptance_note else ""
                 msg = (
                     f"✅ Your order with Order ID: {code_or_id} has been accepted.\n\n"
-                    f"{details}{note}\n\nNext steps:\n1) Make the transfer/send asset\n2) Upload payment/on-chain proof\n3) Enter your receiving details\n4) Add optional notes\n\nTap the button below to continue."
+                    f"{details}{note}\n\nNext steps:\n1) Make the transfer/send asset\n2) Upload payment/on-chain proof\n3) Enter your receiving details\n4) Add optional notes\n\nTap the button below to upload your proof."
                 )
-                # Ask for receiving details first per requested flow
+                # Ask for proof first per requested flow
                 reply_markup = {
                     "inline_keyboard": [[
-                        {"text": "Enter Receiving Details", "callback_data": f"cont_recv_{order.id}"}
+                        {"text": "Upload Payment/On-chain Proof", "callback_data": f"cont_upload_{order.id}"}
                     ]]
                 }
                 tgs.send_message(msg, chat_id=str(order.customer_chat_id), reply_markup=reply_markup)
@@ -189,6 +191,7 @@ class OrderViewSet(ModelViewSet):
 
     @action(detail=True, methods=["post"], url_path="decline")
     def decline(self, request, pk=None):
+        self.throttle_scope = 'order_write'
         from .models import Order
 
         order = self.get_object()
@@ -237,6 +240,7 @@ class OrderViewSet(ModelViewSet):
 
     @action(detail=False, methods=["post"], url_path="expire-overdue")
     def expire_overdue(self, request):
+        self.throttle_scope = 'order_write'
         from django.utils import timezone
         from .models import Order
 
@@ -265,58 +269,4 @@ class OrderViewSet(ModelViewSet):
             updated += 1
         return Response({"expired": updated}, status=status.HTTP_200_OK)
 
-    @action(detail=True, methods=["get"], url_path="pdf")
-    def download_pdf(self, request, pk=None):
-        """Generate a simple PDF summary for the order."""
-        order = self.get_object()
-        if order.vendor != request.user and not request.user.is_staff:
-            return Response({"detail": "Forbidden"}, status=status.HTTP_403_FORBIDDEN)
-
-        try:
-            # Attempt to use reportlab if available
-            from reportlab.lib.pagesizes import letter
-            from reportlab.pdfgen import canvas
-            from io import BytesIO
-
-            buffer = BytesIO()
-            p = canvas.Canvas(buffer, pagesize=letter)
-            width, height = letter
-
-            y = height - 50
-            p.setFont("Helvetica-Bold", 14)
-            p.drawString(50, y, "Vendora Order Summary")
-            y -= 25
-            p.setFont("Helvetica", 10)
-
-            lines = [
-                f"Order: {order.order_code or order.id}",
-                f"Asset: {order.asset}",
-                f"Type: {order.type}",
-                f"Amount: {order.amount}",
-                f"Rate: {order.rate}",
-                f"Total Value: {order.total_value}",
-                f"Status: {order.status}",
-                f"Customer: {order.customer_name or ''}",
-                f"Customer Chat ID: {order.customer_chat_id or ''}",
-                f"Pay Instructions: {(order.pay_instructions or '').splitlines()[0] if order.pay_instructions else ''}",
-                f"Send Instructions: {(order.send_instructions or '').splitlines()[0] if order.send_instructions else ''}",
-            ]
-
-            for line in lines:
-                p.drawString(50, y, str(line))
-                y -= 15
-                if y < 50:
-                    p.showPage()
-                    y = height - 50
-
-            p.showPage()
-            p.save()
-            pdf = buffer.getvalue()
-            buffer.close()
-
-            response = HttpResponse(pdf, content_type="application/pdf")
-            filename = f"order_{order.id}.pdf"
-            response["Content-Disposition"] = f"attachment; filename=\"{filename}\""
-            return response
-        except Exception as e:
-            return Response({"detail": f"PDF generation failed: {e}. Install 'reportlab' to enable PDFs."}, status=status.HTTP_501_NOT_IMPLEMENTED)
+    # Order PDF endpoint removed per request

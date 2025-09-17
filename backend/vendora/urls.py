@@ -19,8 +19,12 @@ from django.urls import path, include, re_path
 from django.conf import settings
 from django.conf.urls.static import static
 from django.views.generic import TemplateView
+from django.contrib.sitemaps.views import sitemap
+from .sitemaps import StaticViewSitemap
 from django.http import JsonResponse
+from api.health import health_view
 from django.views.static import serve as static_serve
+from api.sse import sse_stream
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -32,12 +36,24 @@ urlpatterns = [
     path("api/v1/queries/", include(("queries.urls", "queries"), namespace="queries")),
     path("api/v1/rates/", include(("rates.urls", "rates"), namespace="rates")),
     path("api/v1/notifications/", include(("notifications.urls", "notifications"), namespace="notifications")),
+    # SSE stream for real-time vendor updates
+    path("api/v1/stream/", sse_stream, name="sse_stream"),
     
     # Telegram Bot Webhooks
     path("api/v1/telegram/", include("api.urls")),
 
-    # Health endpoint (for uptime checks and container healthchecks)
-    path("healthz/", lambda request: JsonResponse({"status": "ok"})),
+    # Health endpoints
+    path("health/", health_view, name="health"),
+    path("healthz/", lambda request: JsonResponse({"status": "ok"})),  # legacy simple
+
+    # Marketing / legal static templates (can be overridden by frontend build if desired)
+    path("", TemplateView.as_view(template_name="index.html"), name="landing-home"),
+    path("terms/", TemplateView.as_view(template_name="legal/terms.html"), name="terms"),
+    path("privacy/", TemplateView.as_view(template_name="legal/privacy.html"), name="privacy"),
+
+    # SEO
+    path("sitemap.xml", sitemap, {"sitemaps": {"static": StaticViewSitemap}}, name="sitemap"),
+    path("robots.txt", TemplateView.as_view(template_name="robots.txt", content_type="text/plain"), name="robots"),
 ]
 
 if settings.DEBUG:
@@ -50,9 +66,6 @@ urlpatterns += [
     re_path(r'^icons/(?P<path>.*)$', lambda r, path: static_serve(r, document_root=str(settings.FRONTEND_DIST / 'icons'), path=path)),
     # Vite build assets (JS/CSS)
     re_path(r'^assets/(?P<path>.*)$', lambda r, path: static_serve(r, document_root=str(settings.FRONTEND_DIST / 'assets'), path=path)),
-]
-
-# SPA fallback: serve index.html for any other route not starting with /api or /admin or media
-urlpatterns += [
-    re_path(r'^(?!admin/|api/|media/).*$',(TemplateView.as_view(template_name='index.html'))),
+    # SPA fallback: serve index.html for any other non-handled route (excluding api/admin/media)
+    re_path(r'^(?!admin/|api/|media/).*$', TemplateView.as_view(template_name='index.html')),
 ]

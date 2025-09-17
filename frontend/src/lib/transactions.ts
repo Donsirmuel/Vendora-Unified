@@ -7,8 +7,11 @@ export interface Transaction {
   customer_chat_id: string;
   transaction_hash: string;
   amount: string;
-  status: 'pending' | 'completed' | 'failed';
-  proof_of_payment: string | null;
+  // Align with backend: uncompleted/completed/declined/expired
+  status: 'uncompleted' | 'completed' | 'declined' | 'expired';
+  proof_of_payment: string | null; // legacy alias (may be null)
+  proof?: string | null; // customer proof field from serializer
+  vendor_proof?: string | null; // vendor proof of completion
   completed_at: string | null;
   vendor_completed_at?: string | null;
   order_code?: string;
@@ -28,7 +31,8 @@ export interface TransactionListResponse {
 }
 
 export interface CompleteTransactionRequest {
-  proof_of_payment: File;
+  proof_of_payment?: File;
+  vendor_proof?: File;
 }
 
 export async function listTransactions(page = 1, status?: Transaction['status']): Promise<TransactionListResponse> {
@@ -60,7 +64,9 @@ export async function getTransaction(id: number): Promise<Transaction> {
 export async function completeTransaction(id: number, data: CompleteTransactionRequest): Promise<Transaction> {
   try {
     const formData = new FormData();
-    formData.append('proof_of_payment', data.proof_of_payment);
+  if (data.proof_of_payment) formData.append('proof_of_payment', data.proof_of_payment);
+  if (data.vendor_proof) formData.append('vendor_proof', data.vendor_proof);
+  formData.append('status', 'completed');
     
     const response = await http.post<Transaction>(`/api/v1/transactions/${id}/complete/`, formData, {
       headers: {

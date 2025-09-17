@@ -18,6 +18,8 @@ import {
 } from "lucide-react";
 import { listOrders, acceptOrder, declineOrder, Order } from "@/lib/orders";
 import { useToast } from "@/hooks/use-toast";
+import { getErrorMessage } from "@/lib/errors";
+import { connectSSE } from "@/lib/sse";
 
 const Orders = () => {
   const { toast } = useToast();
@@ -32,6 +34,16 @@ const Orders = () => {
 
   useEffect(() => {
     loadOrders();
+    const sub = connectSSE('/api/v1/stream/', {
+      onMessage: (ev) => {
+        if (ev.type === 'snapshot') {
+          // Re-fetch first page to show newest pending
+          setPage(1);
+          loadOrders();
+        }
+      },
+    });
+    return () => sub.close();
   }, [page]);
 
   useEffect(() => {
@@ -50,10 +62,10 @@ const Orders = () => {
       }
       
       setHasMore(!!response.next);
-    } catch (error: any) {
+  } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message || "Failed to load orders",
+    description: getErrorMessage(error, "Failed to load orders"),
         className: "bg-destructive text-destructive-foreground"
       });
     } finally {
@@ -133,7 +145,7 @@ const Orders = () => {
       setOrders(prev => prev.filter(o => o.id !== order.id));
       toast({ title: "Accepted", description: "Order accepted and customer notified." });
     } catch (e: any) {
-      toast({ title: "Accept failed", description: e.message || "Could not accept order", variant: "destructive" });
+      toast({ title: "Accept failed", description: getErrorMessage(e, "Could not accept order"), variant: "destructive" });
     } finally {
       setIsActingId(null);
     }
@@ -147,7 +159,7 @@ const Orders = () => {
       setOrders(prev => prev.map(o => (o.id === order.id ? updated : o)));
       toast({ title: "Declined", description: "Customer notified of decline." });
     } catch (e: any) {
-      toast({ title: "Decline failed", description: e.message || "Could not decline order", variant: "destructive" });
+      toast({ title: "Decline failed", description: getErrorMessage(e, "Could not decline order"), variant: "destructive" });
     } finally {
       setIsActingId(null);
     }

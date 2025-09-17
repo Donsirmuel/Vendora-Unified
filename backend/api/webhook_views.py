@@ -26,7 +26,12 @@ def telegram_webhook(request):
 
         # Parse the incoming update
         update_data = json.loads(request.body or b"{}")
-        logger.info(f"Received Telegram webhook: {update_data}")
+        # Avoid logging full payloads for performance and noise
+        try:
+            _k = 'message' if 'message' in update_data else ('callback_query' if 'callback_query' in update_data else 'update')
+            logger.debug("TG webhook %s", _k)
+        except Exception:
+            pass
 
         response_text = None
         reply_markup = None
@@ -38,7 +43,7 @@ def telegram_webhook(request):
             chat_id = message.get("chat", {}).get("id")
             text = (message.get("text", "") or "").strip()
 
-            logger.info(f"Message from chat {chat_id}: {text}")
+            logger.debug("TG msg chat=%s txt_prefix=%s", chat_id, (text or '')[:24])
 
             # Handle different types of messages
             if text.startswith("/start"):
@@ -105,10 +110,25 @@ def telegram_webhook(request):
                     logger.error(f"Failed to update or create BotUser: {e}")
 
                 # Call the proper start command handler
-                response_text, reply_markup = bot_handlers.handle_start_command()
+                # Prefer vendor_id from BotUser link
+                try:
+                    from .models import BotUser as _BotUser
+                    bu = _BotUser._default_manager.filter(chat_id=str(chat_id)).first()
+                    if bu and not vendor_id and getattr(bu, "vendor", None):
+                        vendor_id = getattr(bu.vendor, "id", None)
+                except Exception:
+                    pass
+                response_text, reply_markup = bot_handlers.handle_start_command(vendor_id)
 
             elif text.startswith("/help"):
-                response_text, reply_markup = bot_handlers.handle_help_command()
+                # Use vendor context if any
+                try:
+                    from .models import BotUser as _BotUser
+                    bu = _BotUser._default_manager.filter(chat_id=str(chat_id)).first()
+                    vid = getattr(getattr(bu, "vendor", None), "id", None) if bu else None
+                except Exception:
+                    vid = None
+                response_text, reply_markup = bot_handlers.handle_help_command(vid)
 
             elif text.startswith("/status"):
                 response_text = "Bot is running and connected to Vendora PWA!"
@@ -184,16 +204,16 @@ def telegram_webhook(request):
                                             if updates:
                                                 txn.save(update_fields=updates)
 
-                                    # Reset immediate state and keep current order reference
-                                    bu.state = ""
+                                    # Next: prompt for receiving details
+                                    bu.state = "awaiting_receiving"
                                     bu.temp_order_id = str(order.id)
                                     bu.save(update_fields=["state", "temp_order_id"])
 
                                     if order.status in {Order.ACCEPTED, Order.COMPLETED}:
                                         code_or_id = order.order_code or str(order.id)
                                         response_text = (
-                                            f"✅ Your transaction with Order ID: {code_or_id} has been received. "
-                                            f"Please await completion by the vendor."
+                                            f"✅ Proof received for Order ID: {code_or_id}.\n"
+                                            f"Now, please enter your receiving details (bank account or wallet address)."
                                         )
                                         reply_markup = None
                     except Exception as e:
@@ -261,6 +281,94 @@ def telegram_webhook(request):
                             bu.temp_order_id = ""
                             bu.save(update_fields=["state", "temp_order_id"])
                             response_text = "✅ Thanks! Your transaction details have been sent to the vendor. You'll be notified when it's processed."
+                            reply_markup = None
+                        elif bu.state == "awaiting_order_status":
+                            # Parse code or numeric ID, find order in this vendor scope, and respond
+                            from orders.models import Order
+                            code = text.strip()
+                            order = None
+                            if code.upper().startswith("ORD-"):
+                                order = Order.objects.select_related('vendor').filter(order_code__iexact=code).first()
+                            else:
+                                try:
+                                    oid = int(code)
+                                    order = Order.objects.select_related('vendor').filter(id=oid).first()
+                                except Exception:
+                                    order = None
+                            # Enforce vendor scoping if this chat is linked to a vendor
+                            v = getattr(bu, "vendor", None)
+                            if order and v and getattr(order, "vendor_id", None) != getattr(v, "id", None):
+                                order = None
+                            if not order:
+                                response_text = "Order not found. Please check the ID/Code and try again."
+                                reply_markup = None
+                            else:
+                                # Format status like TransactionDetails: type/asset/amount/NGN total and key timestamps
+                                from decimal import Decimal
+                                amt = order.amount
+                                total = order.total_value or (Decimal(order.amount) * Decimal(order.rate))
+                                status = order.status.capitalize()
+                                oid = getattr(order, "pk", None)
+                                parts = [
+                                    f"Order: {order.order_code or oid}",
+                                    f"Type: {order.type.upper()} {order.asset}",
+                                    f"Amount: {amt:,.2f} {order.asset}",
+                                    f"Total: ₦{total:,.2f}",
+                                    f"Status: {status}",
+                                ]
+                                if order.accepted_at:
+                                    parts.append(f"Accepted: {order.accepted_at:%Y-%m-%d %H:%M}")
+                                if order.declined_at:
+                                    parts.append(f"Declined: {order.declined_at:%Y-%m-%d %H:%M}")
+                                # Check transaction completion
+                                from transactions.models import Transaction
+                                txn = Transaction._default_manager.select_related('order').filter(order=order).first()
+                                if txn and (txn.vendor_completed_at or txn.completed_at):
+                                    when = txn.vendor_completed_at or txn.completed_at
+                                    parts.append(f"Completed: {when:%Y-%m-%d %H:%M}")
+                                response_text = "\n".join(parts)
+                                reply_markup = None
+                            # Reset state after responding
+                            bu.state = ""
+                            bu.save(update_fields=["state"])
+                        elif bu.state == "awaiting_general_question":
+                            # Create a Query object with vendor link and message; then ask for contact
+                            from queries.models import Query
+                            v = bu.vendor
+                            q = Query.objects.create(vendor=v, message=text.strip(), status="pending")
+                            bu.state = "awaiting_contact"
+                            bu.temp_query_id = str(getattr(q, "pk", None) or "")
+                            bu.save(update_fields=["state", "temp_query_id"])
+                            response_text = "Thanks! Please share your contact (phone/email/Telegram handle) so the vendor can reach you."
+                            reply_markup = None
+                        elif bu.state == "awaiting_contact" and bu.temp_query_id:
+                            # Update the Query.contact and notify vendor
+                            from queries.models import Query
+                            try:
+                                qid = int(bu.temp_query_id)
+                                q = Query.objects.filter(id=qid).first()
+                            except Exception:
+                                q = None
+                            if q:
+                                q.contact = text.strip()
+                                # Persist chat id if available for future vendor-triggered updates
+                                try:
+                                    q.customer_chat_id = str(chat_id)
+                                except Exception:
+                                    pass
+                                q.save(update_fields=["contact"])
+                                # Push notify vendor
+                                try:
+                                    from notifications.views import send_web_push_to_vendor
+                                    vendor = q.vendor or (getattr(q.order, "vendor", None))
+                                    if vendor:
+                                        send_web_push_to_vendor(vendor, "New customer query", "New general question received")
+                                except Exception:
+                                    pass
+                            bu.state = ""
+                            bu.temp_query_id = ""
+                            bu.save(update_fields=["state", "temp_query_id"])
+                            response_text = "✅ Got it! The vendor has received your question and contact. They'll reach out to you soon."
                             reply_markup = None
                         else:
                             response_text = "I received your message. Use /help to see commands."
@@ -337,8 +445,33 @@ def telegram_webhook(request):
                     bu.state = "awaiting_receiving"
                     bu.temp_order_id = str(order_id)
                     bu.save(update_fields=["state", "temp_order_id"])
-                    response_text = "Please enter your receiving details (bank account or wallet address)."
-                    reply_markup = None
+                    # Personalize with vendor trust signal if available
+                    try:
+                        from orders.models import Order as _Order
+                        order = _Order.objects.get(id=order_id)
+                        from accounts.models import Vendor as _Vendor
+                        v = getattr(order, "vendor", None)
+                        vname = getattr(v, "name", "the vendor")
+                        # Count completed transactions
+                        from transactions.models import Transaction as _Txn
+                        success_count = _Txn.objects.filter(order__vendor=v, status="completed").count() if v else 0
+                        response_text = (
+                            f"Great! {vname} has accepted your order. {vname} has completed {success_count} successful trades here.\n"
+                            "Please enter your receiving details (bank account or wallet address)."
+                        )
+                        # Add Contact Vendor + navigation buttons
+                        tuser = (getattr(v, "telegram_username", "") or "").lstrip("@") if v else ""
+                        buttons = []
+                        if tuser:
+                            buttons.append([{"text": "📨 Contact Vendor", "url": f"https://t.me/{tuser}"}])
+                        buttons.append([
+                            {"text": "🔙 Back", "callback_data": "help"},
+                            {"text": "🏠 Main Menu", "callback_data": "back_to_menu"}
+                        ])
+                        reply_markup = {"inline_keyboard": buttons}
+                    except Exception:
+                        response_text = "Please enter your receiving details (bank account or wallet address)."
+                        reply_markup = None
                 except Exception:
                     response_text, reply_markup = ("Invalid state. Please try again.", None)
             elif data.startswith("cont_upload_"):
@@ -349,10 +482,37 @@ def telegram_webhook(request):
                     bu.state = "awaiting_proof"
                     bu.temp_order_id = str(order_id)
                     bu.save(update_fields=["state", "temp_order_id"])
-                    response_text = "Please upload your payment/on-chain proof now (image or document)."
-                    reply_markup = None
+                    # Personalize with vendor trust signal if available
+                    try:
+                        from orders.models import Order as _Order
+                        order = _Order.objects.get(id=order_id)
+                        v = getattr(order, "vendor", None)
+                        vname = getattr(v, "name", "the vendor")
+                        from transactions.models import Transaction as _Txn
+                        success_count = _Txn.objects.filter(order__vendor=v, status="completed").count() if v else 0
+                        response_text = (
+                            f"{vname} has accepted your order. {vname} has completed {success_count} successful trades here.\n"
+                            "Please upload your payment/on-chain proof now (image or document)."
+                        )
+                        tuser = (getattr(v, "telegram_username", "") or "").lstrip("@") if v else ""
+                        buttons = []
+                        if tuser:
+                            buttons.append([{"text": "📨 Contact Vendor", "url": f"https://t.me/{tuser}"}])
+                        buttons.append([
+                            {"text": "🔙 Back", "callback_data": "help"},
+                            {"text": "🏠 Main Menu", "callback_data": "back_to_menu"}
+                        ])
+                        reply_markup = {"inline_keyboard": buttons}
+                    except Exception:
+                        response_text = "Please upload your payment/on-chain proof now (image or document)."
+                        reply_markup = None
                 except Exception:
                     response_text, reply_markup = ("Invalid state. Please try again.", None)
+            elif data.startswith("contact_vendor@"):
+                # Backward-compat: keep a textual response if an old client sends this callback
+                handle = data.replace("contact_vendor@", "").lstrip("@")
+                response_text = f"You can DM the vendor here: https://t.me/{handle}"
+                reply_markup = None
             else:
                 response_text, reply_markup = bot_handlers.handle_callback_query(data, vendor_id, str(chat_id))
 

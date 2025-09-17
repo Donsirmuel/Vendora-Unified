@@ -7,9 +7,10 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Check, X, Download, RefreshCw } from "lucide-react";
+import { ArrowLeft, Check, X, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { getOrder, acceptOrder, declineOrder, Order } from "@/lib/orders";
+import { getErrorMessage } from "@/lib/errors";
 import { listBankDetails, type BankDetail } from "@/lib/bankDetails";
 import { listRates, type Rate } from "@/lib/rates";
 import { tokenStore } from "@/lib/http";
@@ -46,7 +47,7 @@ const OrderDetails = () => {
           }
         } catch {}
       } catch (e: any) {
-        toast({ title: "Load Error", description: e.message || "Failed to load order", variant: "destructive" });
+        toast({ title: "Load Error", description: getErrorMessage(e, "Failed to load order"), variant: "destructive" });
       } finally {
         setLoading(false);
       }
@@ -73,7 +74,7 @@ const OrderDetails = () => {
       setOrder(updated);
       toast({ title: "Accepted", description: "Customer has been notified with payment details." });
     } catch (e: any) {
-      toast({ title: "Accept Error", description: e.message || "Failed to accept order", variant: "destructive" });
+      toast({ title: "Accept Error", description: getErrorMessage(e, "Failed to accept order"), variant: "destructive" });
     } finally {
       setIsProcessing(false);
     }
@@ -93,7 +94,7 @@ const OrderDetails = () => {
       toast({ title: "Declined", description: "Customer has been notified." });
       navigate("/orders");
     } catch (e: any) {
-      toast({ title: "Decline Error", description: e.message || "Failed to decline order", variant: "destructive" });
+      toast({ title: "Decline Error", description: getErrorMessage(e, "Failed to decline order"), variant: "destructive" });
     } finally {
       setIsProcessing(false);
     }
@@ -132,31 +133,7 @@ const OrderDetails = () => {
     return <Badge className={cls}>{status}</Badge>;
   };
 
-  const handleDownloadPDF = async () => {
-    try {
-      if (!id) return;
-      const base = (import.meta as any).env?.VITE_API_BASE || 'http://127.0.0.1:8000';
-      const token = tokenStore.getAccessToken() || '';
-      const resp = await fetch(`${base}/api/v1/orders/${id}/pdf/`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!resp.ok) {
-        const text = await resp.text();
-        throw new Error(text || 'Failed to generate PDF');
-      }
-      const blob = await resp.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `order_${id}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      window.URL.revokeObjectURL(url);
-    } catch (e: any) {
-      toast({ title: 'PDF Error', description: e.message || 'Failed to download PDF', variant: 'destructive' });
-    }
-  };
+  // Order PDF download disabled per request
 
   if (loading || !order) {
     return (
@@ -189,10 +166,7 @@ const OrderDetails = () => {
               <RefreshCw className="h-4 w-4 mr-2" />
               Refresh
             </Button>
-            <Button variant="outline" onClick={handleDownloadPDF} className="border-border">
-              <Download className="h-4 w-4 mr-2" />
-              PDF
-            </Button>
+            {/* PDF download removed per request */}
           </div>
         </div>
 

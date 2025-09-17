@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { ArrowLeft, Check, Upload, Download, Clock, CheckCircle2, XCircle, Image as ImageIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { http, tokenStore } from "@/lib/http";
+import { getErrorMessage } from "@/lib/errors";
 
 const TransactionDetails = () => {
   const { id } = useParams();
@@ -17,6 +18,13 @@ const TransactionDetails = () => {
   const [isMarkingComplete, setIsMarkingComplete] = useState(false);
   const [txn, setTxn] = useState<any | null>(null);
   const [order, setOrder] = useState<any | null>(null);
+  const apiBase = (import.meta as any).env?.VITE_API_BASE || '';
+  const toAbs = (u?: string | null) => {
+    if (!u) return '';
+    if (u.startsWith('http://') || u.startsWith('https://')) return u;
+    if (u.startsWith('/')) return `${apiBase}${u}`;
+    return u;
+  };
 
   useEffect(() => {
     const load = async () => {
@@ -31,7 +39,7 @@ const TransactionDetails = () => {
           } catch {}
         }
       } catch (e: any) {
-        toast({ title: "Load failed", description: e.message || "Could not load transaction", variant: "destructive" });
+        toast({ title: "Load failed", description: getErrorMessage(e, "Could not load transaction"), variant: "destructive" });
       }
     };
     load();
@@ -50,7 +58,7 @@ const TransactionDetails = () => {
       const fresh = await http.get(`/api/v1/transactions/${id}/`);
       setTxn(fresh.data);
     } catch (e: any) {
-      toast({ title: "Complete failed", description: e.message || "Failed to complete", variant: "destructive" });
+      toast({ title: "Complete failed", description: getErrorMessage(e, "Failed to complete"), variant: "destructive" });
     } finally {
       setIsMarkingComplete(false);
     }
@@ -70,7 +78,7 @@ const TransactionDetails = () => {
       const fresh = await http.get(`/api/v1/transactions/${id}/`);
       setTxn(fresh.data);
     } catch (e: any) {
-      toast({ title: "Upload failed", description: e.message || "Failed to upload proof", variant: "destructive" });
+      toast({ title: "Upload failed", description: getErrorMessage(e, "Failed to upload proof"), variant: "destructive" });
     } finally {
       setIsUploading(false);
     }
@@ -98,7 +106,7 @@ const TransactionDetails = () => {
       a.remove();
       window.URL.revokeObjectURL(url);
     } catch (e: any) {
-      toast({ title: 'PDF Error', description: e.message || 'Failed to download PDF', variant: 'destructive' });
+      toast({ title: 'PDF Error', description: getErrorMessage(e, 'Failed to download PDF'), variant: 'destructive' });
     }
   };
 
@@ -247,7 +255,7 @@ const TransactionDetails = () => {
           </CardHeader>
           <CardContent>
             {(() => {
-              const url = (txn as any).proof || (txn as any).proof_of_payment || (txn as any).customer_proof || null;
+              const url = toAbs((txn as any).proof || (txn as any).proof_of_payment || (txn as any).customer_proof || null);
               if (url) {
                 return (
                   <div className="space-y-3">
@@ -335,7 +343,13 @@ const TransactionDetails = () => {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Accepted</p>
-                <p className="font-medium">{order?.accepted_at ? new Date(order.accepted_at).toLocaleString() : "—"}</p>
+                <p className="font-medium">{
+                  order?.accepted_at
+                    ? new Date(order.accepted_at).toLocaleString()
+                    : (order?.status === 'completed' && (txn.vendor_completed_at || txn.completed_at)
+                        ? new Date((txn.vendor_completed_at || txn.completed_at) as string).toLocaleString()
+                        : '—')
+                }</p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Completed</p>
@@ -343,7 +357,13 @@ const TransactionDetails = () => {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Declined</p>
-                <p className="font-medium">{order?.declined_at ? new Date(order.declined_at).toLocaleString() : "—"}</p>
+                <p className="font-medium">{
+                  order?.declined_at
+                    ? new Date(order.declined_at).toLocaleString()
+                    : (txn.status === 'declined' && (txn.completed_at || order?.updated_at)
+                        ? new Date((txn.completed_at || order?.updated_at) as string).toLocaleString()
+                        : '—')
+                }</p>
               </div>
             </div>
           </CardContent>
@@ -357,9 +377,16 @@ const TransactionDetails = () => {
               <CardDescription>Proof images uploaded by you</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-sm text-muted-foreground">
-                {txn.vendor_proof ? "Vendor proof uploaded" : "No vendor proof uploaded yet"}
-              </div>
+              {txn.vendor_proof ? (
+                <div className="space-y-3">
+                  <div className="p-3 border rounded-lg bg-secondary/30">
+                    <img src={toAbs(txn.vendor_proof)} alt="Vendor proof" className="max-h-96 object-contain mx-auto" />
+                  </div>
+                  <a href={toAbs(txn.vendor_proof)} target="_blank" rel="noreferrer" className="text-sm underline text-primary">Open original</a>
+                </div>
+              ) : (
+                <div className="text-sm text-muted-foreground">No vendor proof uploaded yet</div>
+              )}
             </CardContent>
           </Card>
         )}

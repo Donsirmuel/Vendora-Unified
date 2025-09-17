@@ -9,28 +9,55 @@
   <link rel="apple-touch-icon" href="/icons/apple-touch-icon-180.png" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <title>Vendora — Crypto Vendor PWA</title>
-  <meta name="description" content="Vendora: professional crypto vendor PWA for managing orders and transactions." />
+  <title>Vendora – Crypto Vendor Platform</title>
+  <meta name="description" content="Vendora: OTC / P2P crypto vendor platform for managing orders, rates, transactions, notifications & Telegram bot." />
   <meta name="author" content="Vendora" />
+  <meta name="robots" content="index,follow" />
+  <link rel="canonical" href="https://vendora.page/" />
+  <meta name="keywords" content="crypto vendor platform, otc crypto, p2p crypto trading, cryptocurrency orders, vendor dashboard" />
 
-  <meta property="og:title" content="Vendora" />
-  <meta property="og:description" content="Crypto vendor PWA for orders and transactions." />
+  <!-- Open Graph -->
+  <meta property="og:title" content="Vendora – Crypto Vendor Platform" />
+  <meta property="og:description" content="Manage OTC crypto orders, rates, transactions & notifications in one PWA." />
   <meta property="og:type" content="website" />
   <meta property="og:image" content="/icons/icon-512.png" />
+  <meta property="og:url" content="https://vendora.page/" />
+  <meta property="og:site_name" content="Vendora" />
 
+  <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:site" content="@vendora" />
   <meta name="twitter:image" content="/icons/icon-512.png" />
+  <meta name="twitter:title" content="Vendora – Crypto Vendor Platform" />
+  <meta name="twitter:description" content="Manage OTC crypto orders, rates, transactions & notifications in one PWA." />
+
+  <!-- Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Vendora",
+    "applicationCategory": "FinanceApplication",
+    "operatingSystem": "Any",
+    "description": "Platform for OTC crypto vendors: orders, rates, transactions, notifications, Telegram bot integration.",
+    "url": "https://vendora.page/",
+    "image": "https://vendora.page/icons/icon-512.png"
+  }
+  </script>
     <script>
       try {
-        const t = localStorage.getItem('vendora_theme') || 'dark';
-        if (t === 'dark') document.documentElement.classList.add('dark');
+        const stored = localStorage.getItem('vendora_theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const theme = stored || (prefersDark ? 'dark' : 'light');
+        if (theme === 'dark') document.documentElement.classList.add('dark');
         else document.documentElement.classList.remove('dark');
+        document.documentElement.style.setProperty('color-scheme', theme === 'dark' ? 'dark' : 'light');
       } catch {}
     </script>
   </head>
 
   <body>
+  <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 bg-primary text-primary-foreground px-3 py-2 rounded">Skip to main content</a>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

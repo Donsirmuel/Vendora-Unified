@@ -1,38 +1,55 @@
 import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
+import ErrorBoundary from '@/components/ErrorBoundary'
 import './index.css'
 import { http, tokenStore } from '@/lib/http'
+import { setUpdateAvailable } from '@/lib/sw-updates'
 
-createRoot(document.getElementById("root")!).render(<App />);
+createRoot(document.getElementById("root")!).render(
+	<ErrorBoundary>
+		<App />
+	</ErrorBoundary>
+);
 
 // Register service worker and subscribe to push when available
 async function registerPush() {
 	if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
 	try {
 		const reg = await navigator.serviceWorker.register('/sw.js');
-		// If there's a waiting service worker, ask it to activate
+		// Optionally trigger skipWaiting when an update is found (without forcing a reload here)
 		if (reg.waiting) {
-			reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+			// Mark update available and wait for user to trigger
+			setUpdateAvailable(true);
 		}
-		// When a new SW takes control, reload once to use fresh assets
-		navigator.serviceWorker.addEventListener('controllerchange', () => {
-			if (!(window as any).__reloaded_for_sw__) {
-				(window as any).__reloaded_for_sw__ = true;
-				window.location.reload();
-			}
+		reg.addEventListener('updatefound', () => {
+			const newWorker = reg.installing;
+			if (!newWorker) return;
+			newWorker.addEventListener('statechange', () => {
+				if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+					setUpdateAvailable(true);
+				}
+			});
 		});
-	// Ask for permission
-	const perm = await Notification.requestPermission();
-	if (perm !== 'granted') return;
-	// Get VAPID public key from backend
-	const vapidResp = await http.get<{ publicKey: string }>('/api/v1/notifications/vapid-key/');
-	const vapidKey = vapidResp.data?.publicKey;
-		const subscription = await reg.pushManager.subscribe({
+		navigator.serviceWorker.addEventListener('controllerchange', () => {
+			// New SW took control; reload to apply
+			window.location.reload();
+		});
+	// If already subscribed, reuse
+	let existing = await reg.pushManager.getSubscription();
+	if (!existing) {
+		const perm = await Notification.requestPermission();
+		if (perm !== 'granted') return;
+		const vapidResp = await http.get<{ publicKey: string }>('/api/v1/notifications/vapid-key/');
+		const vapidKey = vapidResp.data?.publicKey;
+		existing = await reg.pushManager.subscribe({
 			userVisibleOnly: true,
 			applicationServerKey: vapidKey ? urlBase64ToUint8Array(vapidKey) : undefined,
 		});
-		// Persist subscription in backend
-	await http.post('/api/v1/notifications/subscribe/', subscription);
+	}
+	// Persist (idempotent on endpoint via backend update_or_create)
+	if (existing) {
+		await http.post('/api/v1/notifications/subscribe/', existing);
+	}
 	} catch (e) {
 		// Ignore failures silently for now
 	}
@@ -47,6 +64,101 @@ function urlBase64ToUint8Array(base64String: string) {
 	return outputArray;
 }
 
-if (tokenStore.get()?.access) {
-	registerPush();
+export async function ensurePushRegistered(force = false) {
+	try {
+		if (!tokenStore.get()?.access) return;
+		if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+		const reg = await navigator.serviceWorker.ready;
+		const sub = await reg.pushManager.getSubscription();
+		if (force && sub) {
+			await sub.unsubscribe().catch(()=>{});
+		}
+		if (force || !sub) {
+			await registerPush();
+		}
+	} catch {}
 }
+
+if (tokenStore.get()?.access) {
+	const schedule = (fn: () => void) =>
+		("requestIdleCallback" in window
+			? (window as any).requestIdleCallback(fn)
+			: setTimeout(fn, 1500));
+	schedule(()=>ensurePushRegistered());
+}
+
+// Custom install prompt (deferred)
+let deferredPrompt: any = null;
+window.addEventListener('beforeinstallprompt', (e: any) => {
+	e.preventDefault();
+	deferredPrompt = e;
+	// You can store a signal to show an Install button in your UI
+	localStorage.setItem('vendora_can_install', '1');
+});
+export async function promptInstall() {
+	if (!deferredPrompt) return false;
+	deferredPrompt.prompt();
+	const { outcome } = await deferredPrompt.userChoice;
+	deferredPrompt = null;
+	localStorage.removeItem('vendora_can_install');
+	return outcome === 'accepted';
+}
+
+// App Badging helpers
+export function setBadge(n: number) {
+	try {
+		if ('setAppBadge' in navigator && n > 0) (navigator as any).setAppBadge(n);
+		else if ('clearAppBadge' in navigator) (navigator as any).clearAppBadge();
+	} catch {}
+}
+
+// Background Sync registration (one-off)
+async function registerBackgroundSync() {
+	if (!('serviceWorker' in navigator)) return;
+	try {
+		const reg = await navigator.serviceWorker.ready;
+		if ('sync' in reg) {
+			// Tag name matches SW handler
+			await (reg as any).sync.register('vendora-sync');
+		}
+	} catch {}
+}
+
+// Periodic Background Sync registration
+async function registerPeriodicSync() {
+	try {
+		const reg: any = await navigator.serviceWorker.ready;
+		if ('periodicSync' in reg) {
+			await reg.periodicSync.register('vendora-periodic', { minInterval: 15 * 60 * 1000 });
+		}
+	} catch {}
+}
+
+// Background Fetch demo (guarded)
+export async function startBackgroundFetch(id = 'vendora-bgf', url = '/api/v1/orders/?status=pending') {
+	try {
+		const reg: any = await navigator.serviceWorker.ready;
+		if ('backgroundFetch' in reg) {
+			await reg.backgroundFetch.fetch(id, [url], {
+				title: 'Fetching updates…',
+				icons: [{ src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' }],
+			});
+		}
+	} catch {}
+}
+
+// Schedule background capabilities lazily
+if ('serviceWorker' in navigator) {
+	const scheduleLight = (fn: () => void) => setTimeout(fn, 2000);
+	scheduleLight(registerBackgroundSync);
+	scheduleLight(registerPeriodicSync);
+}
+
+// Graceful recovery for code-split chunk load failures (e.g., network issues or new deploy)
+window.addEventListener('error', (e: any) => {
+	const msg = String(e?.message || '').toLowerCase();
+	if (msg.includes('loading chunk') || msg.includes('chunk load')) {
+		const shouldReload = confirm('A new version was deployed or a network error occurred. Reload to continue?');
+		if (shouldReload) window.location.reload();
+	}
+});

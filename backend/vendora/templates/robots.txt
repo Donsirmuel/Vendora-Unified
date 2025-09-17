@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+
+# Disallow admin panel
+Disallow: /admin/
+
+# Sitemaps
+Sitemap: https://app.vendora.page/sitemap.xml

@@ -24,6 +24,13 @@ class Vendor(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True)
     name = models.CharField(max_length=100)
     avatar = models.ImageField(upload_to="avatars/", null=True, blank=True)
+    # Optional Telegram username (without @) to allow customers to DM vendor directly from the bot
+    telegram_username = models.CharField(max_length=64, null=True, blank=True)
+    # Optional short bio/tagline shown in bot and public profile
+    bio = models.TextField(blank=True)
+    # Non-custodial wallet metadata (future DEX linking; informational only)
+    wallet_address = models.CharField(max_length=128, null=True, blank=True)
+    wallet_chain = models.CharField(max_length=32, null=True, blank=True)
     bank_details = models.TextField(blank=True)
     # Optional per-vendor override for how many minutes before a pending order auto-expires.
     # If null/blank, fallback to global settings.ORDER_AUTO_EXPIRE_MINUTES.
@@ -66,6 +73,40 @@ class Vendor(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.email
+
+    # Plan utility
+    def set_plan(self, plan: str, duration_days: int | None = None):
+        from django.utils import timezone
+        old_plan = self.plan
+        self.plan = plan
+        self.is_trial = False if plan != 'trial' else True
+        if duration_days:
+            self.plan_expires_at = timezone.now() + timezone.timedelta(days=duration_days)
+        self.save(update_fields=["plan","is_trial","plan_expires_at"])
+        try:
+            from .emails import send_plan_changed_email
+            send_plan_changed_email(self, old_plan, plan)
+        except Exception:
+            pass
+
+
+class NotificationLog(models.Model):
+    KIND_CHOICES = [
+        ("trial_ending", "Trial Ending Soon"),
+        ("trial_expired", "Trial Expired"),
+        ("plan_ending", "Plan Ending Soon"),
+        ("plan_expired", "Plan Expired"),
+    ]
+    vendor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="notification_logs")
+    kind = models.CharField(max_length=32, choices=KIND_CHOICES)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("vendor","kind")
+        ordering = ["-created_at"]
+
+    def __str__(self):  # pragma: no cover
+        return f"{self.vendor_id}:{self.kind}"
 
 
 class BankDetail(models.Model):

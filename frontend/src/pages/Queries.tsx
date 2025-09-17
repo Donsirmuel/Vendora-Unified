@@ -4,15 +4,21 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, MessageCircle, Clock, CheckCircle2, AlertCircle } from "lucide-react";
 import { http } from "@/lib/http";
+import { getErrorMessage } from "@/lib/errors";
+import { useToast } from "@/hooks/use-toast";
 
 const Queries = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [replyOpenId, setReplyOpenId] = useState<number | null>(null);
+  const [replyText, setReplyText] = useState("");
+  const { toast } = useToast();
 
   useEffect(() => {
     const load = async () => {
@@ -22,12 +28,35 @@ const Queries = () => {
         setItems(res.data.results || []);
       } catch (e) {
         setItems([]);
+        toast({ title: "Failed", description: getErrorMessage(e, "Failed to load queries"), variant: "destructive" });
       } finally {
         setLoading(false);
       }
     };
     load();
   }, []);
+
+  const sendReply = async (id: number) => {
+    try {
+      const res = await http.patch(`/api/v1/queries/${id}/`, { reply: replyText });
+      const updated = res.data;
+      setItems(prev => prev.map(q => q.id === id ? { ...q, ...updated } : q));
+      setReplyOpenId(null);
+      setReplyText("");
+      toast({ title: "Reply sent", description: "Your response was saved." });
+    } catch {}
+  };
+
+  const markDone = async (id: number) => {
+    try {
+      const res = await http.post(`/api/v1/queries/${id}/mark_done/`);
+      const updated = res.data;
+      setItems(prev => prev.map(q => q.id === id ? { ...q, ...updated } : q));
+      toast({ title: "Marked as done", description: "Customer will be notified via Telegram." });
+    } catch (e) {
+      toast({ title: "Failed", description: getErrorMessage(e, "Could not mark as done"), variant: "destructive" });
+    }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -50,7 +79,7 @@ const Queries = () => {
   // No priority on backend model currently
 
   const filteredQueries = items.filter((q) => {
-    const status = q.reply && String(q.reply).trim().length > 0 ? "replied" : "pending";
+    const status = String(q.status || (q.reply && String(q.reply).trim().length > 0 ? "replied" : "pending"));
     const matchesSearch = (q.message || "").toLowerCase().includes(searchTerm.toLowerCase()) || String(q.id).includes(searchTerm);
     const matchesStatus = statusFilter === "all" || status === statusFilter.toLowerCase();
     return matchesSearch && matchesStatus;
@@ -82,7 +111,7 @@ const Queries = () => {
               />
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
+      <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="bg-background border-border">
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
@@ -90,7 +119,7 @@ const Queries = () => {
                 <SelectItem value="all">All Statuses</SelectItem>
                 <SelectItem value="pending">Pending</SelectItem>
                 <SelectItem value="replied">Replied</SelectItem>
-                {/* <SelectItem value="resolved">Resolved</SelectItem> */}
+        <SelectItem value="resolved">Resolved</SelectItem>
               </SelectContent>
             </Select>
             <div />
@@ -119,7 +148,7 @@ const Queries = () => {
                     </div>
                   </div>
                   {(() => {
-                    const status = query.reply && String(query.reply).trim().length > 0 ? "replied" : "pending";
+                    const status = String(query.status || (query.reply && String(query.reply).trim().length > 0 ? "replied" : "pending"));
                     return (
                       <Badge className={getStatusColor(status)}>
                         {getStatusIcon(status)}
@@ -135,11 +164,21 @@ const Queries = () => {
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-muted-foreground">Created: {new Date(query.created_at || query.timestamp || Date.now()).toLocaleString()}</span>
                     <div className="space-x-2">
-                      <Button variant="outline" size="sm" className="border-border">
-                        <MessageCircle className="h-4 w-4 mr-2" />
-                        Reply
+                      {replyOpenId === query.id ? (
+                        <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
+                          <Textarea value={replyText} onChange={(e)=>setReplyText(e.target.value)} placeholder="Type your reply…" className="min-w-[240px]" />
+                          <Button size="sm" onClick={()=>sendReply(query.id)}>Send</Button>
+                          <Button size="sm" variant="outline" onClick={()=>{ setReplyOpenId(null); setReplyText(""); }}>Cancel</Button>
+                        </div>
+                      ) : (
+                        <Button variant="outline" size="sm" className="border-border" onClick={()=>{ setReplyOpenId(query.id); setReplyText(query.reply || ""); }}>
+                          <MessageCircle className="h-4 w-4 mr-2" />
+                          Reply
+                        </Button>
+                      )}
+                      <Button size="sm" onClick={()=>markDone(query.id)}>
+                        Mark as done
                       </Button>
-                      {/* Optionally implement a reply dialog and PATCH /queries/:id to set reply */}
                     </div>
                   </div>
                 </div>

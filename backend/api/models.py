@@ -12,6 +12,8 @@ class BotUser(models.Model):
     temp_asset = models.CharField(max_length=50, blank=True)
     temp_amount = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True)
     temp_order_id = models.CharField(max_length=64, blank=True)
+    # Used to keep state for general question flow via Telegram
+    temp_query_id = models.CharField(max_length=64, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

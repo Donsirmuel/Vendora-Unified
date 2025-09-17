@@ -139,6 +139,13 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Smooth theme transitions (respect reduced motion) */
+  @media (prefers-reduced-motion: no-preference) {
+    body, body *:not(.animate-spin):not(.no-theme-transition) {
+      transition: background-color .35s ease, color .35s ease, border-color .35s ease, fill .35s ease, stroke .35s ease;
+    }
+  }
 }
 
 /* Safe-area and dynamic viewport helpers */

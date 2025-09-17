@@ -12,8 +12,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Moon, Sun } from "lucide-react";
 import { useState } from "react";
+import ThemeToggle from '@/components/ThemeToggle';
 import { useAuth } from "@/contexts/AuthContext";
 
 interface LayoutProps {
@@ -25,15 +25,7 @@ const Layout = ({ children, title }: LayoutProps) => {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { user, logout } = useAuth();
-  const [theme, setTheme] = useState<string>(() => localStorage.getItem("vendora_theme") || "dark");
-
-  const toggleTheme = () => {
-    const next = theme === 'dark' ? 'light' : 'dark';
-    setTheme(next);
-    localStorage.setItem('vendora_theme', next);
-    const root = document.documentElement;
-    if (next === 'dark') root.classList.add('dark'); else root.classList.remove('dark');
-  };
+  // Theme handled by ThemeToggle component now
 
   const navigation = [
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -64,8 +56,8 @@ const Layout = ({ children, title }: LayoutProps) => {
         </Button>
       </div>
 
-      {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-40 w-64 bg-card border-r border-border transform transition-transform duration-300 ease-in-out lg:translate-x-0 overflow-y-auto ${
+  {/* Sidebar */}
+  <div role="navigation" aria-label="Primary" className={`fixed inset-y-0 left-0 z-40 w-64 bg-card border-r border-border transform transition-transform duration-300 ease-in-out lg:translate-x-0 overflow-y-auto ${
         isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
         <div className="flex flex-col h-full pb-6">
@@ -100,15 +92,13 @@ const Layout = ({ children, title }: LayoutProps) => {
                   <p className="font-medium text-foreground">{user.name}</p>
                   <p className="text-muted-foreground">{user.email}</p>
                 </div>
-                <Button variant="ghost" size="icon" className="ml-auto" onClick={toggleTheme}>
-                  {theme === 'dark' ? <Sun className="h-4 w-4"/> : <Moon className="h-4 w-4"/>}
-                </Button>
+                <ThemeToggle className="ml-auto" />
               </div>
             </div>
           )}
 
           {/* Navigation */}
-          <nav className="flex-1 px-4 py-6 space-y-2">
+          <nav className="flex-1 px-4 py-6 space-y-2" aria-label="Main menu">
             {navigation.map((item) => {
               const Icon = item.icon;
               if ((item as any).action === 'logout') {
@@ -157,13 +147,13 @@ const Layout = ({ children, title }: LayoutProps) => {
         <div className="flex-1">
           {/* Header */}
           {title && (
-            <header className="bg-card border-b border-border px-6 py-4">
+            <header className="bg-card border-b border-border px-6 py-4" role="banner">
               <h1 className="text-2xl font-semibold text-foreground">{title}</h1>
             </header>
           )}
 
           {/* Page content */}
-          <main className="p-6 pb-24 safe-pb">
+          <main id="main-content" className="p-6 pb-24 safe-pb" role="main" tabIndex={-1}>
             {children}
           </main>
         </div>

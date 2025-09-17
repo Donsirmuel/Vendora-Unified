@@ -10,6 +10,7 @@ import { ArrowLeft, Clock, MessageSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { getVendorProfile, updateVendorProfile } from "@/lib/auth";
 import { http } from "@/lib/http";
+import { getErrorMessage } from "@/lib/errors";
 
 const Availability = () => {
   const { toast } = useToast();
@@ -49,7 +50,7 @@ const Availability = () => {
         className: "bg-success text-success-foreground"
       });
     } catch (e: any) {
-      toast({ title: "Update failed", description: e.message || "Could not update availability", variant: "destructive" });
+      toast({ title: "Update failed", description: getErrorMessage(e, "Could not update availability"), variant: "destructive" });
     } finally {
       setIsSaving(false);
     }

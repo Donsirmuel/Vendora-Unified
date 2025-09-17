@@ -20,29 +20,19 @@ import { listTransactions, type Transaction } from "@/lib/transactions";
 import { listQueries } from "@/lib/queries";
 import { listBroadcasts } from "@/lib/broadcast";
 import { useToast } from "@/hooks/use-toast";
-import {
-  ChartContainer,
-  ChartLegend,
-  ChartLegendContent,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Line,
-  LineChart,
-  XAxis,
-  YAxis,
-} from "recharts";
+// Removed direct bank/rate imports previously used for legacy inline checklist
+import React from "react";
+import { connectSSE } from "@/lib/sse";
+const ChartsPanel = React.lazy(() => import("@/components/ChartsPanel"));
+import http from "@/lib/http";
+import OnboardingChecklist from "@/components/OnboardingChecklist";
 
 interface DashboardStats {
-  totalOrders: number;
+  totalOrdersReceived: number; // accepted + declined
   pendingOrders: number;
   completedOrders: number;
   totalRevenue: number;
-  totalTransactions: number;
+  completedTransactions: number;
   pendingQueries: number;
 }
 
@@ -57,11 +47,11 @@ const Dashboard = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [stats, setStats] = useState<DashboardStats>({
-    totalOrders: 0,
+    totalOrdersReceived: 0,
     pendingOrders: 0,
     completedOrders: 0,
     totalRevenue: 0,
-    totalTransactions: 0,
+    completedTransactions: 0,
     pendingQueries: 0
   });
   const [recentActivity, setRecentActivity] = useState<RecentActivity>({
@@ -72,34 +62,85 @@ const Dashboard = () => {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [completedTx, setCompletedTx] = useState<Transaction[]>([]);
+  const [botLink, setBotLink] = useState<string | null>(null);
+  const [telegramUser, setTelegramUser] = useState<string | null>(null);
+  const [showCharts, setShowCharts] = useState(false);
 
   useEffect(() => {
     loadDashboardData();
+    // Live updates via SSE; fallback is manual refresh via user actions
+    const sub = connectSSE('/api/v1/stream/', {
+      onMessage: (ev) => {
+        if (ev.type === 'snapshot') {
+          // Whenever snapshot markers change, refresh dashboard data
+          loadDashboardData();
+        }
+      },
+    });
+    return () => sub.close();
+  }, []);
+
+  // Defer heavy charts to after first paint/idle to improve LCP
+  useEffect(() => {
+    const schedule = (fn: () => void) =>
+      ("requestIdleCallback" in window
+        ? (window as any).requestIdleCallback(fn)
+        : setTimeout(fn, 1200));
+    schedule(() => setShowCharts(true));
+  }, []);
+
+  useEffect(() => {
+    // Load vendor bot link for easy sharing (vendors only)
+    (async () => {
+      try {
+        const res = await http.get('/api/v1/accounts/vendors/me/');
+        const data = res.data || {};
+        setBotLink(data.bot_link || null);
+        setTelegramUser(data.telegram_username || null);
+      } catch {
+        // ignore
+      }
+    })();
   }, []);
 
   const loadDashboardData = async () => {
     try {
       setIsLoading(true);
       
-      // Load orders
-      const ordersResponse = await listOrders(1);
-      const allOrders = ordersResponse.results;
-      const pendingOrders = allOrders.filter((order: any) => order.status === 'pending');
-      const completedOrders = allOrders.filter((order: any) => order.status === 'completed');
+      // Load orders by status (use counts for accuracy)
+      const [pendingOrdersResp, acceptedOrdersResp, declinedOrdersResp, completedOrdersResp] = await Promise.all([
+        listOrders(1, 'pending'),
+        listOrders(1, 'accepted'),
+        listOrders(1, 'declined'),
+        listOrders(1, 'completed'),
+      ]);
+      const pendingOrders = pendingOrdersResp.results;
+      const acceptedCount = acceptedOrdersResp.count || 0;
+      const declinedCount = declinedOrdersResp.count || 0;
+      const completedOrdersCount = completedOrdersResp.count || 0;
       
-      // Load transactions (grab a few pages to have enough data for charts)
+      // Load transactions: completed (for charts) and uncompleted (latest list)
       const allTransactions: Transaction[] = [];
-      // fetch up to 3 pages for a quick overview
-      for (let page = 1; page <= 3; page++) {
-        const res = await listTransactions(page);
-        allTransactions.push(...res.results);
-        if (!res.next) break;
-      }
-      const completedTransactions = allTransactions.filter((tx) => tx.status === 'completed');
+      let completedCount = 0;
+      try {
+        const completedPage1 = await listTransactions(1, 'completed');
+        completedCount = completedPage1.count || 0;
+        let pageRes = completedPage1;
+        allTransactions.push(...pageRes.results);
+        // fetch up to 2 more pages
+        for (let page = 2; page <= 3 && pageRes.next; page++) {
+          pageRes = await listTransactions(page, 'completed');
+          allTransactions.push(...pageRes.results);
+        }
+      } catch {}
+      const completedTransactions = allTransactions;
+      const uncompletedResp = await listTransactions(1, 'uncompleted');
+      const uncompletedTransactions = uncompletedResp.results;
       
       // Load queries
-      const queriesResponse = await listQueries(1);
-      const pendingQueries = queriesResponse.results.filter((query: any) => query.status === 'pending');
+  const queriesResponse = await listQueries(1);
+  // Backend Query model has no explicit status; treat those without reply as pending
+  const pendingQueries = queriesResponse.results.filter((q: any) => !q.reply || String(q.reply).trim() === "");
       
       // Load recent broadcasts
       const broadcastsResponse = await listBroadcasts(1);
@@ -113,19 +154,19 @@ const Dashboard = () => {
       }, 0);
       
       setStats({
-        totalOrders: allOrders.length,
-        pendingOrders: pendingOrders.length,
-        completedOrders: completedOrders.length,
+        totalOrdersReceived: acceptedCount + declinedCount,
+        pendingOrders: pendingOrdersResp.count || 0,
+        completedOrders: completedOrdersCount,
         totalRevenue,
-        totalTransactions: allTransactions.length,
+        completedTransactions: completedCount,
         pendingQueries: pendingQueries.length
       });
   setCompletedTx(completedTransactions);
       
       setRecentActivity({
         orders: pendingOrders.slice(0, 3),
-        transactions: allTransactions.filter((tx: any) => tx.status === 'pending').slice(0, 3),
-        queries: pendingQueries.slice(0, 3),
+  transactions: uncompletedTransactions.slice(0, 3),
+  queries: pendingQueries.slice(0, 3),
         broadcasts: recentBroadcasts
       });
       
@@ -175,7 +216,7 @@ const Dashboard = () => {
 
     // We only have completedTx here; for statusCounts, estimate from stats
     statusCounts.completed = completedTx.length;
-    statusCounts.pending = Math.max(stats.totalTransactions - stats.completedOrders, 0);
+  statusCounts.pending = 0; // not shown now
     // failed count best-effort (unknown without dedicated fetch). Leave as 0 if not present
 
     for (const tx of completedTx) {
@@ -195,15 +236,15 @@ const Dashboard = () => {
     );
 
     return { series, statusCounts, totals };
-  }, [completedTx, stats.totalTransactions, stats.completedOrders]);
+  }, [completedTx, stats.completedTransactions, stats.completedOrders]);
 
   if (isLoading) {
     return (
       <Layout>
-        <div className="flex items-center justify-center h-64">
+        <div className="flex items-center justify-center h-64" role="status" aria-live="polite" aria-label="Loading dashboard data">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading dashboard...</p>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4" aria-hidden="true"></div>
+            <p className="text-muted-foreground">Loading dashboard…</p>
           </div>
         </div>
       </Layout>
@@ -224,15 +265,55 @@ const Dashboard = () => {
           Welcome back, {user?.name || 'Vendor'}! Here's your business overview.
         </p>
 
+  {/* Onboarding Checklist (derived from backend) */}
+  <OnboardingChecklist />
+
+  {/* Share your bot link (customers use bot, vendors share link) */}
+        {botLink && (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">Share your bot link with customers</CardTitle>
+              <CardDescription>Customers trade via your Telegram bot, not the PWA.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col md:flex-row md:items-center gap-2">
+              <div className="flex-1 truncate text-sm">
+                <span className="font-medium mr-2">Link:</span>
+                <a className="text-primary underline break-all" href={botLink} target="_blank" rel="noreferrer">{botLink}</a>
+                {telegramUser && (
+                  <span className="ml-2 text-xs text-muted-foreground">(@{telegramUser})</span>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText(botLink);
+                      toast({ title: 'Copied', description: 'Bot link copied to clipboard' });
+                    } catch {
+                      toast({ title: 'Copy failed', description: 'Select and copy manually', variant: 'destructive' });
+                    }
+                  }}
+                >Copy</Button>
+                <a href={botLink} target="_blank" rel="noreferrer">
+                  <Button variant="default">Open in Telegram</Button>
+                </a>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+  {/* (Legacy inline checklist removed in favour of server-derived OnboardingChecklist component) */}
+
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card>
+      <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
+        <CardTitle className="text-sm font-medium">Total Orders Received</CardTitle>
               <ShoppingCart className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.totalOrders}</div>
+        <div className="text-2xl font-bold">{stats.totalOrdersReceived}</div>
               <p className="text-xs text-muted-foreground">
                 {stats.pendingOrders} pending
               </p>
@@ -254,13 +335,13 @@ const Dashboard = () => {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Transactions</CardTitle>
+              <CardTitle className="text-sm font-medium">Completed Transactions</CardTitle>
               <ArrowLeftRight className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.totalTransactions}</div>
+              <div className="text-2xl font-bold">{stats.completedTransactions}</div>
               <p className="text-xs text-muted-foreground">
-                {stats.totalTransactions - stats.completedOrders} in progress
+                {completedTx.length} in last fetch
               </p>
             </CardContent>
           </Card>
@@ -279,8 +360,8 @@ const Dashboard = () => {
           </Card>
         </div>
 
-        {/* Recent Activity */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+  {/* Recent Activity */}
+  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Pending Orders */}
           <Card>
             <CardHeader>
@@ -319,6 +400,47 @@ const Dashboard = () => {
                 <div className="text-center py-6 text-muted-foreground">
                   <ShoppingCart className="h-12 w-12 mx-auto mb-2 opacity-50" />
                   <p>No pending orders</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Latest Uncompleted Transactions */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <ArrowLeftRight className="h-5 w-5" />
+                <span>Latest Uncompleted Transactions</span>
+              </CardTitle>
+              <CardDescription>
+                Waiting on your completion
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {recentActivity.transactions.length > 0 ? (
+                <div className="space-y-3">
+                  {recentActivity.transactions.map((tx: any) => (
+                    <div key={tx.id} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div>
+                        <p className="font-medium">{tx.order_asset} • {tx.order_type?.toUpperCase()}</p>
+                        <p className="text-sm text-muted-foreground">₦{Number(tx.order_total_value || 0).toLocaleString()}</p>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Badge className="bg-yellow-100 text-yellow-800">Uncompleted</Badge>
+                        <Link to={`/transactions/${tx.id}`}>
+                          <Button size="sm" variant="outline">Open</Button>
+                        </Link>
+                      </div>
+                    </div>
+                  ))}
+                  <Link to="/transactions">
+                    <Button variant="outline" className="w-full">View All Transactions</Button>
+                  </Link>
+                </div>
+              ) : (
+                <div className="text-center py-6 text-muted-foreground">
+                  <Clock className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                  <p>No uncompleted transactions</p>
                 </div>
               )}
             </CardContent>
@@ -393,80 +515,35 @@ const Dashboard = () => {
           </Card>
         )}
 
-        {/* Insights: simple charts based on completed transactions */}
+        {/* Insights: completed transactions per day */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Revenue (last 14 days)</CardTitle>
-              <CardDescription>Sum of completed transactions per day</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {insights.series.length > 0 ? (
-                <ChartContainer
-                  config={{
-                    revenue: { label: "Revenue", color: "hsl(var(--primary))" },
-                    count: { label: "Completed", color: "hsl(var(--muted-foreground))" },
-                  }}
-                  className="w-full h-72"
-                >
-                  <LineChart data={insights.series} margin={{ left: 12, right: 12 }}>
-                    <CartesianGrid vertical={false} />
-                    <XAxis
-                      dataKey="date"
-                      tickLine={false}
-                      axisLine={false}
-                      tickMargin={8}
-                      minTickGap={24}
-                    />
-                    <YAxis tickLine={false} axisLine={false} tickMargin={8} />
-                    <ChartTooltip content={<ChartTooltipContent />} />
-                    <Line type="monotone" dataKey="revenue" stroke="var(--color-revenue)" strokeWidth={2} dot={false} />
-                    <Line type="monotone" dataKey="count" stroke="var(--color-count)" strokeWidth={1} dot={false} />
-                  </LineChart>
-                </ChartContainer>
-              ) : (
-                <div className="text-center py-6 text-muted-foreground">
-                  <p>No data yet</p>
-                </div>
-              )}
-              <div className="mt-4 text-sm text-muted-foreground">
-                Total: {formatCurrency(insights.totals.revenue)} • {insights.totals.count} completed
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Status breakdown</CardTitle>
-              <CardDescription>Recent transactions by status</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ChartContainer
-                config={{
-                  Completed: { label: "Completed", color: "#22c55e" },
-                  Pending: { label: "Pending", color: "#eab308" },
-                  Failed: { label: "Failed", color: "#ef4444" },
-                }}
-                className="w-full h-72"
-              >
-                <BarChart
-                  data={[
-                    { name: "Completed", value: insights.statusCounts.completed, fill: "var(--color-Completed)" },
-                    { name: "Pending", value: insights.statusCounts.pending, fill: "var(--color-Pending)" },
-                    { name: "Failed", value: insights.statusCounts.failed, fill: "var(--color-Failed)" },
-                  ]}
-                  margin={{ left: 12, right: 12 }}
-                >
-                  <CartesianGrid vertical={false} />
-                  <XAxis dataKey="name" tickLine={false} axisLine={false} tickMargin={8} />
-                  <YAxis allowDecimals={false} tickLine={false} axisLine={false} tickMargin={8} />
-                  <ChartTooltip content={<ChartTooltipContent nameKey="name" />} />
-                  <Bar dataKey="value" radius={4} />
-                </BarChart>
-              </ChartContainer>
-              <div className="mt-4 text-xs text-muted-foreground">Approximate counts based on recent data</div>
-            </CardContent>
-          </Card>
+          {!showCharts && (
+            <>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Completed Transactions per Day</CardTitle>
+                  <CardDescription>Loading…</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-72 w-full animate-pulse bg-muted rounded" />
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Revenue (last 14 days)</CardTitle>
+                  <CardDescription>Loading…</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-72 w-full animate-pulse bg-muted rounded" />
+                </CardContent>
+              </Card>
+            </>
+          )}
+          {showCharts && (
+            <React.Suspense fallback={<div className="grid grid-cols-1 lg:grid-cols-2 gap-6"><Card><CardHeader><CardTitle>Charts</CardTitle><CardDescription>Loading…</CardDescription></CardHeader><CardContent><div className="h-72 bg-muted rounded animate-pulse" /></CardContent></Card></div>}>
+              <ChartsPanel insights={insights as any} formatCurrency={formatCurrency} />
+            </React.Suspense>
+          )}
         </div>
       </div>
     </Layout>

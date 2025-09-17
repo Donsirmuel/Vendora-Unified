@@ -36,3 +36,5 @@ urllib3==2.5.0
 reportlab==4.2.5
 pywebpush==1.14.0
 cryptography==43.0.3
+sentry-sdk==2.17.0
+dj-database-url==2.3.0  # optional convenience parser for DATABASE_URL

@@ -15,6 +15,16 @@ import os
 from decouple import config
 from datetime import timedelta
 from urllib.parse import urlparse, parse_qs
+import logging
+import json
+
+SENTRY_DSN_RAW = config('SENTRY_DSN', default='')
+SENTRY_DSN = str(SENTRY_DSN_RAW) if SENTRY_DSN_RAW not in (True, False) else None
+SENTRY_TRACES_SAMPLE_RATE = float(config('SENTRY_TRACES_SAMPLE_RATE', default='0.0'))
+SENTRY_PROFILES_SAMPLE_RATE = float(config('SENTRY_PROFILES_SAMPLE_RATE', default='0.0'))
+
+# Trial configuration
+TRIAL_DAYS = int(config('TRIAL_DAYS', default=14))
 
 
 
@@ -30,7 +40,7 @@ FRONTEND_DIST = (BASE_DIR.parent / 'frontend' / 'dist').resolve()
 SECRET_KEY = config('SECRET_KEY', default='CHANGE_ME_DEV_ONLY')
 DEBUG = config('DEBUG', cast=bool, default=True)
 
-ALLOWED_HOSTS = [h.strip() for h in str(config('ALLOWED_HOSTS', default='127.0.0.1,localhost')).split(',') if h.strip()]
+ALLOWED_HOSTS = [h.strip() for h in str(config('ALLOWED_HOSTS', default='127.0.0.1,localhost,app.vendora.page,vendora.page')).split(',') if h.strip()]
 CSRF_TRUSTED_ORIGINS = [o.strip() for o in str(config('CSRF_TRUSTED_ORIGINS', default='http://127.0.0.1:8000')).split(',') if o.strip()]
 
 # Telegram Bot Configuration
@@ -58,6 +68,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sitemaps',
     'rest_framework',
     'rest_framework_simplejwt',
     'django_filters',
@@ -77,8 +88,13 @@ MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
+    # Simple request id injection (fallback). Real impl could use a lib.
+    'vendora.settings.RequestIDMiddleware',
+    'vendora.settings.SecurityHeadersMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    # Must run after authentication so request.user is populated
+    'vendora.settings.AccountStatusMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -202,6 +218,119 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Logging configuration: basic JSON-capable console logs
+LOG_LEVEL = str(config('LOG_LEVEL', default='INFO')).upper()
+LOG_JSON = config('LOG_JSON', cast=bool, default=True)
+
+class JsonFormatter(logging.Formatter):
+    def format(self, record):  # type: ignore[override]
+        base = {
+            'level': record.levelname,
+            'logger': record.name,
+            'message': record.getMessage(),
+            'time': self.formatTime(record, self.datefmt),
+        }
+        if record.exc_info:
+            base['exc_info'] = self.formatException(record.exc_info)
+        return json.dumps(base)
+
+_console_handler: dict = {
+    'class': 'logging.StreamHandler',
+    'level': LOG_LEVEL,
+    'formatter': 'json' if LOG_JSON else 'plain',
+}
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'plain': {
+            'format': '[{levelname}] {name} {message}',
+            'style': '{',
+        },
+        'json': {
+            '()': JsonFormatter,
+        },
+    },
+    'handlers': {
+        'console': _console_handler,
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': LOG_LEVEL,
+    },
+    'loggers': {
+        'django.request': {'level': LOG_LEVEL, 'handlers': ['console'], 'propagate': False},
+    'django.db.backends': {'level': str(config('DB_LOG_LEVEL', default='WARNING')).upper()},
+    },
+}
+
+
+# Lightweight Request ID middleware for log correlation
+import uuid
+from django.utils.deprecation import MiddlewareMixin
+class RequestIDMiddleware(MiddlewareMixin):  # type: ignore
+    def process_request(self, request):  # type: ignore[override]
+        rid = request.META.get('HTTP_X_REQUEST_ID') or uuid.uuid4().hex[:12]
+        request.request_id = rid  # type: ignore[attr-defined]
+        # Attach to logging MDC by adding to record via filter (simple env var)
+        os.environ['REQUEST_ID'] = rid
+    def process_response(self, request, response):  # type: ignore[override]
+        rid = getattr(request, 'request_id', None)
+        if rid:
+            response['X-Request-ID'] = rid
+        return response
+
+
+# Middleware to append security headers when not DEBUG
+class SecurityHeadersMiddleware(MiddlewareMixin):  # type: ignore
+    def process_response(self, request, response):  # type: ignore[override]
+        if not DEBUG:
+            csp = globals().get('CONTENT_SECURITY_POLICY')
+            if csp:
+                response['Content-Security-Policy'] = csp
+            ref = globals().get('REFERRER_POLICY')
+            if ref:
+                response['Referrer-Policy'] = ref
+            perm = globals().get('PERMISSIONS_POLICY')
+            if perm:
+                response['Permissions-Policy'] = perm
+            xfo = globals().get('X_FRAME_OPTIONS')
+            if xfo:
+                response['X-Frame-Options'] = xfo
+            response.setdefault('X-Content-Type-Options', 'nosniff')
+        return response
+
+# Account status enforcement middleware
+class AccountStatusMiddleware(MiddlewareMixin):  # type: ignore
+    ALLOW_PATH_SUFFIXES = {"/api/v1/accounts/token/", "/api/v1/accounts/signup/", "/api/v1/accounts/password-reset/", "/api/v1/accounts/password-reset/confirm/"}
+    def process_view(self, request, view_func, view_args, view_kwargs):  # type: ignore[override]
+        user = getattr(request, 'user', None)
+        if not user or not getattr(user, 'is_authenticated', False):
+            return None
+        # Allow safe methods for expired plan? Still block writes.
+        from django.utils import timezone
+        now = timezone.now()
+        trial_expired = bool(getattr(user, 'is_trial', False) and getattr(user, 'trial_expires_at', None) and user.trial_expires_at < now)
+        plan_expired = bool(getattr(user, 'plan', '') not in ('trial','none') and getattr(user, 'plan_expires_at', None) and user.plan_expires_at < now)
+        suspended = not bool(getattr(user, 'is_service_active', True))
+        if not (trial_expired or plan_expired or suspended):
+            return None
+        # Whitelist some endpoints
+        path = request.path
+        if any(path.endswith(suf) for suf in self.ALLOW_PATH_SUFFIXES):
+            return None
+        from rest_framework.response import Response
+        from rest_framework import status
+        detail = {
+            'detail': 'Account not active',
+            'trial_expired': trial_expired,
+            'plan_expired': plan_expired,
+            'suspended': suspended,
+            'code': 'ACCOUNT_INACTIVE'
+        }
+        return Response(detail, status=status.HTTP_403_FORBIDDEN)
+
 
 # Django REST framework settings
 REST_FRAMEWORK = {
@@ -214,13 +343,21 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
+    # Throttling refined (Task 14)
     'DEFAULT_THROTTLE_CLASSES': [
         'rest_framework.throttling.AnonRateThrottle',
-        'rest_framework.throttling.UserRateThrottle',
+        'vendora.throttling.DynamicUserRateThrottle',
+        'vendora.throttling.OrderWriteScopedThrottle',
+        'vendora.throttling.RateWriteScopedThrottle',
+        'vendora.throttling.AuthBurstScopedThrottle',
     ],
     'DEFAULT_THROTTLE_RATES': {
-        'anon': '60/min',
-        'user': '120/min',
+        # Base global scopes (override via env variables below)
+        'anon': config('THROTTLE_ANON', default='60/min'),
+        'user': config('THROTTLE_USER', default='240/min'),
+        'order_write': config('THROTTLE_ORDER_WRITE', default='30/min'),
+        'rate_write': config('THROTTLE_RATES_WRITE', default='15/min'),
+        'auth_burst': config('THROTTLE_AUTH_BURST', default='20/min'),
     },
     'DEFAULT_FILTER_BACKENDS': [
         'django_filters.rest_framework.DjangoFilterBackend',
@@ -231,9 +368,17 @@ REST_FRAMEWORK = {
 }
 
 # CORS settings
+# Allow common local dev origins by default; in DEBUG allow all to reduce friction
 CORS_ALLOW_ALL_ORIGINS = config('CORS_ALLOW_ALL_ORIGINS', cast=bool, default=False)
-_cors = str(config('CORS_ALLOWED_ORIGINS', default='http://127.0.0.1:5173,http://localhost:5173'))
+_cors = str(config(
+    'CORS_ALLOWED_ORIGINS',
+    default='http://127.0.0.1:5173,http://localhost:5173,https://127.0.0.1:5173,https://localhost:5173'
+))
 CORS_ALLOWED_ORIGINS = [o.strip() for o in str(_cors).split(',') if o.strip()]
+
+# In development, reflect any origin to avoid preflight blocks when using different local hosts/ports
+if DEBUG:
+    CORS_ALLOW_ALL_ORIGINS = True
 
 CORS_ALLOW_CREDENTIALS = True
 
@@ -289,6 +434,12 @@ if not DEBUG:
     SECURE_HSTS_SECONDS = int(config('SECURE_HSTS_SECONDS', default=31536000))
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
+    # Additional security headers (Task 13)
+    # Basic CSP: adjust if you add external CDNs; 'self' for scripts/styles, allow data: for images & inline svgs
+    CONTENT_SECURITY_POLICY = config('CONTENT_SECURITY_POLICY', default="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'")
+    REFERRER_POLICY = config('REFERRER_POLICY', default='strict-origin-when-cross-origin')
+    PERMISSIONS_POLICY = config('PERMISSIONS_POLICY', default='geolocation=(), microphone=(), camera=()')
+    X_FRAME_OPTIONS = config('X_FRAME_OPTIONS', default='DENY')
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -308,3 +459,18 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
+
+# Sentry initialization (only if DSN provided)
+if SENTRY_DSN:
+    try:
+        import sentry_sdk
+        from sentry_sdk.integrations.django import DjangoIntegration
+        sentry_sdk.init(
+            dsn=SENTRY_DSN,
+            integrations=[DjangoIntegration()],
+            traces_sample_rate=SENTRY_TRACES_SAMPLE_RATE,
+            profiles_sample_rate=SENTRY_PROFILES_SAMPLE_RATE,
+            send_default_pii=False,
+        )
+    except Exception:  # pragma: no cover
+        pass

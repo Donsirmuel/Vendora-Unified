@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { confirmPasswordReset, validatePassword, passwordsMatch } from '@/lib/auth';
+import { getErrorMessage } from '@/lib/errors';
 
 export default function PasswordResetConfirmPage() {
   const navigate = useNavigate();
@@ -81,7 +82,7 @@ export default function PasswordResetConfirmPage() {
         navigate('/login');
       }, 2000);
     } catch (err: any) {
-      setError(err.message || 'Failed to reset password. Please try again.');
+      setError(getErrorMessage(err, 'Failed to reset password. Please try again.'));
     } finally {
       setLoading(false);
     }

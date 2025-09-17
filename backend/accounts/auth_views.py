@@ -45,6 +45,8 @@ def signup(request):
                     'id': cast(int, vendor.pk),
                     'email': cast(str, vendor.email),
                     'name': cast(str, vendor.name),
+                    'trial_expires_at': getattr(vendor, 'trial_expires_at', None),
+                    'is_trial': getattr(vendor, 'is_trial', True),
                 }
             }, status=status.HTTP_201_CREATED)
             

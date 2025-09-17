@@ -75,6 +75,20 @@ class VendorRegistrationSerializer(serializers.ModelSerializer):
         vendor.name = username
         vendor.external_vendor_id = username
         vendor.set_password(password)
+        # Initialize trial automatically if not explicitly disabled
+        try:
+            from django.utils import timezone
+            from django.conf import settings
+            from datetime import timedelta
+            if getattr(vendor, 'is_trial', True) and not vendor.trial_started_at and not vendor.trial_expires_at:
+                now = timezone.now()
+                days = int(getattr(settings, 'TRIAL_DAYS', 14) or 14)
+                vendor.trial_started_at = now
+                vendor.trial_expires_at = now + timedelta(days=days)
+                vendor.plan = 'trial'
+                vendor.is_service_active = True
+        except Exception:
+            pass
         vendor.save()
         return vendor
 
@@ -92,6 +106,10 @@ class VendorSerializer(serializers.ModelSerializer):
             "id",
             "email",
             "name",
+            "telegram_username",
+            "bio",
+            "wallet_address",
+            "wallet_chain",
             "avatar",
             "avatar_url",
             "bank_details",
@@ -175,6 +193,18 @@ class VendorSerializer(serializers.ModelSerializer):
             return f"https://t.me/{bot_user}?start=vendor_{code}"
         except Exception:
             return None
+
+    def validate_telegram_username(self, value: str) -> str:
+        if value is None:
+            return value
+        v = value.strip()
+        if v.startswith("@"):
+            v = v[1:]
+        # Basic constraint: 5-32 chars typical for Telegram; allow letters, digits, underscores
+        import re
+        if v and not re.fullmatch(r"[A-Za-z0-9_]{5,32}", v):
+            raise serializers.ValidationError("Enter a valid Telegram username (letters, numbers, underscores, 5-32 chars).")
+        return v
 
 
 class BankDetailSerializer(serializers.ModelSerializer):

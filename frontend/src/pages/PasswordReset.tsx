@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { requestPasswordReset, isValidEmail } from '@/lib/auth';
+import { getErrorMessage } from '@/lib/errors';
 
 export default function PasswordResetPage() {
   const [email, setEmail] = useState('');
@@ -28,7 +29,7 @@ export default function PasswordResetPage() {
       await requestPasswordReset({ email });
       setSuccess('Password reset instructions have been sent to your email.');
     } catch (err: any) {
-      setError(err.message || 'Failed to send reset email. Please try again.');
+      setError(getErrorMessage(err, 'Failed to send reset email. Please try again.'));
     } finally {
       setLoading(false);
     }

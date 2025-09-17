@@ -13,6 +13,9 @@ import { getVendorProfile, updateVendorProfile, VendorProfile } from "@/lib/auth
 import { listBankDetails, createBankDetail, updateBankDetail, deleteBankDetail, BankDetail } from "@/lib/bankDetails";
 import { listRates, createRate, updateRate, deleteRate, Rate } from "@/lib/rates";
 import http from "@/lib/http";
+import { getErrorMessage } from "@/lib/errors";
+import { isUpdateAvailable, subscribeToSWUpdate, requestUpdate } from "@/lib/sw-updates";
+import { promptInstall, ensurePushRegistered } from "@/main";
 
 const Settings = () => {
   const { toast } = useToast();
@@ -25,6 +28,9 @@ const Settings = () => {
   const [saving, setSaving] = useState(false);
   const [bankList, setBankList] = useState<BankDetail[]>([]);
   const [rates, setRates] = useState<Rate[]>([]);
+  // Vendor comms fields
+  const [telegramUsername, setTelegramUsername] = useState<string>("");
+  const [bio, setBio] = useState<string>("");
 
   // Bank form state
   const [bankForm, setBankForm] = useState<Partial<BankDetail>>({ bank_name: "", account_number: "", account_name: "", instructions: "", is_default: false });
@@ -35,14 +41,18 @@ const Settings = () => {
   const [editingRateId, setEditingRateId] = useState<number | null>(null);
 
   const [botLink, setBotLink] = useState<string>("");
+  const [updateReady, setUpdateReady] = useState<boolean>(() => (typeof window !== 'undefined') ? isUpdateAvailable() : false);
+  const [canInstall, setCanInstall] = useState<boolean>(() => typeof window !== 'undefined' && localStorage.getItem('vendora_can_install') === '1');
 
   useEffect(() => {
     const load = async () => {
       try {
         setLoading(true);
         const profile: VendorProfile = await getVendorProfile();
-        setUserName(profile.name || "");
+  setUserName(profile.name || "");
         setBankDetails(profile.bank_details || "");
+  setTelegramUsername((profile as any).telegram_username || "");
+  setBio((profile as any).bio || "");
         if ((profile as any).avatar_url) setProfileImage((profile as any).avatar_url);
         if ((profile as any).bot_link) setBotLink((profile as any).bot_link);
         setAutoExpireMinutes(
@@ -56,7 +66,7 @@ const Settings = () => {
         setBankList(banksRes.results || []);
         setRates(ratesRes.results || []);
       } catch (e: any) {
-        toast({ title: "Failed to load profile", description: e.message || String(e), variant: "destructive" });
+        toast({ title: "Failed to load profile", description: getErrorMessage(e, String(e)), variant: "destructive" });
       } finally {
         setLoading(false);
       }
@@ -64,10 +74,46 @@ const Settings = () => {
     load();
   }, [toast]);
 
+  // Listen for SW update availability
+  useEffect(() => {
+    const unsub = subscribeToSWUpdate((flag) => setUpdateReady(flag));
+    return unsub;
+  }, []);
+
+  const handleUpdateApp = async () => {
+    const ok = await requestUpdate();
+    if (!ok) {
+      toast({ title: 'No update found', description: 'You are on the latest version.' });
+    }
+  };
+
+  // Listen for install prompt availability and appinstalled
+  useEffect(() => {
+    const onBip = (e: Event) => setCanInstall(true);
+    const onInstalled = () => { setCanInstall(false); localStorage.removeItem('vendora_can_install'); toast({ title: 'Installed', description: 'Vendora is now installed as an app.' }); };
+    window.addEventListener('beforeinstallprompt', onBip as any);
+    window.addEventListener('appinstalled', onInstalled);
+    return () => {
+      window.removeEventListener('beforeinstallprompt', onBip as any);
+      window.removeEventListener('appinstalled', onInstalled);
+    };
+  }, [toast]);
+
+  const handleInstall = async () => {
+    const accepted = await promptInstall();
+    if (accepted) {
+      toast({ title: 'Installing…', description: 'Completing installation.' });
+    } else {
+      toast({ title: 'Install dismissed', description: 'You can install later from Settings.' });
+    }
+  };
+
   const handleSave = async () => {
     try {
       setSaving(true);
   const payload: any = { name: userName, bank_details: bankDetails };
+      if (telegramUsername != null) payload.telegram_username = telegramUsername;
+      if (bio != null) payload.bio = bio;
       if (autoExpireMinutes === "") {
         payload.auto_expire_minutes = null;
       } else {
@@ -79,13 +125,15 @@ const Settings = () => {
       setAutoExpireMinutes(
         typeof updated.auto_expire_minutes === "number" ? updated.auto_expire_minutes : ""
       );
+  setTelegramUsername((updated as any).telegram_username || "");
+  setBio((updated as any).bio || "");
       toast({
         title: "Settings Saved",
         description: "Your settings have been updated successfully.",
         className: "bg-success text-success-foreground"
       });
     } catch (e: any) {
-      toast({ title: "Save failed", description: e.message || String(e), variant: "destructive" });
+      toast({ title: "Save failed", description: getErrorMessage(e, String(e)), variant: "destructive" });
     } finally {
       setSaving(false);
     }
@@ -104,7 +152,7 @@ const Settings = () => {
         setProfileImage(url);
         toast({ title: "Profile updated", description: "Avatar uploaded.", className: "bg-success text-success-foreground" });
       } catch (err: any) {
-        toast({ title: "Upload failed", description: err.message || String(err), variant: "destructive" });
+        toast({ title: "Upload failed", description: getErrorMessage(err, String(err)), variant: "destructive" });
       }
     }
   };
@@ -128,7 +176,7 @@ const Settings = () => {
       setEditingBankId(null);
       toast({ title: "Saved", description: "Bank detail saved.", className: "bg-success text-success-foreground" });
     } catch (err: any) {
-      toast({ title: "Failed", description: err.message || String(err), variant: "destructive" });
+      toast({ title: "Failed", description: getErrorMessage(err, String(err)), variant: "destructive" });
     }
   };
 
@@ -156,7 +204,7 @@ const Settings = () => {
       setEditingRateId(null);
       toast({ title: "Saved", description: "Rate saved.", className: "bg-success text-success-foreground" });
     } catch (err: any) {
-      toast({ title: "Failed", description: err.message || String(err), variant: "destructive" });
+      toast({ title: "Failed", description: getErrorMessage(err, String(err)), variant: "destructive" });
     }
   };
 
@@ -206,8 +254,41 @@ const Settings = () => {
           </CardContent>
         </Card>
         
+        {/* App Update */}
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <SettingsIcon className="h-5 w-5" />
+              <span>Application</span>
+            </CardTitle>
+            <CardDescription>Manage application updates</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-3">
+              <Button onClick={handleUpdateApp} disabled={!updateReady} variant={updateReady ? 'default' : 'outline'}>
+                {updateReady ? 'Update App' : 'Up to Date'}
+              </Button>
+              {!updateReady && <p className="text-sm text-muted-foreground">Updates are checked automatically and applied when available.</p>}
+            </div>
+            <div className="mt-4 flex items-center gap-3">
+              <Button onClick={handleInstall} disabled={!canInstall} variant={canInstall ? 'default' : 'outline'}>
+                {canInstall ? 'Install App' : 'Install Not Available'}
+              </Button>
+              {!canInstall && <p className="text-sm text-muted-foreground">Open from a supported browser and revisit later to install.</p>}
+            </div>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Button variant="secondary" onClick={async()=>{ try { await ensurePushRegistered(true); toast({ title: 'Push re-registered', description: 'Subscription refreshed.' }); } catch { toast({ title: 'Failed', description: 'Could not re-register push', variant: 'destructive' }); } }}>
+                Re-register Push
+              </Button>
+              <Button variant="secondary" onClick={async()=>{ try { await http.post('/api/v1/notifications/test-push/', { title: 'Test Push', message: 'This is a test notification.' }); toast({ title: 'Test push sent', description: 'Check for a browser notification.' }); } catch (e:any) { toast({ title: 'Failed', description: getErrorMessage(e, 'Could not send test push'), variant: 'destructive' }); } }}>
+                Send Test Push
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
   {/* Profile Settings */}
-        <Card className="bg-gradient-card border-border">
+  <Card id="profile" className="bg-gradient-card border-border">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <User className="h-5 w-5" />
@@ -226,6 +307,32 @@ const Settings = () => {
                     onChange={(e) => setUserName(e.target.value)}
                     className="bg-background border-border"
         disabled={loading}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="telegram-username">Telegram Username</Label>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">@</span>
+                    <Input
+                      id="telegram-username"
+                      placeholder="your_handle"
+                      value={telegramUsername}
+                      onChange={(e) => setTelegramUsername(e.target.value.replace(/^@+/, ""))}
+                      className="bg-background border-border"
+                      disabled={loading}
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">Used in the bot for the “Contact Vendor” button.</p>
+                </div>
+                <div>
+                  <Label htmlFor="bio">Short Bio (optional)</Label>
+                  <Textarea
+                    id="bio"
+                    placeholder="A short line customers will see in the bot"
+                    value={bio}
+                    onChange={(e) => setBio(e.target.value)}
+                    className="bg-background border-border min-h-[72px]"
+                    disabled={loading}
                   />
                 </div>
               </div>
@@ -252,7 +359,7 @@ const Settings = () => {
         </Card>
 
         {/* Assets & Rates */}
-        <Card className="bg-gradient-card border-border">
+  <Card id="rates" className="bg-gradient-card border-border">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <DollarSign className="h-5 w-5" />
@@ -309,7 +416,7 @@ const Settings = () => {
         </Card>
 
         {/* Orders Auto-Expire Settings */}
-        <Card className="bg-gradient-card border-border">
+  <Card className="bg-gradient-card border-border">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <SettingsIcon className="h-5 w-5" />
@@ -340,7 +447,7 @@ const Settings = () => {
         </Card>
 
         {/* Bank Details / Payment Instructions (from vendor profile) */}
-        <Card className="bg-gradient-card border-border">
+  <Card id="banks" className="bg-gradient-card border-border">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <DollarSign className="h-5 w-5" />

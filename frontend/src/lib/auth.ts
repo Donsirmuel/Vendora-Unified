@@ -81,8 +81,10 @@ export async function login(credentials: LoginCredentials): Promise<LoginRespons
 
     return tokens;
   } catch (error: any) {
-    const message = error.response?.data?.detail || 
-                   Object.values(error.response?.data || {}).flat().join(', ') ||
+    const data = error?.response?.data;
+    const message = (typeof data?.detail === 'string' && data.detail) ||
+                   (data?.detail && typeof data.detail !== 'string' ? JSON.stringify(data.detail) : '') ||
+                   (data ? Object.values(data).flat().join(', ') : '') ||
                    'Login failed';
     throw new Error(message);
   }
@@ -93,8 +95,10 @@ export async function signup(credentials: SignupCredentials): Promise<SignupResp
     const response = await http.post<SignupResponse>('/api/v1/accounts/signup/', credentials);
     return response.data;
   } catch (error: any) {
-    const message = error.response?.data?.detail || 
-                   Object.values(error.response?.data || {}).flat().join(', ') ||
+    const data = error?.response?.data;
+    const message = (typeof data?.detail === 'string' && data.detail) ||
+                   (data?.detail && typeof data.detail !== 'string' ? JSON.stringify(data.detail) : '') ||
+                   (data ? Object.values(data).flat().join(', ') : '') ||
                    'Signup failed';
     throw new Error(message);
   }
@@ -105,7 +109,8 @@ export async function requestPasswordReset(data: PasswordResetRequest): Promise<
     const response = await http.post('/api/v1/accounts/password-reset/', data);
     return response.data;
   } catch (error: any) {
-    const message = error.response?.data?.detail || 'Failed to send reset email';
+    const data = error?.response?.data;
+    const message = (typeof data?.detail === 'string' && data.detail) || 'Failed to send reset email';
     throw new Error(message);
   }
 }
@@ -115,7 +120,8 @@ export async function confirmPasswordReset(data: PasswordResetConfirm): Promise<
     const response = await http.post('/api/v1/accounts/password-reset/confirm/', data);
     return response.data;
   } catch (error: any) {
-    const message = error.response?.data?.detail || 'Failed to reset password';
+    const data = error?.response?.data;
+    const message = (typeof data?.detail === 'string' && data.detail) || 'Failed to reset password';
     throw new Error(message);
   }
 }
@@ -138,7 +144,8 @@ export async function getVendorProfile(): Promise<VendorProfile> {
     const response = await http.get<VendorProfile>('/api/v1/accounts/vendors/me/');
     return response.data;
   } catch (error: any) {
-    const message = error.response?.data?.detail || 'Failed to fetch profile';
+    const data = error?.response?.data;
+    const message = (typeof data?.detail === 'string' && data.detail) || 'Failed to fetch profile';
     throw new Error(message);
   }
 }

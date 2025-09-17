@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Smartphone, Laptop, Tablet, Monitor } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { getErrorMessage } from "@/lib/errors";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -32,10 +33,10 @@ const Login = () => {
         className: "bg-success text-success-foreground"
       });
       navigate(from, { replace: true });
-    } catch (error: any) {
+  } catch (error: any) {
       toast({
         title: "Login Failed",
-        description: error.message || "Invalid credentials. Please try again.",
+    description: getErrorMessage(error, "Invalid credentials. Please try again."),
         className: "bg-destructive text-destructive-foreground"
       });
     } finally {
@@ -133,6 +134,11 @@ const Login = () => {
                     className="bg-background border-border"
                     disabled={isLoading}
                   />
+                </div>
+                <div className="flex items-center justify-end -mt-2">
+                  <Link to="/password-reset" className="text-sm text-primary hover:underline">
+                    Forgot password?
+                  </Link>
                 </div>
                 <Button
                   type="submit"

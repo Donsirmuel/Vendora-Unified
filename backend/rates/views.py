@@ -11,6 +11,15 @@ class RateViewSet(ModelViewSet):
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ["asset", "contract_address"]
     ordering_fields = ["asset"]
+    throttle_scope = 'user'
+
+    def get_throttles(self):  # type: ignore[override]
+        # For write operations (POST, PATCH, PUT, DELETE) use rate_write scope
+        if self.request and self.request.method in {"POST", "PATCH", "PUT", "DELETE"}:
+            self.throttle_scope = 'rate_write'
+        else:
+            self.throttle_scope = 'user'
+        return super().get_throttles()
     def get_queryset(self) -> QuerySet[Any]:
         from .models import Rate
 
@@ -26,7 +35,13 @@ class RateViewSet(ModelViewSet):
         return RateSerializer
 
     def perform_create(self, serializer):
-        serializer.save(vendor=self.request.user)
+        # Gracefully handle duplicate asset per vendor returning 400 instead of 500
+        from django.db import IntegrityError
+        from rest_framework.exceptions import ValidationError
+        try:
+            serializer.save(vendor=self.request.user)
+        except IntegrityError:
+            raise ValidationError({"asset": ["Rate for this asset already exists for this vendor."]})
 
     def perform_update(self, serializer):
         instance = self.get_object()

@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Vendora – Simple Crypto Vendor Suite</title>
+  <meta name="description" content="Vendora helps independent crypto vendors manage rates, orders, transactions & customer queries in one fast PWA." />
+  <link rel="canonical" href="https://vendora.page/" />
+  <!-- OpenGraph / Social -->
+  <meta property="og:site_name" content="Vendora" />
+  <meta property="og:title" content="Vendora – Simple Crypto Vendor Suite" />
+  <meta property="og:description" content="Manage crypto vendor operations: rates, orders, transactions, queries & Telegram notifications in one lightweight PWA." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://vendora.page/" />
+  <meta property="og:image" content="https://vendora.page/og-image.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Vendora – Crypto Vendor Suite" />
+  <meta name="twitter:description" content="All your vendor operations in one ultra‑light PWA." />
+  <meta name="twitter:image" content="https://vendora.page/og-image.png" />
+  <meta name="twitter:site" content="@vendora" />
+  <meta name="theme-color" content="#0ea5b7" />
+  <meta name="robots" content="index,follow" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root { --bg:#0f172a; --accent:#0ea5b7; --fg:#f1f5f9; --muted:#94a3b8; --danger:#ef4444; }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; background:var(--bg); color:var(--fg); -webkit-font-smoothing:antialiased; }
+    header { max-width:1100px; margin:0 auto; padding:20px 28px; display:flex; align-items:center; justify-content:space-between; }
+    nav a { color:var(--fg); text-decoration:none; font-size:14px; margin-left:28px; opacity:.85; transition:.2s; }
+    nav a:hover { opacity:1; }
+    .logo { font-weight:600; font-size:19px; letter-spacing:.5px; display:flex; align-items:center; }
+    .badge { background:rgba(255,255,255,.08); padding:4px 10px; border-radius:999px; font-size:12px; margin-left:10px; font-weight:500; }
+    .hero { max-width:1100px; margin:40px auto 70px; padding:0 28px; display:grid; grid-template-columns:repeat(auto-fit,minmax(420px,1fr)); align-items:center; gap:56px; }
+    h1 { font-size:clamp(2.4rem,5.2vw,3.6rem); line-height:1.05; margin:0 0 28px; background:linear-gradient(90deg,#fff,#7dd3fc); -webkit-background-clip:text; background-clip: text; color:transparent; }
+    p.lead { font-size:20px; line-height:1.5; max-width:600px; margin:0 0 32px; color:var(--muted); }
+    .cta-row { display:flex; flex-wrap:wrap; gap:16px; }
+    .btn { --btn-bg:var(--accent); background:var(--btn-bg); color:#041e28; padding:14px 28px; font-weight:600; font-size:15px; border:none; border-radius:10px; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; gap:8px; box-shadow:0 4px 16px -4px rgba(14,165,183,.45); transition:.25s; }
+    .btn:hover { transform:translateY(-2px); box-shadow:0 6px 22px -6px rgba(14,165,183,.55); }
+    .btn.secondary { --btn-bg:#1e293b; color:var(--fg); box-shadow:none; }
+    .btn.secondary:hover { background:#243552; }
+    .screen { background:#0b1322; border:1px solid #1e293b; padding:26px 26px 30px; border-radius:18px; box-shadow:0 20px 50px -18px rgba(0,0,0,.55); position:relative; overflow:hidden; }
+    .screen:before { content:''; position:absolute; inset:0; background:radial-gradient(circle at 85% 15%,rgba(14,165,183,.25),transparent 60%); opacity:.9; pointer-events:none; }
+    code { font-family:Source Code Pro,monospace; font-size:13px; color:#7dd3fc; }
+  ul.features { list-style:none; padding:0; margin:56px auto 40px; max-width:1050px; display:grid; gap:24px; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); }
+    ul.features li { background:#101e33; border:1px solid #1e2b42; padding:20px 20px 18px; border-radius:14px; position:relative; overflow:hidden; }
+    ul.features h3 { margin:0 0 8px; font-size:16px; letter-spacing:.5px; }
+    ul.features p { margin:0; font-size:14px; line-height:1.5; color:var(--muted); }
+  /* FAQ */
+  .faq { max-width:950px; margin:80px auto 20px; padding:0 28px; }
+  .faq h2 { font-size:32px; margin:0 0 28px; letter-spacing:.5px; }
+  .faq-item { background:#101e33; border:1px solid #1e2b42; padding:18px 20px 14px; border-radius:14px; margin-bottom:14px; }
+  .faq-item h3 { margin:0 0 8px; font-size:16px; }
+  .faq-item p { margin:0; font-size:14px; line-height:1.55; color:var(--muted); }
+    footer { max-width:1100px; margin:80px auto 40px; padding:0 28px; font-size:12.5px; color:var(--muted); display:flex; flex-wrap:wrap; gap:18px; align-items:center; justify-content:space-between; }
+    a.inline { color:#7dd3fc; text-decoration:none; }
+    a.inline:hover { text-decoration:underline; }
+    .tagline { font-size:13px; font-weight:500; letter-spacing:.5px; text-transform:uppercase; color:#7dd3fc; margin-bottom:18px; }
+    .pricing-teaser { font-size:14px; color:var(--muted); margin-top:14px; }
+    .pill { background:#1e293b; display:inline-block; padding:4px 10px; border-radius:999px; font-size:11px; letter-spacing:.5px; text-transform:uppercase; font-weight:600; margin-bottom:10px; color:#7dd3fc; }
+    .soon { color:#fbbf24; font-weight:600; }
+    @media (max-width:760px){ .hero { margin-top:10px; } header { padding:16px 20px; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo" aria-label="Vendora logo">Vendora <span class="badge">Beta</span></div>
+    <nav>
+      <a href="#features">Features</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#faq">FAQ</a>
+      <a href="https://app.vendora.page/signup?utm_source=landing&utm_medium=nav&utm_campaign=vendor_acq" class="inline">Sign Up</a>
+      <a href="https://app.vendora.page/login" class="inline">Login</a>
+    </nav>
+  </header>
+  <section class="hero">
+    <div>
+      <div class="tagline">Operate faster</div>
+      <h1>All your vendor operations—orders, rates, deals—in one ultra‑light PWA.</h1>
+      <p class="lead">Vendora centralizes P2P crypto vendor workflows: publish rates, accept customer orders, confirm transactions, push updates, answer queries & stream live activity—without heavyweight dashboards.</p>
+      <div class="cta-row">
+        <a class="btn" href="https://app.vendora.page/signup?utm_source=landing&utm_medium=hero&utm_campaign=vendor_acq">Start Free Trial →</a>
+        <a class="btn secondary" href="#features">See Features</a>
+      </div>
+      <div class="pricing-teaser">No card required • 14‑day trial • Keep your data</div>
+    </div>
+    <div class="screen">
+<pre><code>POST /api/v1/orders
+201 Created  ⏱ 142ms
+
+stream: vendor_events
+  - order.created
+  - rate.updated
+  - transaction.completed
+</code></pre>
+    </div>
+  </section>
+
+  <ul class="features" id="features">
+    <li><h3>Straightforward Rates</h3><p>Quickly publish buy & sell rates; prevent duplicates automatically.</p></li>
+    <li><h3>Order Lifecycle</h3><p>Create, accept, complete or decline — with automatic expiry handling.</p></li>
+    <li><h3>Transaction Proofs</h3><p>Attach and view confirmation proofs & export PDF summaries.</p></li>
+    <li><h3>Live Event Stream</h3><p>Server-Sent Events push updates instantly to every open session.</p></li>
+    <li><h3>Web Push</h3><p>Optional push notifications for critical order & transaction events.</p></li>
+    <li><h3>Telegram Bot</h3><p>Get order alerts or resolve queries directly inside Telegram.</p></li>
+    <li><h3>Customer Queries</h3><p>Track and close customer inquiries with vendor-scoped access.</p></li>
+    <li><h3>Secure & Throttled</h3><p>JWT auth, per-user rate limits, structured logs and request IDs.</p></li>
+  </ul>
+
+  <section id="pricing" style="max-width:900px;margin:30px auto 0;padding:0 28px;">
+    <span class="pill">Pricing (Preview)</span>
+    <p style="font-size:15px;line-height:1.6;color:var(--muted);max-width:720px;">During beta your first <strong>14 days are free</strong>. Afterwards choose a simple monthly plan (coming soon). Need volume pricing? <a class="inline" href="mailto:hello@vendora.page?subject=Vendora%20Early%20Access">Contact us</a>.</p>
+  </section>
+
+  <section class="faq" id="faq" aria-labelledby="faq-heading">
+    <h2 id="faq-heading">Frequently Asked Questions</h2>
+    <div class="faq-item">
+      <h3>What is Vendora?</h3>
+      <p>Vendora is a lightweight platform for independent crypto vendors to manage rates, customer orders, transactions, proofs, and queries with optional Telegram notifications & real‑time streaming updates.</p>
+    </div>
+    <div class="faq-item">
+      <h3>How does the free trial work?</h3>
+      <p>You get access to all core features during the trial (no card required). Near expiry you’ll see reminders. After it ends, actions that create new orders may be gated until you activate a plan.</p>
+    </div>
+    <div class="faq-item">
+      <h3>Do I need to install anything?</h3>
+      <p>No. Vendora runs as a progressive web app in your browser. You can optionally “Install” it from your browser menu for an app‑like experience.</p>
+    </div>
+    <div class="faq-item">
+      <h3>How do I receive notifications?</h3>
+      <p>Enable web push in the dashboard for browser alerts or connect your Telegram username to receive bot messages for key events like new orders or completed transactions.</p>
+    </div>
+    <div class="faq-item">
+      <h3>Is my data secure?</h3>
+      <p>All API requests use JWT authentication, endpoints are rate‑limited, and structured logging plus health checks help monitor stability. Future updates will add stronger security headers & optional audit exports.</p>
+    </div>
+  </section>
+
+  <footer>
+    <div>© <span id="year"></span> Vendora. All rights reserved.</div>
+    <div><a class="inline" href="/legal/terms.html">Terms</a> • <a class="inline" href="/legal/privacy.html">Privacy</a> • <a class="inline" href="mailto:hello@vendora.page">Contact</a></div>
+  </footer>
+  <script>
+    document.getElementById('year').textContent=new Date().getFullYear();
+  </script>
+  <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"SoftwareApplication","name":"Vendora","applicationCategory":"FinanceApplication","operatingSystem":"Web","description":"Lightweight crypto vendor operations suite (rates, orders, transactions, queries, Telegram integration).","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
+  </script>
+</body>
+</html>

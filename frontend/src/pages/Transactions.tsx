@@ -8,6 +8,7 @@ import { Search, RefreshCw } from "lucide-react";
 import { http } from "@/lib/http";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { connectSSE } from "@/lib/sse";
 
 type ApiTransaction = {
   id: number;
@@ -33,12 +34,24 @@ const Transactions = () => {
   const [items, setItems] = useState<ApiTransaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [status, setStatus] = useState<string>("");
+  const [completedToday, setCompletedToday] = useState<number>(0);
 
   const load = async () => {
     try {
       setLoading(true);
-      const res = await http.get<ListResponse>("/api/v1/transactions/");
+      const url = new URL("/api/v1/transactions/", (import.meta as any).env?.VITE_API_BASE || "http://127.0.0.1:8000");
+      if (status) url.searchParams.set("status", status);
+      const res = await http.get<ListResponse>(`${url.pathname}${url.search}`);
       setItems(res.data.results || []);
+      // Compute completed today quickly from current page (informational)
+      if (status === "completed" || !status) {
+        const today = new Date().toISOString().slice(0,10);
+        const count = (res.data.results || []).filter(t => t.completed_at && String(t.completed_at).slice(0,10) === today).length;
+        setCompletedToday(count);
+      } else {
+        setCompletedToday(0);
+      }
     } catch (e) {
       setItems([]);
     } finally {
@@ -48,7 +61,15 @@ const Transactions = () => {
 
   useEffect(() => {
     load();
-  }, []);
+    const sub = connectSSE('/api/v1/stream/', {
+      onMessage: (ev) => {
+        if (ev.type === 'snapshot') {
+          load();
+        }
+      },
+    });
+    return () => sub.close();
+  }, [status]);
 
   const filtered = items.filter((t) => {
     const q = search.toLowerCase();
@@ -74,6 +95,18 @@ const Transactions = () => {
   return (
     <Layout title="Transactions">
       <div className="space-y-6">
+        {/* Quick stats */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm">Completed Today</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{completedToday}</div>
+              <div className="text-xs text-muted-foreground">Count from current view</div>
+            </CardContent>
+          </Card>
+        </div>
         <Card>
           <CardHeader className="flex items-center justify-between">
             <CardTitle>Transactions</CardTitle>
@@ -83,6 +116,20 @@ const Transactions = () => {
             </Button>
           </CardHeader>
           <CardContent>
+            {/* Status filters */}
+            <div className="flex flex-wrap gap-2 mb-4">
+              {[
+                { key: "", label: "All" },
+                { key: "uncompleted", label: "Uncompleted" },
+                { key: "completed", label: "Completed" },
+                { key: "declined", label: "Declined" },
+                { key: "expired", label: "Expired" },
+              ].map(tab => (
+                <Button key={tab.key || 'all'} size="sm" variant={status === tab.key ? "default" : "outline"} onClick={() => setStatus(tab.key)}>
+                  {tab.label}
+                </Button>
+              ))}
+            </div>
             <div className="max-w-md relative mb-4">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input

@@ -4,10 +4,11 @@ from datetime import timedelta
 from .models import Vendor
 
 
+
 @admin.register(Vendor)
 class VendorAdmin(admin.ModelAdmin):
-	list_display = ("email", "name", "plan", "is_trial", "is_service_active", "trial_expires_at", "plan_expires_at")
-	search_fields = ("email", "name", "external_vendor_id")
+	list_display = ("email", "name", "telegram_username", "plan", "is_trial", "is_service_active", "trial_expires_at", "plan_expires_at")
+	search_fields = ("email", "name", "external_vendor_id", "telegram_username")
 	list_filter = ("is_trial", "plan", "is_service_active")
 	actions = ("start_5_day_trial", "activate_monthly", "activate_yearly", "activate_perpetual", "revoke_service", "generate_external_ids")
 

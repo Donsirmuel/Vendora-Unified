@@ -24,6 +24,22 @@ export default tseslint.config(
         { allowConstantExport: true },
       ],
       "@typescript-eslint/no-unused-vars": "off",
+      // Relax strictness to reduce noise; we still surface as warnings
+      "@typescript-eslint/no-explicit-any": "warn",
+      "@typescript-eslint/no-empty-object-type": "warn",
+      "no-empty": ["warn", { allowEmptyCatch: true }],
+      "@typescript-eslint/ban-ts-comment": [
+        "warn",
+        { "ts-expect-error": "allow-with-description", minimumDescriptionLength: 3 }
+      ],
+    },
+    settings: {},
+  },
+  // File-specific overrides
+  {
+    files: ["tailwind.config.ts"],
+    rules: {
+      "@typescript-eslint/no-require-imports": "off",
     },
   }
 );

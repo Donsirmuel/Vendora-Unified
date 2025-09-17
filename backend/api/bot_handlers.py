@@ -1,27 +1,97 @@
 from typing import Dict, Any, Tuple, Optional
+from django.core.cache import cache
 from django.urls import reverse
 from django.conf import settings
 from .telegram_service import TelegramBotService
 
 
 def create_inline_keyboard(buttons: list) -> dict:
-    """Create inline keyboard markup for Telegram."""
+    """Create inline keyboard markup for Telegram.
+    Supports both callback buttons and URL buttons (if 'url' provided).
+    """
     keyboard = []
     for row in buttons:
         keyboard_row = []
         for button in row:
-            keyboard_row.append({
-                "text": button["text"],
-                "callback_data": button["callback_data"]
-            })
+            btn = {"text": button["text"]}
+            if "url" in button and button["url"]:
+                btn["url"] = button["url"]
+            else:
+                btn["callback_data"] = button.get("callback_data", "noop")
+            keyboard_row.append(btn)
         keyboard.append(keyboard_row)
-    
+
     return {"inline_keyboard": keyboard}
 
 
-def handle_start_command() -> Tuple[str, dict]:
-    """Handle /start command with Buy/Sell/Query buttons."""
-    text = "Welcome to Vendora Bot! 🚀\n\nWhat would you like to do today?"
+def handle_start_command(vendor_id: Optional[int] = None) -> Tuple[str, dict]:
+    """Handle /start command with personalization, trust signal, and Contact Vendor button."""
+    vendor_name = "your vendor"
+    vendor_contact_btn = None
+    trust_snippet = ""
+    bio_snippet = ""
+    extras_snippet = ""
+    try:
+        if vendor_id:
+            from accounts.models import Vendor
+            from transactions.models import Transaction
+            from typing import Any, cast
+            v = cast(Any, Vendor).objects.only('id','name','bio','telegram_username').filter(id=vendor_id).first()
+            if v:
+                vendor_name = getattr(v, "name", vendor_name) or vendor_name
+                # Cached trust stats
+                cache_key = f"vendor:{v.id}:trust_stats:v1"
+                cached = cache.get(cache_key)
+                if cached and isinstance(cached, dict):
+                    success_count = int(cached.get('success_count') or 0)
+                    avg_minutes = cached.get('avg_minutes')
+                else:
+                    success_count = cast(Any, Transaction).objects.filter(order__vendor=v, status="completed").count()
+                    # Compute avg release minutes with DB aggregate then fallback
+                    avg_minutes: Optional[int] = None
+                    try:
+                        from django.db.models import Avg, F, ExpressionWrapper, DurationField
+                        qs = cast(Any, Transaction).objects.filter(order__vendor=v, status="completed").exclude(vendor_completed_at__isnull=True).exclude(order__accepted_at__isnull=True)
+                        delta_expr = ExpressionWrapper(F('vendor_completed_at') - F('order__accepted_at'), output_field=DurationField())
+                        delta = qs.aggregate(avg=Avg(delta_expr)).get('avg')
+                        if delta:
+                            avg_minutes = max(1, int(delta.total_seconds() // 60))
+                    except Exception:
+                        vals = list(cast(Any, Transaction).objects.filter(order__vendor=v, status="completed").values_list('vendor_completed_at', 'order__accepted_at')[:100])
+                        diffs = []
+                        for done, acc in vals:
+                            try:
+                                if done and acc:
+                                    diffs.append((done - acc).total_seconds())
+                            except Exception:
+                                pass
+                        if diffs:
+                            avg_minutes = max(1, int((sum(diffs) / len(diffs)) // 60))
+                    cache.set(cache_key, {"success_count": success_count, "avg_minutes": avg_minutes}, 300)
+
+                if success_count:
+                    trust_snippet = f"\n{vendor_name} has completed {success_count} successful transactions here."
+                bio = (getattr(v, "bio", "") or "").strip()
+                if bio:
+                    bio_snippet = f"\n“{bio[:140]}”"
+                if locals().get('avg_minutes'):
+                    extras_snippet = f"\n\nWhy trade here?\n• Verified vendor\n• {success_count} successful trades\n• Typical release ~{locals()['avg_minutes']}m"
+                tg_user = (getattr(v, "telegram_username", "") or "").lstrip("@")
+                if tg_user:
+                    vendor_contact_btn = {"text": "📨 Contact Vendor", "url": f"https://t.me/{tg_user}"}
+    except Exception:
+        pass
+
+    # Wording: when we know the vendor, use "your <name> bot"; otherwise keep generic
+    if vendor_id and vendor_name and vendor_name != "your vendor":
+        # Use possessive properly: add 's unless name already ends with ' or s'
+        possessive = (
+            f"{vendor_name}'" if str(vendor_name).endswith("s") and not str(vendor_name).endswith("s'") else f"{vendor_name}'s"
+        )
+        header = f"Welcome to Vendora — your {possessive} bot! 🚀"
+    else:
+        header = "Welcome to Vendora — your vendor bot! 🚀"
+    text = f"{header}\n\nWhat would you like to do today?{trust_snippet}{bio_snippet}{extras_snippet}"
     
     buttons = [
         [
@@ -29,17 +99,30 @@ def handle_start_command() -> Tuple[str, dict]:
             {"text": "💰 Sell", "callback_data": "sell"}
         ],
         [
-            {"text": "❓ Query", "callback_data": "query"}
+            {"text": "📊 Check Order Status", "callback_data": "check_order"},
+            {"text": "❓ Help", "callback_data": "help"}
         ]
     ]
+    # Insert contact button if available
+    if vendor_contact_btn:
+        buttons.insert(1, [vendor_contact_btn])
     
     reply_markup = create_inline_keyboard(buttons)
     return text, reply_markup
 
 
-def handle_help_command() -> Tuple[str, dict]:
-    """Handle /help command with available options."""
-    text = "Available commands:\n\n" \
+def handle_help_command(vendor_id: Optional[int] = None) -> Tuple[str, dict]:
+    """Handle /help command, personalize if vendor is known."""
+    prefix = "This bot connects you with your vendor on Vendora."
+    try:
+        if vendor_id:
+            from accounts.models import Vendor
+            v = Vendor.objects.filter(id=vendor_id).first()
+            if v:
+                prefix = f"You're chatting with {v.name}'s Vendora bot."
+    except Exception:
+        pass
+    text = prefix + "\n\nAvailable commands:\n\n" \
            "🛒 Buy - Purchase assets\n" \
            "💰 Sell - Sell your assets\n" \
            "❓ Query - Ask questions\n" \
@@ -55,6 +138,9 @@ def handle_help_command() -> Tuple[str, dict]:
         [
             {"text": "❓ Query", "callback_data": "query"},
             {"text": "📊 Assets", "callback_data": "assets"}
+        ],
+        [
+            {"text": "🏠 Main Menu", "callback_data": "back_to_menu"}
         ]
     ]
     
@@ -70,8 +156,10 @@ def handle_callback_query(data: str, vendor_id: Optional[int] = None, chat_id: O
         return handle_sell_command(vendor_id)
     elif data == "query":
         return handle_query_command()
+    elif data == "help":
+        return handle_help_command(vendor_id)
     elif data == "assets":
-        return handle_assets(), {}
+        return handle_assets_panel()
     elif data.startswith("asset_"):
         # asset_{type}_{asset}
         parts = data.split("_", 2)
@@ -130,36 +218,79 @@ def handle_callback_query(data: str, vendor_id: Optional[int] = None, chat_id: O
                 bu.save(update_fields=["state", "temp_asset", "temp_type"])
             except Exception:
                 pass
-            return (f"Please enter the amount you want to {order_type} for {asset}.", None)
+            # Provide a Cancel option specific to the awaiting_amount step
+            buttons = [
+                [
+                    {"text": "❌ Cancel", "callback_data": "cancel_amount"},
+                    {"text": "🏠 Main Menu", "callback_data": "back_to_menu"}
+                ]
+            ]
+            return (f"Please enter the amount you want to {order_type} for {asset}.", create_inline_keyboard(buttons))
         return ("Invalid request. Try again.", None)
+    elif data == "cancel_amount" and chat_id:
+        # Only cancel the amount-entry flow; clear awaiting_amount state and related temp fields
+        try:
+            from .models import BotUser
+            from typing import Any, cast
+            bu = cast(Any, BotUser)._default_manager.filter(chat_id=str(chat_id)).first()
+            if bu and getattr(bu, "state", "") == "awaiting_amount":
+                bu.state = ""
+                # Clear amount-related temp fields only
+                bu.temp_asset = ""
+                bu.temp_type = ""
+                bu.save(update_fields=["state", "temp_asset", "temp_type"])
+        except Exception:
+            pass
+        # Go back to main menu after canceling amount input
+        return handle_start_command()
+    elif data.startswith("repeat_"):
+        # repeat_{asset}_{order_type}_{amount}
+        try:
+            _, asset, order_type, amount = data.split("_", 3)
+        except ValueError:
+            return ("Couldn't parse repeat request. Please start a new trade.", None)
+        return handle_amount_confirmation(asset, order_type, amount, vendor_id, chat_id)
     elif data.startswith("confirm_"):
         # Parse: confirm_{order_id}_{asset}_{order_type}_{amount}_{vendor_id}
         return handle_order_creation(data, chat_id)
     elif data == "cancel_order":
         return handle_order_cancelled()
+    elif data == "check_order":
+        return handle_check_order(chat_id)
+    elif data == "general_question":
+        return handle_general_question(chat_id, vendor_id)
     elif data == "back_to_menu":
         return handle_start_command()
+    elif data.startswith("contact_vendor@"):  # open DM link instruction
+        handle = data.replace("contact_vendor@", "").lstrip("@")
+        url = f"https://t.me/{handle}" if handle else "https://t.me/"
+        return (f"You can contact the vendor directly here: {url}", None)
     else:
         return "Unknown action. Please try again.", {}
 
 
 def handle_buy_command(vendor_id: Optional[int] = None) -> Tuple[str, dict]:
     """Handle buy command with dynamic asset selection from database."""
-    text = "What would you like to buy? Select an asset:"
+    vendor_label = ""
+    if vendor_id:
+        try:
+            from accounts.models import Vendor
+            v = Vendor.objects.filter(id=vendor_id).first()
+            if v:
+                vendor_label = f" from {v.name}"
+        except Exception:
+            pass
+    text = f"What would you like to buy{vendor_label}? Select an asset:"
     
     # Fetch available assets from the database
     from rates.models import Rate
     from typing import Any, cast
     
     if vendor_id:
-        # Get assets for specific vendor
-        rates_qs = cast(Any, Rate).objects.filter(vendor_id=vendor_id)
+        rates_qs = cast(Any, Rate).objects.only('asset').filter(vendor_id=vendor_id)
     else:
-        # Get all available assets (fallback)
-        rates_qs = cast(Any, Rate).objects.all()
-    
-    # Get unique assets
-    assets = rates_qs.values_list('asset', flat=True).distinct()
+        rates_qs = cast(Any, Rate).objects.only('asset')
+    assets = list(rates_qs.values_list('asset', flat=True).distinct())
     
     buttons = []
     # Create dynamic buttons for available assets
@@ -179,21 +310,26 @@ def handle_buy_command(vendor_id: Optional[int] = None) -> Tuple[str, dict]:
 
 def handle_sell_command(vendor_id: Optional[int] = None) -> Tuple[str, dict]:
     """Handle sell command with dynamic asset selection from database."""
-    text = "What would you like to sell? Select an asset:"
+    vendor_label = ""
+    if vendor_id:
+        try:
+            from accounts.models import Vendor
+            v = Vendor.objects.filter(id=vendor_id).first()
+            if v:
+                vendor_label = f" to {v.name}"
+        except Exception:
+            pass
+    text = f"What would you like to sell{vendor_label}? Select an asset:"
     
     # Fetch available assets from the database
     from rates.models import Rate
     from typing import Any, cast
     
     if vendor_id:
-        # Get assets for specific vendor
-        rates_qs = cast(Any, Rate).objects.filter(vendor_id=vendor_id)
+        rates_qs = cast(Any, Rate).objects.only('asset').filter(vendor_id=vendor_id)
     else:
-        # Get all available assets (fallback)
-        rates_qs = cast(Any, Rate).objects.all()
-    
-    # Get unique assets
-    assets = rates_qs.values_list('asset', flat=True).distinct()
+        rates_qs = cast(Any, Rate).objects.only('asset')
+    assets = list(rates_qs.values_list('asset', flat=True).distinct())
     
     buttons = []
     # Create dynamic buttons for available assets
@@ -223,7 +359,8 @@ def handle_query_command() -> Tuple[str, dict]:
             {"text": "❓ General Question", "callback_data": "general_question"}
         ],
         [
-            {"text": "🔙 Back to Menu", "callback_data": "back_to_menu"}
+                {"text": "🔙 Back", "callback_data": "help"},
+                {"text": "🏠 Main Menu", "callback_data": "back_to_menu"}
         ]
     ]
     
@@ -241,7 +378,7 @@ def handle_asset_selection(asset: str, order_type: str = "buy", vendor_id: Optio
     extra_info = ""
     if vendor_id:
         try:
-            rate = cast(Any, Rate).objects.get(vendor_id=vendor_id, asset=asset)
+            rate = cast(Any, Rate).objects.only('buy_rate','sell_rate','bank_details','contract_address').get(vendor_id=vendor_id, asset=asset)
             if order_type == "buy":
                 rate_info = f"Buy Rate: ₦{rate.buy_rate:,.2f} per {asset}"
                 if rate.bank_details:
@@ -260,7 +397,8 @@ def handle_asset_selection(asset: str, order_type: str = "buy", vendor_id: Optio
             {"text": "❌ Cancel", "callback_data": "back_to_menu"}
         ],
         [
-            {"text": "🔙 Back to Assets", "callback_data": order_type}
+                {"text": "🔙 Back", "callback_data": order_type},
+                {"text": "🏠 Main Menu", "callback_data": "back_to_menu"}
         ]
     ]
     
@@ -351,6 +489,21 @@ def handle_order_creation(callback_data: str, chat_id: Optional[str] = None) -> 
             
             # Get vendor
             vendor = cast(Any, Vendor).objects.get(id=int(vendor_id))
+            # Respect availability and service gating
+            from django.utils import timezone
+            now = timezone.now()
+            if getattr(vendor, "is_available", True) is False:
+                msg = getattr(vendor, "unavailable_message", "Vendor is currently unavailable.") or "Vendor is currently unavailable."
+                return (msg, {})
+            if not getattr(vendor, "is_service_active", True):
+                return ("Vendor service inactive. Please contact the vendor.", {})
+            tea = getattr(vendor, "trial_expires_at", None)
+            if getattr(vendor, "is_trial", False) and tea and tea < now:
+                return ("Vendor trial expired. Please contact the vendor.", {})
+            if getattr(vendor, "plan", "trial") not in {"trial", "perpetual"}:
+                pea = getattr(vendor, "plan_expires_at", None)
+                if pea and pea < now:
+                    return ("Vendor subscription expired. Please contact the vendor.", {})
             
             # Create order in database
             order = cast(Any, Order).objects.create(
@@ -385,6 +538,13 @@ def handle_order_creation(callback_data: str, chat_id: Optional[str] = None) -> 
                 bu.temp_amount = amount
                 bu.save(update_fields=["state", "temp_order_id", "temp_type", "temp_asset", "temp_amount"])
             except BotUser.DoesNotExist:
+                pass
+
+            # Push notify vendor about new pending order (bot-created)
+            try:
+                from notifications.views import send_web_push_to_vendor as _send_push
+                _send_push(vendor, "New pending order", f"Order {order.order_code or order.pk} created", url="/orders")
+            except Exception:
                 pass
 
             text = f"""
@@ -440,30 +600,46 @@ def handle_order_cancelled() -> Tuple[str, dict]:
     return text, reply_markup
 
 
-def handle_check_order() -> Tuple[str, dict]:
-    """Handle order status check."""
-    text = "To check your order status, please provide your order ID or contact support."
-    
+def handle_check_order(chat_id: Optional[str] = None) -> Tuple[str, dict]:
+    """Handle order status check: set state and prompt for code/ID."""
+    if chat_id:
+        try:
+            from .models import BotUser
+            bu = BotUser._default_manager.filter(chat_id=str(chat_id)).first()
+            if bu:
+                bu.state = "awaiting_order_status"
+                # Clear previous temp order context to avoid confusion
+                bu.temp_order_id = ""
+                bu.save(update_fields=["state", "temp_order_id"])
+        except Exception:
+            pass
+    text = "Please enter your Order ID or Code (e.g., ORD-..., or a numeric ID)."
     buttons = [
         [
             {"text": "🏠 Back to Main Menu", "callback_data": "back_to_menu"}
         ]
     ]
-    
     reply_markup = create_inline_keyboard(buttons)
     return text, reply_markup
 
 
-def handle_general_question() -> Tuple[str, dict]:
-    """Handle general questions."""
-    text = "For general questions, please contact our support team or use the PWA interface."
-    
+def handle_general_question(chat_id: Optional[str] = None, vendor_id: Optional[int] = None) -> Tuple[str, dict]:
+    """Start general question flow by setting state and prompting for the question."""
+    if chat_id:
+        try:
+            from .models import BotUser
+            bu = BotUser._default_manager.filter(chat_id=str(chat_id)).first()
+            if bu:
+                bu.state = "awaiting_general_question"
+                bu.save(update_fields=["state"])
+        except Exception:
+            pass
+    text = "Please type your question. After that, I'll ask for your contact so the vendor can reach you."
     buttons = [
         [
             {"text": "🏠 Back to Main Menu", "callback_data": "back_to_menu"}
         ]
     ]
-    
     reply_markup = create_inline_keyboard(buttons)
     return text, reply_markup
 
@@ -481,6 +657,18 @@ def handle_assets() -> str:
         return "No assets available yet."
     listing = "\n".join(sorted(set(assets)))
     return f"Available assets:\n{listing}"
+
+
+def handle_assets_panel() -> Tuple[str, dict]:
+    """Assets list with navigation buttons for the callback flow."""
+    text = handle_assets()
+    buttons = [
+        [
+            {"text": "🔙 Back", "callback_data": "help"},
+            {"text": "🏠 Main Menu", "callback_data": "back_to_menu"}
+        ]
+    ]
+    return text, create_inline_keyboard(buttons)
 
 
 def handle_rate(asset_symbol: str) -> str:

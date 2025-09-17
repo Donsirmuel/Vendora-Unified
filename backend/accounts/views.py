@@ -11,6 +11,46 @@ from rest_framework import status
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import CustomTokenObtainPairSerializer
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
+from django.utils import timezone
+
+def compute_onboarding(vendor: Vendor):
+    """Derive onboarding steps dynamically (no persistence yet)."""
+    # Step definitions (id, label, done flag, optional url slug)
+    steps = []
+    # 1 Profile completeness (name + optional bio or telegram)
+    profile_done = bool(vendor.name and vendor.name.strip())
+    steps.append({"id": "profile", "label": "Complete profile", "done": profile_done})
+    # 2 Set at least one active rate
+    try:
+        from rates.models import Rate  # type: ignore
+        has_rate = Rate.objects.filter(vendor=vendor).exists()
+    except Exception:
+        has_rate = False
+    steps.append({"id": "rates", "label": "Add first rate", "done": has_rate})
+    # 3 First order placed or received
+    try:
+        from orders.models import Order  # type: ignore
+        has_order = Order.objects.filter(vendor=vendor).exists()
+    except Exception:
+        has_order = False
+    steps.append({"id": "order", "label": "Process first order", "done": has_order})
+    # 4 Enable web push (placeholder: check any push subscription if model exists)
+    push_enabled = False
+    try:
+        from notifications.models import PushSubscription  # type: ignore
+        push_enabled = PushSubscription.objects.filter(vendor=vendor, is_active=True).exists()
+    except Exception:
+        push_enabled = False
+    steps.append({"id": "push", "label": "Enable browser notifications", "done": push_enabled})
+    # 5 Telegram connected (telegram_username or external id usable)
+    from django.conf import settings
+    telegram_connected = bool(vendor.telegram_username or getattr(settings, 'TELEGRAM_BOT_TOKEN', ''))
+    steps.append({"id": "telegram", "label": "Connect Telegram bot", "done": telegram_connected})
+
+    total = len(steps)
+    completed = sum(1 for s in steps if s["done"])
+    pct = int((completed / total) * 100) if total else 0
+    return {"steps": steps, "completed": completed, "total": total, "percent": pct}
 
 
 class VendorViewSet(ModelViewSet):
@@ -75,6 +115,16 @@ class VendorViewSet(ModelViewSet):
             return Response({"detail": "Failed to update availability"}, status=status.HTTP_400_BAD_REQUEST)
         serializer = self.get_serializer(user)
         return Response(serializer.data)
+
+    @action(detail=False, methods=["get"], url_path="onboarding")
+    def onboarding(self, request):
+        """Return dynamic onboarding checklist for the authenticated vendor.
+
+        GET /api/v1/accounts/vendors/onboarding/
+        """
+        vendor = request.user
+        data = compute_onboarding(vendor)
+        return Response(data)
 
 
 class BankDetailViewSet(ModelViewSet):
@@ -181,3 +231,4 @@ class BroadcastMessageViewSet(ModelViewSet):
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
+    throttle_scope = 'auth_burst'

@@ -86,8 +86,14 @@ class NotificationViewSet(ModelViewSet):
             logger.exception("Failed to send test push: %s", e)
             return Response({"detail": "Failed to send test push"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+    @action(detail=False, methods=["get"], url_path="subscriptions")
+    def list_subscriptions(self, request):
+        """Return current vendor's stored push subscription endpoints (for debugging)."""
+        subs = PushSubscription.objects.filter(vendor=request.user).values("endpoint", "created_at", "user_agent")
+        return Response({"results": list(subs)})
 
-def send_web_push_to_vendor(vendor, title: str, message: str):
+
+def send_web_push_to_vendor(vendor, title: str, message: str, url: str | None = None, icon: str | None = None):
     subs = PushSubscription.objects.filter(vendor=vendor)
     # Build VAPID claims, accepting either plain email or pre-prefixed "mailto:..."
     sub = getattr(settings, "VAPID_EMAIL", "admin@example.com")
@@ -102,6 +108,10 @@ def send_web_push_to_vendor(vendor, title: str, message: str):
         "vapid_claims": {"sub": sub},
     }
     payload = {"title": title, "message": message}
+    if url:
+        payload["url"] = url
+    if icon:
+        payload["icon"] = icon
     success, failed = 0, 0
     for sub in subs:
         try:
@@ -116,7 +126,19 @@ def send_web_push_to_vendor(vendor, title: str, message: str):
             success += 1
         except WebPushException as wpe:
             failed += 1
-            logger.warning("WebPush failed for %s: %s", sub.endpoint, getattr(wpe, 'message', wpe))
+            # Prune subscriptions that are gone/invalid
+            status_code = None
+            try:
+                status_code = getattr(getattr(wpe, "response", None), "status_code", None)
+            except Exception:
+                status_code = None
+            if status_code in (401, 403, 404, 410):
+                try:
+                    sub.delete()
+                except Exception:
+                    pass
+            else:
+                logger.warning("WebPush failed for %s: %s", sub.endpoint, getattr(wpe, 'message', wpe))
         except Exception as e:
             failed += 1
             logger.exception("Unexpected error sending web push: %s", e)

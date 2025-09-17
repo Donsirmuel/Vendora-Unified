@@ -29,6 +29,27 @@
 - Rates: `/api/v1/rates/`
 - Transactions: `/api/v1/transactions/`
 
+### Transaction Lifecycle & Completion Rules
+
+Transaction statuses:
+
+| Status | Meaning | Allowed Next |
+|--------|---------|--------------|
+| uncompleted | Created; awaiting action | completed, declined, expired |
+| completed | Fully settled (timestamps set) | (terminal) |
+| declined | Vendor declined; trade not proceeding | (terminal) |
+| expired | Auto-expired based on TTL | (terminal) |
+
+Declined transactions are immutable: attempting to call `POST /api/v1/transactions/{id}/complete/` on a declined transaction returns HTTP 400.
+
+`POST /api/v1/transactions/{id}/complete/` body fields:
+* `status`: `completed` or `declined` (required)
+* `proof`: optional file upload stored in `proof`
+* `vendor_proof`: optional file upload stored separately in `vendor_proofs/`
+
+If `status=completed` the endpoint stamps `vendor_completed_at` (and `completed_at` if not already set) and may update the parent order to completed when appropriate.
+
+
 ## Testing
 
 Run backend tests: `pytest`

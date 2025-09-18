@@ -76,22 +76,18 @@ class VendorRegistrationSerializer(serializers.ModelSerializer):
         vendor.external_vendor_id = username
         vendor.set_password(password)
         # Initialize trial automatically if not explicitly disabled
-        try:
-            from django.utils import timezone
-            from django.conf import settings
-            from datetime import timedelta
-            if getattr(vendor, 'is_trial', True) and not vendor.trial_started_at and not vendor.trial_expires_at:
+        from django.utils import timezone
+        from django.conf import settings
+        from datetime import timedelta
+        if getattr(vendor, 'is_trial', True) and not vendor.trial_started_at and not vendor.trial_expires_at:
                 now = timezone.now()
                 days = int(getattr(settings, 'TRIAL_DAYS', 14) or 14)
-                vendor.trial_started_at = now
-                vendor.trial_expires_at = now + timedelta(days=days)
+                vendor.trial_started_at = now  # type: ignore[assignment]
+                vendor.trial_expires_at = now + timedelta(days=days)  # type: ignore[assignment]
                 vendor.plan = 'trial'
-                vendor.is_service_active = True
-        except Exception:
-            pass
+                vendor.is_service_active = True  # type: ignore[assignment]
         vendor.save()
         return vendor
-
 
 class VendorSerializer(serializers.ModelSerializer):
     """Serializer for Vendor accounts with explicit, safe fields."""
@@ -271,3 +267,39 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
         except ValidationError as e:
             raise serializers.ValidationError(list(e.messages))
         return value
+
+
+class PlanUpgradeSerializer(serializers.Serializer):
+    """Serializer to handle plan upgrades from trial to a paid tier.
+
+    Supports: monthly, yearly, perpetual. Optional explicit duration override.
+    """
+    plan = serializers.ChoiceField(choices=[('monthly','Monthly'),('yearly','Yearly'),('perpetual','Perpetual')])
+    duration_days = serializers.IntegerField(required=False, min_value=1, max_value=400)
+
+    def validate(self, attrs):
+        plan = attrs['plan']
+        if plan == 'perpetual' and attrs.get('duration_days') is not None:
+            raise serializers.ValidationError({'duration_days': 'Do not specify duration for perpetual plan.'})
+        return attrs
+
+    def save(self, **kwargs):  # type: ignore[override]
+        vendor: Vendor = self.context['request'].user  # type: ignore[assignment]
+        if not isinstance(self.validated_data, dict) or 'plan' not in self.validated_data:
+            raise serializers.ValidationError({'plan': 'Plan is required.'})
+        plan = self.validated_data['plan']
+        duration_days = self.validated_data.get('duration_days')
+        # Prevent downgrading to trial via this path
+        if plan == 'trial':
+            raise serializers.ValidationError({'plan': 'Cannot downgrade to trial via upgrade endpoint.'})
+        # Idempotent if already on plan (non-trial)
+        if vendor.plan == plan and not vendor.is_trial:
+            return vendor
+        if plan != 'perpetual' and duration_days is None:
+            from django.conf import settings
+            if plan == 'monthly':
+                duration_days = int(getattr(settings, 'PLAN_DAYS_MONTHLY', 30))
+            elif plan == 'yearly':
+                duration_days = int(getattr(settings, 'PLAN_DAYS_YEARLY', 365))
+        vendor.set_plan(plan, duration_days=duration_days)
+        return vendor

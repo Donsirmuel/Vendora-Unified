@@ -103,8 +103,8 @@ def telegram_webhook(request):
                             if allowed:
                                 bot_user.vendor = vendor
                                 bot_user.save(update_fields=["vendor"])
-                        except Vendor.DoesNotExist:
-                            pass
+                        except Exception as vendor_exc:
+                            logger.warning(f"Failed to link BotUser to Vendor: {vendor_exc}")
 
                 except Exception as e:
                     logger.error(f"Failed to update or create BotUser: {e}")
@@ -160,10 +160,7 @@ def telegram_webhook(request):
                             reply_markup = None
                         else:
                             # Resolve current BotUser state
-                            try:
-                                bu = cast(Any, BotUser)._default_manager.get(chat_id=str(chat_id))
-                            except BotUser.DoesNotExist:
-                                bu = None
+                            bu = cast(Any, BotUser)._default_manager.filter(chat_id=str(chat_id)).first()
 
                             if not bu or bu.state != "awaiting_proof" or not bu.temp_order_id:
                                 response_text = "Thanks for the file. If this is a payment proof, please create an order first."
@@ -192,22 +189,21 @@ def telegram_webhook(request):
                                         else:
                                             txn = cast(Any, Transaction)._default_manager.filter(order=order).first()
                                             if not txn:
-                                                txn = Transaction(order=order, status="uncompleted")
-
-                                            # Save to FileField (this will save the instance as well)
-                                            txn.proof.save(filename, ContentFile(bytes(content)), save=True)
-                                            # Ensure status is uncompleted; vendor will complete later
-                                            updates = []
-                                            if txn.status != "uncompleted":
+                                                # Create a new transaction with status "uncompleted"
+                                                txn = Transaction(order=order)
+                                                txn.save()  # Save first to get a primary key if needed for FileField
+                                            # Save the proof file
+                                            if hasattr(txn, "proof") and hasattr(txn.proof, "save"):
+                                                txn.proof.save(filename, ContentFile(bytes(content)), save=True)
+                                            # Set status to "uncompleted" if possible
+                                            if hasattr(Transaction, "UNCOMPLETED"):
+                                                txn.status = Transaction.UNCOMPLETED
+                                            else:
                                                 txn.status = "uncompleted"
-                                                updates.append("status")
-                                            if updates:
-                                                txn.save(update_fields=updates)
-
-                                    # Next: prompt for receiving details
-                                    bu.state = "awaiting_receiving"
-                                    bu.temp_order_id = str(order.id)
-                                    bu.save(update_fields=["state", "temp_order_id"])
+                                                txn.save(update_fields=["proof", "status"])
+                                                bu.state = "awaiting_receiving"
+                                                bu.temp_order_id = str(order.id)
+                                            bu.save(update_fields=["state", "temp_order_id"])
 
                                     if order.status in {Order.ACCEPTED, Order.COMPLETED}:
                                         code_or_id = order.order_code or str(order.id)
@@ -288,15 +284,15 @@ def telegram_webhook(request):
                             code = text.strip()
                             order = None
                             if code.upper().startswith("ORD-"):
-                                order = Order.objects.select_related('vendor').filter(order_code__iexact=code).first()
+                                order = Order._default_manager.select_related('vendor').filter(order_code__iexact=code).first()
                             else:
                                 try:
                                     oid = int(code)
-                                    order = Order.objects.select_related('vendor').filter(id=oid).first()
+                                    order = Order._default_manager.select_related('vendor').filter(id=oid).first()
                                 except Exception:
                                     order = None
-                            # Enforce vendor scoping if this chat is linked to a vendor
-                            v = getattr(bu, "vendor", None)
+                                # Enforce vendor scoping if this chat is linked to a vendor
+                                v = getattr(bu, "vendor", None)
                             if order and v and getattr(order, "vendor_id", None) != getattr(v, "id", None):
                                 order = None
                             if not order:
@@ -335,7 +331,7 @@ def telegram_webhook(request):
                             # Create a Query object with vendor link and message; then ask for contact
                             from queries.models import Query
                             v = bu.vendor
-                            q = Query.objects.create(vendor=v, message=text.strip(), status="pending")
+                            q = Query._default_manager.create(vendor=v, message=text.strip(), status="pending")
                             bu.state = "awaiting_contact"
                             bu.temp_query_id = str(getattr(q, "pk", None) or "")
                             bu.save(update_fields=["state", "temp_query_id"])
@@ -346,7 +342,7 @@ def telegram_webhook(request):
                             from queries.models import Query
                             try:
                                 qid = int(bu.temp_query_id)
-                                q = Query.objects.filter(id=qid).first()
+                                q = Query._default_manager.filter(id=qid).first()
                             except Exception:
                                 q = None
                             if q:
@@ -433,8 +429,8 @@ def telegram_webhook(request):
             try:
                 bot_user = cast(Any, BotUser).objects.get(chat_id=str(chat_id))
                 vendor_id = bot_user.vendor.id if bot_user.vendor else None
-            except BotUser.DoesNotExist:
-                pass
+            except Exception:
+                    vendor_id = None
 
             # Special flow: continue to receive details then proof after vendor acceptance
             if data.startswith("cont_recv_"):
@@ -448,13 +444,13 @@ def telegram_webhook(request):
                     # Personalize with vendor trust signal if available
                     try:
                         from orders.models import Order as _Order
-                        order = _Order.objects.get(id=order_id)
+                        order = _Order._default_manager.get(id=order_id)
                         from accounts.models import Vendor as _Vendor
                         v = getattr(order, "vendor", None)
                         vname = getattr(v, "name", "the vendor")
                         # Count completed transactions
                         from transactions.models import Transaction as _Txn
-                        success_count = _Txn.objects.filter(order__vendor=v, status="completed").count() if v else 0
+                        success_count = _Txn._default_manager.filter(order__vendor=v, status="completed").count() if v else 0
                         response_text = (
                             f"Great! {vname} has accepted your order. {vname} has completed {success_count} successful trades here.\n"
                             "Please enter your receiving details (bank account or wallet address)."
@@ -485,11 +481,11 @@ def telegram_webhook(request):
                     # Personalize with vendor trust signal if available
                     try:
                         from orders.models import Order as _Order
-                        order = _Order.objects.get(id=order_id)
+                        order = _Order._default_manager.get(id=order_id)
                         v = getattr(order, "vendor", None)
                         vname = getattr(v, "name", "the vendor")
                         from transactions.models import Transaction as _Txn
-                        success_count = _Txn.objects.filter(order__vendor=v, status="completed").count() if v else 0
+                        success_count = _Txn._default_manager.filter(order__vendor=v, status="completed").count() if v else 0
                         response_text = (
                             f"{vname} has accepted your order. {vname} has completed {success_count} successful trades here.\n"
                             "Please upload your payment/on-chain proof now (image or document)."

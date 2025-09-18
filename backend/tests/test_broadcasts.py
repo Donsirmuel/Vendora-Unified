@@ -1,5 +1,6 @@
 from django.urls import reverse
 from typing import Any, cast
+import json
 
 
 def test_broadcast_requires_auth(db):
@@ -30,8 +31,9 @@ def test_broadcast_create_and_list(auth_client, vendor_user):
     # List broadcasts
     res = auth_client.get(url)
     assert int(res.status_code) == 200
-    assert len(res.data["results"]) == 1
-    assert res.data["results"][0]["title"] == "New BTC Rate"
+    data = res.json()
+    assert len(data["results"]) == 1
+    assert data["results"][0]["title"] == "New BTC Rate"
 
 
 def test_broadcast_send_to_bot(auth_client, vendor_user):
@@ -85,5 +87,6 @@ def test_broadcast_scoped_to_vendor(auth_client, vendor_user):
     url = reverse("accounts:broadcast-list")
     res = auth_client.get(url)
     assert int(res.status_code) == 200
-    assert len(res.data["results"]) == 2
-    assert res.data["results"][0]["title"] == "Other Message"
+    data = res.json()
+    assert len(data["results"]) == 2
+    assert data["results"][0]["title"] == "Other Message"

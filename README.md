@@ -70,6 +70,7 @@ Multi-environment guidance & pre-deploy checklist: see `docs/environment.md` (ma
 
 ## Feature Overview
 - Vendor signup → automatic trial start & expiry enforcement.
+- Plan upgrade endpoint `/api/v1/accounts/upgrade/` (monthly, yearly, perpetual) with configurable durations.
 - Orders: lifecycle with auto-expire fallback (`ORDER_AUTO_EXPIRE_MINUTES`).
 - Transactions: state changes (complete / decline) with timestamp audit.
 - Rates: unique per vendor & asset pair.
@@ -79,7 +80,7 @@ Multi-environment guidance & pre-deploy checklist: see `docs/environment.md` (ma
 - Telegram webhook adapter (bot notifications / future commands).
 - Security headers (CSP, Referrer-Policy, Permissions-Policy) auto-enabled in production.
 - Sitemap + robots for basic SEO surface.
-- Granular throttling scopes (anon, user, trial_user, order & rate write, auth burst) configurable via THROTTLE_* env vars.
+- Granular throttling scopes (anon, user, user_trial, order_write, rate_write, auth_burst) configurable via THROTTLE_* env vars (see `docs/throttling.md`).
 
 ## Testing
 ```bash

@@ -17,7 +17,7 @@ def test_transactions_scoped_to_vendor(auth_client, vendor_user):
     from django.contrib.auth import get_user_model
 
     User = get_user_model()
-    other = User.objects.create_user(username="other2", email="other2@example.com", password="pass1234", name="Other2")
+    other = User.objects.create_user(email="other2@example.com", password="pass1234", name="Other2")
 
     my_order = cast(Any, Order).objects.create(vendor=vendor_user, asset="SOL", type=Order.BUY, amount=3, rate=30)
     other_order = cast(Any, Order).objects.create(vendor=other, asset="ADA", type=Order.SELL, amount=4, rate=2)
@@ -27,7 +27,7 @@ def test_transactions_scoped_to_vendor(auth_client, vendor_user):
     url = reverse("transactions:transaction-list")
     res = auth_client.get(url)
     assert int(res.status_code) == 200
-    assert len(res.data["results"]) == 1
+    assert len(res.json()["results"]) == 1
 
 
 def test_transaction_complete_action(auth_client, vendor_user, tmp_path):

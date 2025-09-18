@@ -8,7 +8,8 @@ def test_rates_requires_auth(db):
     client = APIClient()
     url = reverse("rates:rate-list")
     res = client.get(url)
-    assert int(res.status_code) in (401, 403)
+    # The response object from APIClient has a status_code attribute, not WSGIRequest.
+    assert int(getattr(res, "status_code", 0)) in (401, 403)
 
 
 def test_rate_create_and_duplicate_prevent(auth_client, vendor_user):

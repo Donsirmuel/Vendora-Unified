@@ -1,7 +1,7 @@
 from rest_framework.test import APIClient
 from django.urls import reverse
 from typing import Any, cast
-
+import json
 
 def test_jwt_obtain_and_refresh(db):
     client = APIClient()
@@ -15,7 +15,7 @@ def test_jwt_obtain_and_refresh(db):
     url = reverse("accounts:token_obtain_pair")
     res = client.post(url, {"email": "test@example.com", "password": "pass1234"}, format="json")
     assert res.status_code in (200, 201)
-    data = cast(Any, res).data
+    data = json.loads(res.content)
     access = data.get("access")
     refresh = data.get("refresh")
     assert access and refresh
@@ -25,7 +25,7 @@ def test_jwt_obtain_and_refresh(db):
     res = client.post(url, {"refresh": refresh}, format="json")
     assert int(cast(Any, res).status_code) == 200
     assert int(cast(Any, res).status_code) == 200
-    assert "access" in cast(Any, res).data
+    assert "access" in res.json()
 
 
 def test_jwt_wrong_password(db):

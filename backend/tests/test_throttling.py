@@ -33,6 +33,8 @@ def test_rate_write_throttle(auth_client, vendor_user, settings):
     settings.REST_FRAMEWORK['DEFAULT_THROTTLE_CLASSES'] = [
         'vendora.throttling.RateWriteScopedThrottle'
     ]
+    settings.REST_FRAMEWORK['DEFAULT_THROTTLE_RATES']['user_trial'] = settings.THROTTLE_TRIAL_USER
+    settings.DEBUG_PROPAGATE_EXCEPTIONS = True
     # Clear cache so previous tests don't pollute counts
     from django.core.cache import caches
     try:
@@ -48,7 +50,7 @@ def test_rate_write_throttle(auth_client, vendor_user, settings):
             'buy_rate': '100.00',
             'sell_rate': '90.00'
         }, format='json')
-        assert res.status_code in (200,201), res.content
+        assert getattr(res, "status_code", None) in (200,201), res.content
     # 3rd should throttle
     res = auth_client.post(url, {
         'vendor': vendor_user.id,
@@ -56,7 +58,7 @@ def test_rate_write_throttle(auth_client, vendor_user, settings):
         'buy_rate': '100.00',
         'sell_rate': '90.00'
     }, format='json')
-    assert res.status_code == 429
+    assert getattr(res, "status_code", None) == 429
 
 @pytest.mark.django_db
 def test_trial_vs_user_throttle_difference(settings, django_user_model):
@@ -66,9 +68,10 @@ def test_trial_vs_user_throttle_difference(settings, django_user_model):
     settings.THROTTLE_USER = '8/min'
     # Inject base user rate (will be superseded for trial via dynamic throttle)
     settings.REST_FRAMEWORK['DEFAULT_THROTTLE_RATES']['user'] = settings.THROTTLE_USER
-    # Isolate to user throttle only
+    # Isolate to only the two user-tier throttles
     settings.REST_FRAMEWORK['DEFAULT_THROTTLE_CLASSES'] = [
-        'vendora.throttling.DynamicUserRateThrottle'
+        'vendora.throttling.TrialUserRateThrottle',
+        'vendora.throttling.RegularUserRateThrottle'
     ]
     from django.core.cache import caches
     try:
@@ -87,11 +90,11 @@ def test_trial_vs_user_throttle_difference(settings, django_user_model):
     for i in range(4):
         res = client.get(url, format='json')
         # debug: show iteration and status
-        print('trial loop', i+1, res.status_code)
-        assert res.status_code == 200
+        print('trial loop', i+1, getattr(res, "status_code", None))
+        assert getattr(res, "status_code", None) == 200
     res = client.get(url)
-    print('trial attempt 5 status', res.status_code)
-    assert res.status_code == 429  # 5th exceeds trial limit
+    print('trial attempt 5 status', getattr(res, "status_code", None))
+    assert getattr(res, "status_code", None) == 429  # 5th exceeds trial limit
 
     # Upgrade user (simulate plan change)
     trial_user.is_trial = False
@@ -110,11 +113,11 @@ def test_trial_vs_user_throttle_difference(settings, django_user_model):
     # With user rate 8/min we should allow 8 requests before throttle
     for i in range(8):
         res = upgraded_client.get(url)
-        print('paid loop', i+1, res.status_code)
-        assert res.status_code == 200
+        print('paid loop', i+1, getattr(res, "status_code", None))
+        assert getattr(res, "status_code", None) == 200
     res = upgraded_client.get(url)
-    print('paid attempt 9 status', res.status_code)
-    assert res.status_code == 429
+    print('paid attempt 9 status', getattr(res, "status_code", None))
+    assert getattr(res, "status_code", None) == 429
 
 @pytest.mark.django_db
 def test_auth_burst_throttle(settings, django_user_model):
@@ -137,7 +140,7 @@ def test_auth_burst_throttle(settings, django_user_model):
     # First 3 attempts with wrong password
     for i in range(2):
         r = client.post(url, {'email':'tb@example.com','password':'wrong'}, format='json')
-        assert r.status_code in (400,401)
+        assert getattr(r, "status_code", None) in (400,401)
     # 3rd attempt should be throttled (expect 429)
     r = client.post(url, {'email':'tb@example.com','password':'wrong'}, format='json')
-    assert r.status_code == 429
+    assert getattr(r, "status_code", None) == 429

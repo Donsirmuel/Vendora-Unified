@@ -19,8 +19,9 @@ def test_orders_list_scoped_to_vendor(auth_client, vendor_user):
     url = reverse("orders:order-list")
     res = auth_client.get(url)
     assert int(res.status_code) == 200
-    assert len(res.data["results"]) == 1
-    assert res.data["results"][0]["asset"] == "BTC"
+    data = res.json()
+    assert len(data["results"]) == 1
+    assert data["results"][0]["asset"] == "BTC"
 
 
 def test_orders_requires_auth(db):

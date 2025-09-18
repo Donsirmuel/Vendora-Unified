@@ -23,6 +23,7 @@ from django.contrib.sitemaps.views import sitemap
 from .sitemaps import StaticViewSitemap
 from django.http import JsonResponse
 from api.health import health_view
+from api.metrics import metrics_view
 from django.views.static import serve as static_serve
 from api.sse import sse_stream
 
@@ -45,6 +46,7 @@ urlpatterns = [
     # Health endpoints
     path("health/", health_view, name="health"),
     path("healthz/", lambda request: JsonResponse({"status": "ok"})),  # legacy simple
+    path("metrics/", metrics_view, name="metrics"),
 
     # Marketing / legal static templates (can be overridden by frontend build if desired)
     path("", TemplateView.as_view(template_name="index.html"), name="landing-home"),

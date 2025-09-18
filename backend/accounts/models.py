@@ -2,21 +2,38 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from typing import Any, cast
 from django.conf import settings
+from django.utils import timezone
+from datetime import timedelta
 # Create your models here.
 
 class VendorManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
+        # tolerate stray 'username' from tests/legacy code
+        extra_fields.pop('username', None)
         if not email:
             raise ValueError("Email is required")
         email = self.normalize_email(email)
+        
+        # Default to trial if not explicitly provided (helps tests using create_user)
+        if 'is_trial' not in extra_fields and 'trial_expires_at' not in extra_fields:
+            days = int(getattr(settings, 'TRIAL_DAYS', 14))
+            extra_fields['is_trial'] = True
+            extra_fields['trial_expires_at'] = timezone.now() + timedelta(days=days)
+
         vendor = self.model(email=email, **extra_fields)
         vendor.set_password(password)
         vendor.save(using=self._db)
         return vendor
 
     def create_superuser(self, email, password=None, **extra_fields):
-        extra_fields.setdefault("is_staff", True)
-        extra_fields.setdefault("is_superuser", True)
+         # tolerate stray 'username' from tests/legacy code
+        extra_fields.pop('username', None)
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+        if extra_fields.get('is_staff') is not True:
+            raise ValueError('Superuser must have is_staff=True.')
+        if extra_fields.get('is_superuser') is not True:
+            raise ValueError('Superuser must have is_superuser=True.')
         return self.create_user(email, password, **extra_fields)
 
 # Vendor model (custom user)
@@ -85,10 +102,9 @@ class Vendor(AbstractBaseUser, PermissionsMixin):
         self.save(update_fields=["plan","is_trial","plan_expires_at"])
         try:
             from .emails import send_plan_changed_email
-            send_plan_changed_email(self, old_plan, plan)
+            send_plan_changed_email(self, str(old_plan), plan)
         except Exception:
             pass
-
 
 class NotificationLog(models.Model):
     KIND_CHOICES = [
@@ -106,8 +122,11 @@ class NotificationLog(models.Model):
         ordering = ["-created_at"]
 
     def __str__(self):  # pragma: no cover
-        return f"{self.vendor.id}:{self.kind}"
+        return f"{self.vendor_id}:{self.kind}" if hasattr(self.vendor, "id") else f"{self.vendor}:{self.kind}"
 
+    @property
+    def vendor_id(self):
+        return self.vendor_id if hasattr(self, "vendor_id") else self.vendor
 
 class BankDetail(models.Model):
     """Per-vendor saved bank/payment details to share with customers on BUY orders."""
@@ -116,7 +135,7 @@ class BankDetail(models.Model):
     account_number = models.CharField(max_length=64)
     account_name = models.CharField(max_length=120)
     instructions = models.TextField(blank=True)
-    is_default = models.BooleanField(default=False)
+    is_default = models.BooleanField(default=cast(Any, False))
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

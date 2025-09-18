@@ -1,3 +1,4 @@
+from ctypes import cast
 from django.http import StreamingHttpResponse, HttpResponse
 from django.utils import timezone
 from django.db.models import Max
@@ -47,17 +48,24 @@ def sse_stream(request):
 
     # capture initial markers
     def snapshot_marks():
-        last_order = (
-            Order.objects.filter(vendor_id=vendor_id)
-            .aggregate(max_updated=Max("updated_at"), max_created=Max("created_at"))
+        last_order = Order.objects.filter(vendor_id=vendor_id).aggregate(
+            max_updated=Max("updated_at"), max_created=Max("created_at")
         )
-        last_txn = (
-            Transaction.objects.filter(order__vendor_id=vendor_id)
-            .aggregate(max_completed=Max("completed_at"), max_vendor_completed=Max("vendor_completed_at"))
+        last_txn = Transaction.objects.filter(order__vendor_id=vendor_id).aggregate(
+            max_completed=Max("completed_at"), max_vendor_completed=Max("vendor_completed_at")
         )
         # Use ISO strings or None
         def iso(dt):
             return dt.isoformat() if dt else None
+
+        # Safely handle None for last_order and last_txn to avoid attribute errors
+        orders_updated_at = None
+        transactions_updated_at = None
+
+        if last_order is not None:
+            orders_updated_at = iso(last_order.get("max_updated")) or iso(last_order.get("max_created"))
+        if last_txn is not None:
+            transactions_updated_at = iso(last_txn.get("max_completed")) or iso(last_txn.get("max_vendor_completed"))
 
         return {
             "orders_updated_at": iso(last_order.get("max_updated")) or iso(last_order.get("max_created")),

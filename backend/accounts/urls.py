@@ -1,7 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView
-from .views import VendorViewSet, BroadcastMessageViewSet, BankDetailViewSet
+from .views import VendorViewSet, BroadcastMessageViewSet, BankDetailViewSet, PlanUpgradeView
 from .auth_views import (
     CustomTokenObtainPairView,
     signup, 
@@ -27,6 +27,7 @@ urlpatterns = [
     path('signup/', signup, name='signup'),
     path('password-reset/', request_password_reset, name='password_reset'),
     path('password-reset/confirm/', confirm_password_reset, name='password_reset_confirm'),
+    path('upgrade/', PlanUpgradeView.as_view(), name='plan_upgrade'),
 
     # Vendor management
     path('vendors/', VendorViewSet.as_view({'get': 'list', 'post': 'create'}), name='vendor_list'),

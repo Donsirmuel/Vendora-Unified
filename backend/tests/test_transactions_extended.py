@@ -12,7 +12,8 @@ def test_transactions_status_filter(auth_client, vendor_user):
     base = reverse("transactions:transaction-list")
     res = auth_client.get(base + "?status=completed")
     assert res.status_code == 200
-    assert all(r["status"] == "completed" for r in res.data["results"])
+    data = res.json()  # PATCHED
+    assert all(r["status"] == "completed" for r in data["results"])
 
 
 def test_transaction_pdf_endpoint_not_available(auth_client, vendor_user):

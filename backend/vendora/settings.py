@@ -340,8 +340,7 @@ class AccountStatusMiddleware(MiddlewareMixin):  # type: ignore
         path = request.path or ''
         if any(path.endswith(suf) for suf in self.ALLOW_PATH_SUFFIXES):
             return None
-        from rest_framework.response import Response
-        from rest_framework import status
+        from django.http import JsonResponse
         detail = {
             'detail': 'Account not active',
             'trial_expired': trial_expired,
@@ -349,7 +348,7 @@ class AccountStatusMiddleware(MiddlewareMixin):  # type: ignore
             'suspended': suspended,
             'code': 'ACCOUNT_INACTIVE'
         }
-        return Response(detail, status=status.HTTP_403_FORBIDDEN)
+        return JsonResponse(detail, status=403)
 
 
 # Django REST framework settings
@@ -363,10 +362,11 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
-    # Throttling refined (Task 14)
+    # Throttling refined 
     'DEFAULT_THROTTLE_CLASSES': [
-        'rest_framework.throttling.AnonRateThrottle',
-        'vendora.throttling.DynamicUserRateThrottle',
+    'rest_framework.throttling.AnonRateThrottle',
+    'vendora.throttling.TrialUserRateThrottle',
+    'vendora.throttling.RegularUserRateThrottle',
         'vendora.throttling.OrderWriteScopedThrottle',
         'vendora.throttling.RateWriteScopedThrottle',
         'vendora.throttling.AuthBurstScopedThrottle',

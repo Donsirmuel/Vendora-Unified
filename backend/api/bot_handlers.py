@@ -385,11 +385,13 @@ def handle_asset_selection(asset: str, order_type: str = "buy", vendor_id: Optio
                     extra_info = f"\n\nBank Details:\n{rate.bank_details}"
             else:  # sell
                 rate_info = f"Sell Rate: ₦{rate.sell_rate:,.2f} per {asset}"
-                if rate.contract_address:
+                if hasattr(rate, "contract_address") and rate.contract_address:
                     extra_info = f"\n\nContract Address:\n{rate.contract_address}"
-        except Rate.DoesNotExist:
+        except cast(Any, Rate).DoesNotExist:
             rate_info = f"Rate not available for {asset}"
-    
+        except Exception as e:
+            rate_info = f"Error retrieving rate for {asset}: {e}"
+
     text = f"{'🛒 BUY' if order_type == 'buy' else '💰 SELL'} {asset}\n\n{rate_info}{extra_info}\n\nTap Continue to enter amount or Cancel to go back."
     buttons = [
         [
@@ -443,7 +445,7 @@ def handle_amount_confirmation(asset: str, order_type: str, amount: str, vendor_
         else:
             rate = Decimal(rate_obj.sell_rate)
         total_naira = amount_decimal * rate
-    except Rate.DoesNotExist:
+    except cast(Any, Rate).DoesNotExist:
         return "❌ Rate not found for this asset. Please try again.", {}
 
     text = f"""
@@ -525,7 +527,7 @@ def handle_order_creation(callback_data: str, chat_id: Optional[str] = None) -> 
                 else:
                     order.rate = Decimal(rate_obj.sell_rate)
                 order.save(update_fields=["rate"])
-            except Rate.DoesNotExist:
+            except cast(Any, Rate).DoesNotExist:
                 pass
             
             # Keep context but wait for vendor acceptance before asking for proof
@@ -537,7 +539,7 @@ def handle_order_creation(callback_data: str, chat_id: Optional[str] = None) -> 
                 bu.temp_asset = asset
                 bu.temp_amount = amount
                 bu.save(update_fields=["state", "temp_order_id", "temp_type", "temp_asset", "temp_amount"])
-            except BotUser.DoesNotExist:
+            except cast(Any, BotUser).DoesNotExist:
                 pass
 
             # Push notify vendor about new pending order (bot-created)

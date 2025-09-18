@@ -18,19 +18,19 @@ def compute_onboarding(vendor: Vendor):
     # Step definitions (id, label, done flag, optional url slug)
     steps = []
     # 1 Profile completeness (name + optional bio or telegram)
-    profile_done = bool(vendor.name and vendor.name.strip())
+    profile_done = bool(getattr(vendor, "name", None)) and bool(getattr(vendor, "name", "").strip())
     steps.append({"id": "profile", "label": "Complete profile", "done": profile_done})
     # 2 Set at least one active rate
     try:
         from rates.models import Rate  # type: ignore
-        has_rate = Rate.objects.filter(vendor=vendor).exists()
+        has_rate = Rate.objects.filter(vendor=vendor).exists()  # type: ignore
     except Exception:
         has_rate = False
     steps.append({"id": "rates", "label": "Add first rate", "done": has_rate})
     # 3 First order placed or received
     try:
         from orders.models import Order  # type: ignore
-        has_order = Order.objects.filter(vendor=vendor).exists()
+        has_order = Order.objects.filter(vendor=vendor).exists()  # type: ignore
     except Exception:
         has_order = False
     steps.append({"id": "order", "label": "Process first order", "done": has_order})
@@ -38,7 +38,7 @@ def compute_onboarding(vendor: Vendor):
     push_enabled = False
     try:
         from notifications.models import PushSubscription  # type: ignore
-        push_enabled = PushSubscription.objects.filter(vendor=vendor, is_active=True).exists()
+        push_enabled = getattr(PushSubscription, "objects", None) is not None and PushSubscription.objects.filter(vendor=vendor, is_active=True).exists()  # type: ignore
     except Exception:
         push_enabled = False
     steps.append({"id": "push", "label": "Enable browser notifications", "done": push_enabled})
@@ -142,7 +142,7 @@ class BankDetailViewSet(ModelViewSet):
         # If setting default, clear existing defaults for this vendor
         is_default = bool(serializer.validated_data.get("is_default", False))
         if is_default:
-            BankDetail.objects.filter(vendor=self.request.user, is_default=True).update(is_default=False)
+            type(serializer.Meta.model).objects.filter(vendor=self.request.user, is_default=True).update(is_default=False)
         serializer.save(vendor=self.request.user)
 
     def perform_update(self, serializer):
@@ -232,3 +232,23 @@ class BroadcastMessageViewSet(ModelViewSet):
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
     throttle_scope = 'auth_burst'
+
+
+from rest_framework.views import APIView
+from .serializers import PlanUpgradeSerializer
+
+class PlanUpgradeView(APIView):
+    """POST endpoint to upgrade a vendor's plan.
+
+    Payload: {"plan": "monthly" | "yearly" | "perpetual", "duration_days"?: int}
+    Returns updated vendor representation.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):  # type: ignore[override]
+        serializer = PlanUpgradeSerializer(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        vendor = serializer.save()
+        from .serializers import VendorSerializer
+        out = VendorSerializer(vendor, context={'request': request})
+        return Response(out.data, status=status.HTTP_200_OK)

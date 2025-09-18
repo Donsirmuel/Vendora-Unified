@@ -2,48 +2,46 @@ from __future__ import annotations
 from typing import Optional
 from rest_framework.throttling import SimpleRateThrottle
 from rest_framework.permissions import SAFE_METHODS
+from django.conf import settings
 
-class DynamicUserRateThrottle(SimpleRateThrottle):
-    """User throttle that selects a dynamic rate based on trial/plan status.
+class TrialUserRateThrottle(SimpleRateThrottle):
+    """
+    Applies THROTTLE_TRIAL_USER to authenticated users flagged as trial.
+    Scope: user_trial
+    """
+    scope = 'user_trial'
 
-    Base key = user id; falls back to IP if unauthenticated (rare because we only apply to auth routes).
-    The rate string is derived from Django settings:
-      THROTTLE_TRIAL_USER, THROTTLE_USER
+    def get_rate(self):
+        # Prefer explicit setting; otherwise fall back to DRF rates mapping
+        return getattr(settings, 'THROTTLE_TRIAL_USER', super().get_rate())
+
+    def get_cache_key(self, request, view):  # type: ignore[override]
+        user = getattr(request, 'user', None)
+        if not user or not user.is_authenticated:
+            return None
+        # Consider user in trial if flag is set and not expired (if expiry exists)
+        if not getattr(user, 'is_trial', False):
+            return None
+        return self.cache_format % {'scope': self.scope, 'ident': str(user.pk)}
+
+
+class RegularUserRateThrottle(SimpleRateThrottle):
+    """
+    Applies THROTTLE_USER to authenticated non-trial users.
+    Scope: user
     """
     scope = 'user'
 
-    def get_cache_key(self, request, view) -> Optional[str]:  # type: ignore[override]
-        if request.user and request.user.is_authenticated:
-            # Separate bucket for trial users so stricter trial rate does not share counter
-            suffix = ':trial' if getattr(request.user, 'is_trial', False) else ''
-            ident = f"user:{request.user.pk}{suffix}"
-        else:
-            # fallback to IP (should not normally happen for this throttle)
-            ident = self.get_ident(request)
-        # Keep a handle to request for dynamic rate selection
-        self.request = request  # type: ignore[attr-defined]
-        return self.cache_format % {
-            'scope': self.scope,
-            'ident': ident
-        }
+    def get_rate(self):
+        return getattr(settings, 'THROTTLE_USER', super().get_rate())
 
-    def get_rate(self):  # type: ignore[override]
-                """Return trial or normal user rate based on user's trial flag.
-
-                Priority:
-                    1. Explicit trial/user settings (THROTTLE_TRIAL_USER / THROTTLE_USER)
-                    2. DRF DEFAULT_THROTTLE_RATES['user'] fallback
-                """
-                from django.conf import settings
-                drf_rates = getattr(settings, 'REST_FRAMEWORK', {}).get('DEFAULT_THROTTLE_RATES', {})
-                fallback = drf_rates.get('user')
-                trial_rate = getattr(settings, 'THROTTLE_TRIAL_USER', None) or fallback
-                user_rate = getattr(settings, 'THROTTLE_USER', None) or fallback
-                request = getattr(self, 'request', None)
-                user = getattr(request, 'user', None)
-                if getattr(user, 'is_authenticated', False) and getattr(user, 'is_trial', False):
-                        return trial_rate
-                return user_rate
+    def get_cache_key(self, request, view):  # type: ignore[override]
+        user = getattr(request, 'user', None)
+        if not user or not user.is_authenticated:
+            return None
+        if getattr(user, 'is_trial', False):
+            return None
+        return self.cache_format % {'scope': self.scope, 'ident': user.pk}
 
 class _FixedScopeThrottle(SimpleRateThrottle):
     """A SimpleRateThrottle variant with an immutable, class-level scope.
@@ -84,6 +82,13 @@ class _FixedScopeThrottle(SimpleRateThrottle):
         # Attach debug marker so tests can inspect which throttle class processed the request
         try:  # best-effort, ignore failures
             from django.conf import settings
+            if not allowed:
+                # increment metrics counter
+                try:
+                    from api.metrics import inc
+                    inc('throttle_429_total', 1)
+                except Exception:
+                    pass
             if getattr(settings, 'DEBUG', False):
                 # DRF attaches request._request (Django HttpRequest) accessible after view
                 request.META[f'HTTP_X_DEBUG_THROTTLE_{self.scope.upper()}'] = 'ALLOWED' if allowed else 'THROTTLED'

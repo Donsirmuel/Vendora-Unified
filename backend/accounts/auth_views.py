@@ -90,8 +90,8 @@ def request_password_reset(request):
             return Response({
                 'error': 'Failed to send reset email. Please try again.'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            
-    except Vendor.DoesNotExist:
+                
+    except cast(Any, Vendor).DoesNotExist:
         # Return success even if user doesn't exist (security)
         return Response({
             'message': 'If an account with this email exists, you will receive a reset link.'
@@ -135,7 +135,7 @@ def confirm_password_reset(request):
                 'error': 'Invalid or expired reset token'
             }, status=status.HTTP_400_BAD_REQUEST)
             
-    except (Vendor.DoesNotExist, ValueError):
+    except (cast(Any, Vendor).DoesNotExist, ValueError):
         return Response({
             'error': 'Invalid reset link'
         }, status=status.HTTP_400_BAD_REQUEST)

@@ -12,5 +12,6 @@ def test_queries_scoped_to_vendor(auth_client, vendor_user, django_user_model):
     url = reverse("queries:query-list")
     res = auth_client.get(url)
     assert res.status_code == 200
-    ids = [r["id"] for r in res.data["results"]]
+    data = res.json()  # PATCHED
+    ids = [r["id"] for r in data["results"]]
     assert mine.id in ids and len(ids) == 1

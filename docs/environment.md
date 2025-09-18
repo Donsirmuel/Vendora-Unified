@@ -59,10 +59,13 @@ python env_sanity.py --json
 | DB_LOG_LEVEL | optional | Database backend log level |
 | THROTTLE_ANON | optional | Anonymous request rate ceiling |
 | THROTTLE_USER | optional | Authenticated user base rate ceiling |
-| THROTTLE_TRIAL_USER | optional | Trial user rate ceiling (if lower) |
+| THROTTLE_TRIAL_USER | optional | Trial user rate ceiling (maps to `user_trial` scope) |
 | THROTTLE_ORDER_WRITE | optional | Order accept/decline action rate |
 | THROTTLE_RATES_WRITE | optional | Rate create/update/delete rate |
 | THROTTLE_AUTH_BURST | optional | Auth endpoints (login/signup) burst cap |
+| PLAN_DAYS_MONTHLY | optional | Override default monthly plan duration (days) |
+| PLAN_DAYS_YEARLY | optional | Override default yearly plan duration (days) |
+| METRICS_SECRET | optional | Protect /metrics with X-Metrics-Token header |
 
 ## Multi-Environment Matrix (Task 26)
 
@@ -102,12 +105,17 @@ Guidance for typical values across environments. "—" means leave blank (featur
 | DB_LOG_LEVEL | WARNING | WARNING | WARNING | DEBUG only when diagnosing |
 | THROTTLE_ANON | 60/min | 60/min | 60/min | Increase only if necessary |
 | THROTTLE_USER | 240/min | 240/min | 240/min | General authenticated ceiling |
-| THROTTLE_TRIAL_USER | 120/min | 120/min | 120/min | Lower to reduce abuse risk |
+| THROTTLE_TRIAL_USER | 120/min | 120/min | 120/min | Provides `user_trial` scope override |
 | THROTTLE_ORDER_WRITE | 30/min | 20/min | 10/min | Tighten in production |
 | THROTTLE_RATES_WRITE | 15/min | 10/min | 5/min | Rate editing is infrequent |
 | THROTTLE_AUTH_BURST | 20/min | 15/min | 10/min | Protect login brute force |
+| PLAN_DAYS_MONTHLY | 30 | 30 | 30 | Change only if product pricing shifts |
+| PLAN_DAYS_YEARLY | 365 | 365 | 365 | Align with billing cycle |
+| METRICS_SECRET | dev-secret | staging-secret | prod-generated | Rotate if leaked |
 
 Add new variables to both classification and this matrix when introduced.
+
+Throttling specifics & scope behavior: see `docs/throttling.md`.
 
 ## Suggested CI Step
 Add a pipeline step before migrations/server start:

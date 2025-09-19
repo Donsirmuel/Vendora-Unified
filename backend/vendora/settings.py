@@ -41,6 +41,9 @@ SECRET_KEY = config('SECRET_KEY', default='CHANGE_ME_DEV_ONLY')
 DEBUG = config('DEBUG', cast=bool, default=True)
 
 ALLOWED_HOSTS = [h.strip() for h in str(config('ALLOWED_HOSTS', default='127.0.0.1,localhost,app.vendora.page,vendora.page')).split(',') if h.strip()]
+# Add testserver for Django tests
+if 'testserver' not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append('testserver')
 CSRF_TRUSTED_ORIGINS = [o.strip() for o in str(config('CSRF_TRUSTED_ORIGINS', default='http://127.0.0.1:8000')).split(',') if o.strip()]
 
 # Telegram Bot Configuration

@@ -32,6 +32,8 @@ Key Integrations:
 - Structured JSON logging + request ID header.
 - Optional Sentry instrumentation (performance + profiles toggle via env).
 
+- Telegram bot main menu: header now reads "Welcome to Vendor - Youre currently trading with [Vendor username]" to make the active vendor explicit to users.
+
 ## Try It Locally (5 Minutes)
 ```bash
 # 1. Backend

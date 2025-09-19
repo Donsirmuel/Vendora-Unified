@@ -42,7 +42,7 @@ def handle_start_command(chat_id: str, bot_user=None) -> Dict[str, Any]:
     reply_markup = create_inline_keyboard(keyboard)
     
     return {
-        "text": "🎉 Welcome to Vendora Bot!\n\nChoose what you'd like to do:",
+        "text": "Welcome to Vendor - Youre currently trading with a vendor\n\nChoose what you'd like to do:",
         "reply_markup": reply_markup
     }
 

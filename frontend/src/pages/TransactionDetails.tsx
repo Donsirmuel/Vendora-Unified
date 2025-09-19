@@ -190,16 +190,16 @@ const TransactionDetails = () => {
                 <p className="font-semibold">{
                   order?.created_at
                     ? new Date(order.created_at).toLocaleString()
-                    : (txn.completed_at ? new Date(txn.completed_at).toLocaleString() : "—")
+                    : (txn.completed_at ? new Date(txn.completed_at).toLocaleString() : "-")
                 }</p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Asset</p>
-                <Badge className={getAssetColor(txn.order_asset || "")}>{txn.order_asset || "—"}</Badge>
+                <Badge className={getAssetColor(txn.order_asset || "")}>{txn.order_asset || "-"}</Badge>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Amount</p>
-                <p className="font-semibold">{txn.order_amount ?? "—"}</p>
+                <p className="font-semibold">{txn.order_amount ?? "-"}</p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Value</p>
@@ -207,7 +207,7 @@ const TransactionDetails = () => {
                   (() => {
                     const v = (order?.total_value ?? txn.order_total_value);
                     const n = v != null ? Number(v) : NaN;
-                    return isFinite(n) ? `₦${n.toLocaleString()}` : "—";
+                    return isFinite(n) ? `₦${n.toLocaleString()}` : "-";
                   })()
                 }</p>
               </div>
@@ -235,13 +235,13 @@ const TransactionDetails = () => {
             <div>
               <p className="text-sm text-muted-foreground mb-2">Customer Receiving Details</p>
               <div className="p-3 bg-secondary/50 rounded-lg">
-                <p className="text-sm whitespace-pre-wrap">{txn.customer_receiving_details || "—"}</p>
+                <p className="text-sm whitespace-pre-wrap">{txn.customer_receiving_details || "-"}</p>
               </div>
             </div>
             <div>
               <p className="text-sm text-muted-foreground mb-2">Customer Note</p>
               <div className="p-3 bg-secondary/50 rounded-lg">
-                <p className="text-sm whitespace-pre-wrap">{txn.customer_note || "—"}</p>
+                <p className="text-sm whitespace-pre-wrap">{txn.customer_note || "-"}</p>
               </div>
             </div>
           </CardContent>
@@ -339,7 +339,7 @@ const TransactionDetails = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <div>
                 <p className="text-sm text-muted-foreground">Created</p>
-                <p className="font-medium">{order?.created_at ? new Date(order.created_at).toLocaleString() : (txn.completed_at ? new Date(txn.completed_at).toLocaleString() : "—")}</p>
+                <p className="font-medium">{order?.created_at ? new Date(order.created_at).toLocaleString() : (txn.completed_at ? new Date(txn.completed_at).toLocaleString() : "-")}</p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Accepted</p>
@@ -348,12 +348,12 @@ const TransactionDetails = () => {
                     ? new Date(order.accepted_at).toLocaleString()
                     : (order?.status === 'completed' && (txn.vendor_completed_at || txn.completed_at)
                         ? new Date((txn.vendor_completed_at || txn.completed_at) as string).toLocaleString()
-                        : '—')
+                        : '-')
                 }</p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Completed</p>
-                <p className="font-medium">{txn.vendor_completed_at ? new Date(txn.vendor_completed_at).toLocaleString() : "—"}</p>
+                <p className="font-medium">{txn.vendor_completed_at ? new Date(txn.vendor_completed_at).toLocaleString() : "-"}</p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Declined</p>
@@ -362,7 +362,7 @@ const TransactionDetails = () => {
                     ? new Date(order.declined_at).toLocaleString()
                     : (txn.status === 'declined' && (txn.completed_at || order?.updated_at)
                         ? new Date((txn.completed_at || order?.updated_at) as string).toLocaleString()
-                        : '—')
+                        : '-')
                 }</p>
               </div>
             </div>

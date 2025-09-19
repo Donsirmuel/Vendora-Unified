@@ -53,23 +53,47 @@ def telegram_webhook(request):
                 if " " in text:
                     parts = text.split(" ")
                     if len(parts) > 1 and parts[1].startswith("vendor_"):
-                        token = parts[1].replace("vendor_", "").strip()
-                        if token.isdigit():
-                            try:
+                        # Remove only the leading 'vendor_' prefix once
+                        token = parts[1][len("vendor_"):].strip() if parts[1].startswith("vendor_") else parts[1].strip()
+                        # Try several ways to resolve the vendor token in order of reliability:
+                        # - numeric ID
+                        # - external_vendor_id exact match
+                        # - telegram_username (strip @)
+                        # - case-insensitive name match (last resort)
+                        try:
+                            if token.isdigit():
                                 vendor_id = int(token)
-                            except ValueError:
-                                vendor_id = None
-                        else:
-                            # Try resolve by external_vendor_id code
-                            try:
+                            else:
                                 from accounts.models import Vendor as _Vendor
-                                vendor_obj = _Vendor.objects.get(external_vendor_id=token)
+                                vendor_obj = None
+                                # try external_vendor_id
                                 try:
-                                    vendor_id = int(getattr(vendor_obj, "id", None) or 0)
+                                    vendor_obj = _Vendor.objects.filter(external_vendor_id__iexact=token).first()
                                 except Exception:
+                                    vendor_obj = None
+                                # try telegram_username
+                                if not vendor_obj:
+                                    try:
+                                        t = token.lstrip("@")
+                                        vendor_obj = _Vendor.objects.filter(telegram_username__iexact=t).first()
+                                    except Exception:
+                                        vendor_obj = None
+                                # try name search (case-insensitive) as a last resort
+                                if not vendor_obj:
+                                    try:
+                                        vendor_obj = _Vendor.objects.filter(name__iexact=token).first()
+                                    except Exception:
+                                        vendor_obj = None
+
+                                if vendor_obj:
+                                    try:
+                                        vendor_id = int(getattr(vendor_obj, "id", None) or 0)
+                                    except Exception:
+                                        vendor_id = None
+                                else:
                                     vendor_id = None
-                            except Exception:
-                                vendor_id = None
+                        except Exception:
+                            vendor_id = None
 
                 # Subscribe or update the BotUser
                 try:
@@ -81,9 +105,10 @@ def telegram_webhook(request):
                         chat_id=str(chat_id),
                         defaults={"is_subscribed": True},
                     )
+                    logger.debug(f"/start token resolved: token={locals().get('token', None)} vendor_id={vendor_id} vendor_obj={getattr(vendor_obj, 'id', None) if vendor_obj else None}")
 
-                    # Link to vendor if provided (only if vendor is active/allowed)
-                    if vendor_id:
+                    # Link to vendor if provided (either vendor_id or resolved vendor_obj)
+                    if vendor_id or vendor_obj:
                         try:
                             vendor = vendor_obj or cast(Any, Vendor).objects.get(id=vendor_id)
                             # Check manual gating flags
@@ -103,6 +128,7 @@ def telegram_webhook(request):
                             if allowed:
                                 bot_user.vendor = vendor
                                 bot_user.save(update_fields=["vendor"])
+                                logger.info(f"Linked BotUser {bot_user.chat_id} to Vendor {getattr(vendor,'id',None)} via /start")
                         except Exception as vendor_exc:
                             logger.warning(f"Failed to link BotUser to Vendor: {vendor_exc}")
 
@@ -129,6 +155,18 @@ def telegram_webhook(request):
                 except Exception:
                     vid = None
                 response_text, reply_markup = bot_handlers.handle_help_command(vid)
+
+            elif text.startswith("/switch_vendor"):
+                # Ask user to send vendor username, ID, or code to link this chat
+                try:
+                    from .models import BotUser as _BotUser
+                    _BotUser._default_manager.update_or_create(
+                        chat_id=str(chat_id), defaults={"is_subscribed": True, "state": "awaiting_vendor"}
+                    )
+                except Exception:
+                    pass
+                response_text = "Please send the vendor's username, ID, or code to link this chat to that vendor."
+                reply_markup = None
 
             elif text.startswith("/status"):
                 response_text = "Bot is running and connected to Vendora PWA!"
@@ -195,14 +233,15 @@ def telegram_webhook(request):
                                             # Save the proof file
                                             if hasattr(txn, "proof") and hasattr(txn.proof, "save"):
                                                 txn.proof.save(filename, ContentFile(bytes(content)), save=True)
-                                            # Set status to "uncompleted" if possible
-                                            if hasattr(Transaction, "UNCOMPLETED"):
-                                                txn.status = Transaction.UNCOMPLETED
+                                            # Set status to "uncompleted" if possible; use getattr to avoid static analyzer warnings
+                                            uncompleted_attr = getattr(Transaction, "UNCOMPLETED", None)
+                                            if uncompleted_attr is not None:
+                                                txn.status = uncompleted_attr
                                             else:
                                                 txn.status = "uncompleted"
-                                                txn.save(update_fields=["proof", "status"])
-                                                bu.state = "awaiting_receiving"
-                                                bu.temp_order_id = str(order.id)
+                                            txn.save(update_fields=["proof", "status"])
+                                            bu.state = "awaiting_receiving"
+                                            bu.temp_order_id = str(order.id)
                                             bu.save(update_fields=["state", "temp_order_id"])
 
                                     if order.status in {Order.ACCEPTED, Order.COMPLETED}:
@@ -223,10 +262,66 @@ def telegram_webhook(request):
                         from .models import BotUser
                         from typing import Any, cast
                         bu = cast(Any, BotUser)._default_manager.get(chat_id=str(chat_id))
+                        # If we're awaiting a vendor identifier from the user (after /switch_vendor),
+                        # attempt to resolve the provided text into a Vendor and link it.
+                        if bu and getattr(bu, "state", "") == "awaiting_vendor":
+                            try:
+                                token = text.strip()
+                                from accounts.models import Vendor as _Vendor
+                                found = None
+                                # numeric id
+                                if token.isdigit():
+                                    try:
+                                        found = _Vendor.objects.filter(id=int(token)).first()
+                                    except Exception:
+                                        found = None
+                                # external_vendor_id
+                                if not found:
+                                    try:
+                                        found = _Vendor.objects.filter(external_vendor_id__iexact=token).first()
+                                    except Exception:
+                                        found = None
+                                # telegram_username
+                                if not found:
+                                    try:
+                                        found = _Vendor.objects.filter(telegram_username__iexact=token.lstrip("@")).first()
+                                    except Exception:
+                                        found = None
+                                # name
+                                if not found:
+                                    try:
+                                        found = _Vendor.objects.filter(name__iexact=token).first()
+                                    except Exception:
+                                        found = None
+
+                                if found:
+                                    bu.vendor = found
+                                    bu.state = ""
+                                    bu.save(update_fields=["vendor", "state"])
+                                    response_text = "Linked to vendor successfully. Use /help to see available commands."
+                                    reply_markup = None
+                                else:
+                                    response_text = "Couldn't find that vendor. Please check the username/ID and try again."
+                                    reply_markup = None
+                                # In either case we've handled this message
+                                # send reply and return to avoid duplicate handling below
+                                from .telegram_service import TelegramBotService
+                                telegram_service = TelegramBotService()
+                                telegram_service.chat_id = str(chat_id)
+                                result = telegram_service.send_message(
+                                    response_text or "",
+                                    chat_id=str(chat_id),
+                                    reply_markup=reply_markup,
+                                )
+                                if not result.get("success"):
+                                    logger.error(f"Failed to send response to Telegram: {result.get('error')}")
+                                return JsonResponse({"status": "ok"})
+                            except Exception:
+                                pass
                         if bu.state == "awaiting_amount" and bu.temp_asset and bu.temp_type:
                             amt = text.replace(",", "")
                             # Only proceed if vendor is active/subscribed
-                            vendor_id = bu.vendor.id if bu.vendor else None
+                            vendor_id = bu.vendor_id if bu.vendor else None
                             allowed = True
                             try:
                                 if bu.vendor:
@@ -508,6 +603,17 @@ def telegram_webhook(request):
                 # Backward-compat: keep a textual response if an old client sends this callback
                 handle = data.replace("contact_vendor@", "").lstrip("@")
                 response_text = f"You can DM the vendor here: https://t.me/{handle}"
+                reply_markup = None
+            elif data == "switch_vendor":
+                # User clicked the "Switch Vendor" inline button — prompt them to send vendor identifier
+                try:
+                    from .models import BotUser as _BU
+                    bu = cast(Any, _BU)._default_manager.update_or_create(
+                        chat_id=str(chat_id), defaults={"is_subscribed": True, "state": "awaiting_vendor"}
+                    )
+                except Exception:
+                    pass
+                response_text = "Please send the vendor's username, ID, or code to link this chat to that vendor."
                 reply_markup = None
             else:
                 response_text, reply_markup = bot_handlers.handle_callback_query(data, vendor_id, str(chat_id))

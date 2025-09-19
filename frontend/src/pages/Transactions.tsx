@@ -168,16 +168,16 @@ const Transactions = () => {
                             {String(t.id).padStart(4, '0')}
                           </Link>
                         </TableCell>
-                        <TableCell className="capitalize">{t.order_type || "—"}</TableCell>
+                        <TableCell className="capitalize">{t.order_type || "-"}</TableCell>
                         <TableCell>{t.order_code || t.order}</TableCell>
-                        <TableCell>{t.order_asset || "—"}</TableCell>
-                        <TableCell>{t.order_amount ?? "—"}</TableCell>
+                        <TableCell>{t.order_asset || "-"}</TableCell>
+                        <TableCell>{t.order_amount ?? "-"}</TableCell>
                         <TableCell>
-                          {t.order_total_value != null ? `₦${Number(t.order_total_value).toLocaleString()}` : "—"}
+                          {t.order_total_value != null ? `₦${Number(t.order_total_value).toLocaleString()}` : "-"}
                         </TableCell>
                         <TableCell>{statusBadge(t.status)}</TableCell>
                         <TableCell className="text-muted-foreground">
-                          {t.completed_at ? new Date(t.completed_at).toLocaleString() : "—"}
+                          {t.completed_at ? new Date(t.completed_at).toLocaleString() : "-"}
                         </TableCell>
                         <TableCell>{t.proof ? "Yes" : "No"}</TableCell>
                       </TableRow>

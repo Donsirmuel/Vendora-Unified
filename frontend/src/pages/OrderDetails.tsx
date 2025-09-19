@@ -144,7 +144,7 @@ const OrderDetails = () => {
   }
 
   const code = order.order_code || String(order.id);
-  const value = order.total_value != null ? `₦${Number(order.total_value).toLocaleString()}` : "—";
+  const value = order.total_value != null ? `₦${Number(order.total_value).toLocaleString()}` : "-";
   return (
     <Layout>
       <div className="space-y-6">

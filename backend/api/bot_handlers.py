@@ -106,9 +106,23 @@ def handle_start_command(vendor_id: Optional[int] = None) -> Tuple[str, dict]:
     # Insert contact button if available
     if vendor_contact_btn:
         buttons.insert(1, [vendor_contact_btn])
+    # Offer a manual switch vendor option when no vendor is linked
+    try:
+        if not vendor_id:
+            buttons.append([
+                {"text": "🔁 Switch Vendor", "callback_data": "switch_vendor"}
+            ])
+    except Exception:
+        pass
     
     reply_markup = create_inline_keyboard(buttons)
     return text, reply_markup
+
+
+def handle_switch_vendor() -> Tuple[str, dict]:
+    """Prompt user to send the vendor username/ID/code to switch vendor for this chat."""
+    text = "Please send the vendor's username, ID, or code to link this chat to that vendor."
+    return text, {}
 
 
 def handle_help_command(vendor_id: Optional[int] = None) -> Tuple[str, dict]:
@@ -261,6 +275,8 @@ def handle_callback_query(data: str, vendor_id: Optional[int] = None, chat_id: O
         return handle_general_question(chat_id, vendor_id)
     elif data == "back_to_menu":
         return handle_start_command()
+    elif data == "switch_vendor":
+        return handle_switch_vendor()
     elif data.startswith("contact_vendor@"):  # open DM link instruction
         handle = data.replace("contact_vendor@", "").lstrip("@")
         url = f"https://t.me/{handle}" if handle else "https://t.me/"

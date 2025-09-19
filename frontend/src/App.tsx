@@ -24,6 +24,9 @@ import Availability from "./pages/Availability";
 import BroadcastMessages from "./pages/BroadcastMessages";
 import Queries from "./pages/Queries";
 import NotFound from "./pages/NotFound";
+import Home from "./pages/Home";
+import Terms from "./pages/Terms";
+import Privacy from "./pages/Privacy";
 
 const queryClient = new QueryClient();
 
@@ -40,7 +43,22 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            {/* Public Auth Routes - Default to Signup */}
+            {/* Public Auth Routes - Default to Home */}
+            <Route path="/terms" element={
+              <PublicRoute>
+                <Terms />
+              </PublicRoute>
+            } />
+            <Route path="/privacy" element={
+              <PublicRoute>
+                <Privacy />
+              </PublicRoute>
+            } />
+            <Route path="/" element={
+              <PublicRoute>
+                <Home />
+              </PublicRoute>
+            } />
             <Route path="/signup" element={
               <PublicRoute>
                 <Signup />

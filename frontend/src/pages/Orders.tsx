@@ -274,7 +274,7 @@ const Orders = () => {
                           </div>
                           <div>
                             <span className="text-muted-foreground">Total Value:</span>
-            <p className="font-medium">{order.total_value != null ? `₦${Number(order.total_value || 0).toLocaleString()}` : '—'}</p>
+            <p className="font-medium">{order.total_value != null ? `₦${Number(order.total_value || 0).toLocaleString()}` : '-'}</p>
                           </div>
                           <div>
                             <span className="text-muted-foreground">Created:</span>

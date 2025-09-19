@@ -378,6 +378,7 @@ REST_FRAMEWORK = {
         # Base global scopes (override via env variables below)
         'anon': config('THROTTLE_ANON', default='60/min'),
         'user': config('THROTTLE_USER', default='240/min'),
+        'user_trial': config('THROTTLE_TRIAL_USER', default='120/min'),
         'order_write': config('THROTTLE_ORDER_WRITE', default='30/min'),
         'rate_write': config('THROTTLE_RATES_WRITE', default='15/min'),
         'auth_burst': config('THROTTLE_AUTH_BURST', default='20/min'),

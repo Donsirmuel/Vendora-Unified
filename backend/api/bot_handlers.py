@@ -82,15 +82,26 @@ def handle_start_command(vendor_id: Optional[int] = None) -> Tuple[str, dict]:
     except Exception:
         pass
 
-    # Wording: when we know the vendor, use "your <name> bot"; otherwise keep generic
-    if vendor_id and vendor_name and vendor_name != "your vendor":
-        # Use possessive properly: add 's unless name already ends with ' or s'
-        possessive = (
-            f"{vendor_name}'" if str(vendor_name).endswith("s") and not str(vendor_name).endswith("s'") else f"{vendor_name}'s"
-        )
-        header = f"Welcome to Vendora — your {possessive} bot! 🚀"
+    # Wording: when we know the vendor, show vendor's username in the header; otherwise keep generic
+    # Desired header: "Welcome to Vendora - Youre currently trading with [Vendor username]"
+    vendor_username = ""
+    try:
+        if vendor_id:
+            from accounts.models import Vendor
+            # Prefer external_vendor_id (public vendor code/name used in /start links)
+            v_for_header = Vendor.objects.filter(id=vendor_id).only('external_vendor_id', 'name').first()
+            if v_for_header:
+                vendor_username = (getattr(v_for_header, 'external_vendor_id', '') or '')
+                # Fallback to name if external_vendor_id is not set
+                if not vendor_username:
+                    vendor_username = (getattr(v_for_header, 'name', '') or '')
+    except Exception:
+        vendor_username = ""
+
+    if vendor_username:
+        header = f"Welcome to Vendor - Youre currently trading with {vendor_username}"
     else:
-        header = "Welcome to Vendora — your vendor bot! 🚀"
+        header = "Welcome to Vendor - Youre currently trading with a vendor"
     text = f"{header}\n\nWhat would you like to do today?{trust_snippet}{bio_snippet}{extras_snippet}"
     
     buttons = [
@@ -106,12 +117,11 @@ def handle_start_command(vendor_id: Optional[int] = None) -> Tuple[str, dict]:
     # Insert contact button if available
     if vendor_contact_btn:
         buttons.insert(1, [vendor_contact_btn])
-    # Offer a manual switch vendor option when no vendor is linked
+    # Always offer a manual switch vendor option on the main menu
     try:
-        if not vendor_id:
-            buttons.append([
-                {"text": "🔁 Switch Vendor", "callback_data": "switch_vendor"}
-            ])
+        buttons.append([
+            {"text": "🔁 Switch Vendor", "callback_data": "switch_vendor"}
+        ])
     except Exception:
         pass
     
@@ -274,7 +284,18 @@ def handle_callback_query(data: str, vendor_id: Optional[int] = None, chat_id: O
     elif data == "general_question":
         return handle_general_question(chat_id, vendor_id)
     elif data == "back_to_menu":
-        return handle_start_command()
+        # Try to resolve vendor from BotUser by chat_id so handle_start_command can include Switch Vendor
+        resolved_vendor_id = vendor_id
+        if not resolved_vendor_id and chat_id:
+            try:
+                from .models import BotUser
+                from typing import Any, cast
+                bu = cast(Any, BotUser)._default_manager.filter(chat_id=str(chat_id)).first()
+                if bu and getattr(bu, 'vendor', None):
+                    resolved_vendor_id = getattr(bu.vendor, 'id', None)
+            except Exception:
+                resolved_vendor_id = None
+        return handle_start_command(resolved_vendor_id)
     elif data == "switch_vendor":
         return handle_switch_vendor()
     elif data.startswith("contact_vendor@"):  # open DM link instruction

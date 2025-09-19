@@ -106,6 +106,9 @@ def telegram_webhook(request):
                         defaults={"is_subscribed": True},
                     )
                     logger.debug(f"/start token resolved: token={locals().get('token', None)} vendor_id={vendor_id} vendor_obj={getattr(vendor_obj, 'id', None) if vendor_obj else None}")
+                    # If the start command didn't include a vendor token and this chat isn't linked,
+                    # prompt the user to send the vendor identifier instead of showing the main menu.
+                    prompted_for_vendor = False
 
                     # Link to vendor if provided (either vendor_id or resolved vendor_obj)
                     if vendor_id or vendor_obj:
@@ -132,10 +135,22 @@ def telegram_webhook(request):
                         except Exception as vendor_exc:
                             logger.warning(f"Failed to link BotUser to Vendor: {vendor_exc}")
 
+                    # If no vendor was provided via the /start token and the BotUser has no linked vendor,
+                    # prompt them to provide a vendor username/ID/code before showing the menu.
+                    try:
+                        if not vendor_id and not getattr(bot_user, "vendor", None):
+                            bot_user.state = "awaiting_vendor"
+                            bot_user.save(update_fields=["state"])
+                            response_text = "Please send the vendor's username, ID, or code to link this chat to that vendor."
+                            reply_markup = None
+                            prompted_for_vendor = True
+                    except Exception:
+                        prompted_for_vendor = False
+
                 except Exception as e:
                     logger.error(f"Failed to update or create BotUser: {e}")
 
-                # Call the proper start command handler
+                # Call the proper start command handler unless we already prompted for vendor
                 # Prefer vendor_id from BotUser link
                 try:
                     from .models import BotUser as _BotUser
@@ -144,7 +159,8 @@ def telegram_webhook(request):
                         vendor_id = getattr(bu.vendor, "id", None)
                 except Exception:
                     pass
-                response_text, reply_markup = bot_handlers.handle_start_command(vendor_id)
+                if not locals().get('prompted_for_vendor', False):
+                    response_text, reply_markup = bot_handlers.handle_start_command(vendor_id)
 
             elif text.startswith("/help"):
                 # Use vendor context if any
@@ -605,7 +621,7 @@ def telegram_webhook(request):
                 response_text = f"You can DM the vendor here: https://t.me/{handle}"
                 reply_markup = None
             elif data == "switch_vendor":
-                # User clicked the "Switch Vendor" inline button — prompt them to send vendor identifier
+                # User clicked the "Switch Vendor" inline button - prompt them to send vendor identifier
                 try:
                     from .models import BotUser as _BU
                     bu = cast(Any, _BU)._default_manager.update_or_create(

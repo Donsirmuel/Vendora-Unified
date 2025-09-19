@@ -113,7 +113,25 @@ def send_web_push_to_vendor(vendor, title: str, message: str, url: str | None = 
     if icon:
         payload["icon"] = icon
     success, failed = 0, 0
+    pruned_non_webpush = 0
     for sub in subs:
+        # Basic validation: ensure this subscription looks like a Web Push subscription.
+        # Some platforms (Windows native notifications/WNS) produce endpoints that are
+        # not compatible with the Web Push protocol used by pywebpush. Skip and remove
+        # such endpoints to avoid repeated 400 responses.
+        try:
+            endpoint_l = (sub.endpoint or "").lower()
+        except Exception:
+            endpoint_l = ""
+        if not endpoint_l.startswith("http") or "notify.windows.com" in endpoint_l or "/wns" in endpoint_l:
+            logger.warning("Skipping non-WebPush subscription endpoint (will prune): %s", sub.endpoint)
+            try:
+                sub.delete()
+            except Exception:
+                pass
+            pruned_non_webpush += 1
+            # don't count pruned non-webpush subs as a webpush failure for VAPID diagnostics
+            continue
         try:
             webpush(
                 subscription_info={
@@ -129,20 +147,50 @@ def send_web_push_to_vendor(vendor, title: str, message: str, url: str | None = 
             # Prune subscriptions that are gone/invalid
             status_code = None
             try:
-                status_code = getattr(getattr(wpe, "response", None), "status_code", None)
+                resp = getattr(wpe, "response", None)
+                status_code = getattr(resp, "status_code", None)
+                # try to extract response body if present
+                body_text = None
+                try:
+                    if resp is not None:
+                        body_bytes = getattr(resp, "content", None) or getattr(resp, "text", None)
+                        if body_bytes is not None:
+                            # content may be bytes or str
+                            if isinstance(body_bytes, (bytes, bytearray)):
+                                body_text = body_bytes.decode('utf-8', errors='ignore')
+                            else:
+                                body_text = str(body_bytes)
+                except Exception:
+                    body_text = None
             except Exception:
                 status_code = None
+            # Log richer diagnostics
+            logger.warning(
+                "WebPushException for endpoint=%s status=%s body=%s exc=%s",
+                sub.endpoint,
+                status_code,
+                (body_text or "<no body>"),
+                getattr(wpe, 'message', str(wpe)),
+            )
             if status_code in (401, 403, 404, 410):
                 try:
                     sub.delete()
                 except Exception:
                     pass
-            else:
-                logger.warning("WebPush failed for %s: %s", sub.endpoint, getattr(wpe, 'message', wpe))
         except Exception as e:
             failed += 1
             logger.exception("Unexpected error sending web push: %s", e)
     if failed and not success:
-        # Surface a hint when all sends fail (likely VAPID keys missing or invalid)
-        logger.error("All web push sends failed. Check VAPID_PUBLIC_KEY/PRIVATE_KEY and HTTPS context.")
+        # If all failures were pruned non-WebPush subscriptions, log an info instead of a VAPID error
+        if pruned_non_webpush and pruned_non_webpush == len(subs):
+            logger.info("No WebPush-compatible subscriptions to send (pruned %s non-WebPush subscriptions).", pruned_non_webpush)
+        else:
+            # Surface a hint when web push sends failed (likely VAPID keys missing or invalid)
+            vk = getattr(settings, 'VAPID_PUBLIC_KEY', None)
+            sk = getattr(settings, 'VAPID_PRIVATE_KEY', None)
+            logger.error(
+                "All web push sends failed. Check VAPID_PUBLIC_KEY/PRIVATE_KEY and HTTPS context. VAPID_PUBLIC_KEY_len=%s VAPID_PRIVATE_KEY_len=%s",
+                (len(vk) if vk else 0),
+                (len(sk) if sk else 0),
+            )
     return {"sent": success, "failed": failed}

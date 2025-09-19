@@ -4,46 +4,44 @@ from django.db import migrations
 
 def add_columns_if_missing(apps, schema_editor):
     # Idempotent add of accepted_at and declined_at to orders_order
-    table = 'orders_order'
-    conn = schema_editor.connection
+    from django.db import models
+    
     try:
-        with conn.cursor() as cursor:
-            try:
-                cursor.execute(f"PRAGMA table_info('{table}')")
-                cols = [row[1] for row in cursor.fetchall()]  # 2nd item is column name
-            except Exception:
-                cols = []
-            if 'accepted_at' not in cols:
-                try:
-                    cursor.execute(f'ALTER TABLE "{table}" ADD COLUMN "accepted_at" datetime NULL')
-                except Exception:
-                    pass
-            if 'declined_at' not in cols:
-                try:
-                    cursor.execute(f'ALTER TABLE "{table}" ADD COLUMN "declined_at" datetime NULL')
-                except Exception:
-                    pass
-    except Exception:
-        # As a fallback, try using schema_editor on historical model (portable approach)
-        try:
-            from django.db import models
-            Order = apps.get_model('orders', 'Order')
-            if not any(f.name == 'accepted_at' for f in Order._meta.get_fields()):
+        Order = apps.get_model('orders', 'Order')
+        
+        # Use Django's database introspection to check for existing columns
+        # This is portable across all database backends
+        table_name = Order._meta.db_table
+        introspection = schema_editor.connection.introspection
+        
+        with schema_editor.connection.cursor() as cursor:
+            # Get existing column names using Django's database introspection
+            existing_columns = [
+                column.name for column in introspection.get_table_description(cursor, table_name)
+            ]
+            
+            # Add accepted_at column if it doesn't exist
+            if 'accepted_at' not in existing_columns:
                 field = models.DateTimeField(null=True, blank=True)
                 field.set_attributes_from_name('accepted_at')
                 try:
                     schema_editor.add_field(Order, field)
                 except Exception:
+                    # Column might already exist from previous run
                     pass
-            if not any(f.name == 'declined_at' for f in Order._meta.get_fields()):
+            
+            # Add declined_at column if it doesn't exist
+            if 'declined_at' not in existing_columns:
                 field = models.DateTimeField(null=True, blank=True)
                 field.set_attributes_from_name('declined_at')
                 try:
                     schema_editor.add_field(Order, field)
                 except Exception:
+                    # Column might already exist from previous run
                     pass
-        except Exception:
-            pass
+    except Exception:
+        # If anything fails, silently continue - the columns will be added by migration 0007
+        pass
 
 
 class Migration(migrations.Migration):

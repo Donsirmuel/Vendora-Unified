@@ -76,7 +76,7 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4 page-anim light-dimmer light-dimmer--soft">
       <div className="w-full max-w-6xl grid lg:grid-cols-2 gap-8 items-center">
         {/* Left side - Branding & Features */}
         <div className="space-y-8 text-center lg:text-left">
@@ -127,7 +127,7 @@ export default function SignupPage() {
         </div>
         {/* Right side - Signup Form */}
         <div className="w-full max-w-md mx-auto lg:mx-0">
-          <Card className="bg-gradient-card border-border shadow-card">
+          <Card className="bg-gradient-card border-border shadow-card card-anim">
             <CardHeader className="space-y-1">
               <CardTitle className="text-2xl font-bold">Create Account</CardTitle>
               <CardDescription>

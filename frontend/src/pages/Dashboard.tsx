@@ -253,7 +253,7 @@ const Dashboard = () => {
 
   return (
     <Layout>
-      <div className="space-y-6">
+      <div className="space-y-6 page-anim">
         {/* Header */}
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <h1 className="text-3xl font-bold">Dashboard</h1>
@@ -270,7 +270,7 @@ const Dashboard = () => {
 
   {/* Share your bot link (customers use bot, vendors share link) */}
         {botLink && (
-          <Card>
+          <Card className="card-anim">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium">Share your bot link with customers</CardTitle>
               <CardDescription>Customers trade via your Telegram bot, not the PWA.</CardDescription>
@@ -307,7 +307,7 @@ const Dashboard = () => {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      <Card>
+      <Card className="card-anim">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium">Total Orders Received</CardTitle>
               <ShoppingCart className="h-4 w-4 text-muted-foreground" />

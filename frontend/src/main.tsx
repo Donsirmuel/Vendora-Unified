@@ -2,6 +2,8 @@ import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import './index.css'
+// Shared page animations and decorative styles used by Home, Signup, Login, Dashboard
+import './pages/home.css'
 import { http, tokenStore } from '@/lib/http'
 import { setUpdateAvailable } from '@/lib/sw-updates'
 

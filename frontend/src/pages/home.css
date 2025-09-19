@@ -1,0 +1,50 @@
+/* Animations and decorative background for Home.tsx (scoped under .home-hero) */
+.home-hero .fade-up { animation: fadeUp .7s cubic-bezier(.2,.9,.2,1) both; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(12px) scale(.995); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+.home-hero .hero-zoom { animation: heroZoom 900ms cubic-bezier(.24,.9,.2,1) both; }
+@keyframes heroZoom { from { transform: translateY(6px) scale(.998); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } }
+
+/* gentle float to add depth */
+.home-hero .float-slight { animation: float 6s ease-in-out infinite; }
+@keyframes float { 0% { transform: translateY(0); } 50% { transform: translateY(-6px); } 100% { transform: translateY(0); } }
+
+/* stats */
+.home-hero .stat { color: #e6f6fb; font-weight: 700; }
+.home-hero .stat-label { color: #9fbfc8; font-weight: 600; font-size: 13px; }
+
+/* button micro-interactions */
+.home-hero .cta { transition: transform .18s cubic-bezier(.2,.9,.2,1), box-shadow .18s; }
+.home-hero .cta:hover { transform: translateY(-3px) scale(1.01); box-shadow: 0 10px 30px -16px rgba(14,165,183,.55); }
+.home-hero .cta:active { transform: translateY(-1px) scale(.995); }
+
+/* feature items - staggered entrance */
+.home-hero .feature { opacity: 0; transform: translateY(12px); }
+.home-hero .feature.show { opacity: 1; transform: translateY(0); transition: transform .5s cubic-bezier(.2,.9,.2,1), opacity .45s; }
+
+/* animated background layers (subtle, performant) */
+.home-hero .bg-layer { position: absolute; inset: 0; pointer-events: none; z-index: 0; }
+.home-hero .bg-radial { position: absolute; width: 180%; height: 180%; left: -40%; top: -30%; filter: blur(36px); opacity: 0.08; transform: translateZ(0); background: radial-gradient(circle at 20% 20%, rgba(125,211,252,0.9), transparent 18%), radial-gradient(circle at 80% 80%, rgba(14,165,183,0.9), transparent 20%); animation: bgMove 12s linear infinite; }
+.home-hero .bg-glow { position: absolute; width: 120%; height: 120%; left: -10%; top: -10%; opacity: 0.04; background: conic-gradient(from 90deg at 50% 50%, rgba(125,211,252,.8), rgba(14,165,183,.8), rgba(125,211,252,.8)); filter: blur(40px); animation: bgRotate 28s linear infinite reverse; }
+
+@keyframes bgMove { 0%{ transform: translate3d(0,0,0) scale(1); } 50%{ transform: translate3d(6%, -4%, 0) scale(1.02);} 100%{ transform: translate3d(0,0,0) scale(1);} }
+@keyframes bgRotate { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }
+
+/* parallax performance hints */
+.home-hero .bg-layer, .home-hero svg { will-change: transform, opacity; transform: translate3d(0,0,0); }
+
+.home-hero .parallax-slow { transition: transform 0.12s linear; }
+.home-hero .parallax-fast { transition: transform 0.08s linear; }
+
+/* shared utilities for other pages */
+.page-anim { opacity: 0; transform: translateY(8px); animation: pageFadeIn .6s cubic-bezier(.2,.9,.2,1) both; }
+@keyframes pageFadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+/* dimmer for light mode: reduces harsh white backgrounds while preserving accessibility */
+.light-dimmer { position: relative; }
+.light-dimmer::before { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(2,6,23,0)); mix-blend-mode: multiply; opacity: 1; }
+.light-dimmer--soft::before { background: rgba(0,0,0,0.04); }
+
+/* small card entrance */
+.card-anim { opacity: 0; transform: translateY(6px) scale(.997); animation: cardIn .45s cubic-bezier(.2,.9,.2,1) both; }
+@keyframes cardIn { from { opacity: 0; transform: translateY(6px) scale(.997); } to { opacity: 1; transform: translateY(0) scale(1); } }

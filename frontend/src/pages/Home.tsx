@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import "./home.css";
 
 export default function Home(): JSX.Element {
   const root = { fontFamily: "Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif", background: "#0f172a", color: "#f1f5f9", minHeight: "100vh" };
@@ -17,34 +18,34 @@ export default function Home(): JSX.Element {
   const footer = { maxWidth: 1100, margin: "80px auto 40px", padding: "0 28px", fontSize: 12.5, color: "#94a3b8", display: "flex", flexWrap: "wrap", gap: 18, alignItems: "center", justifyContent: "space-between" };
 
   return (
-    <div style={root}>
-      <header style={header}>
+    <div style={root} className="home-container">
+      <header style={header} className="home-header">
         <div style={{ fontWeight: 600, fontSize: 19, color: "#94a3b8", display: "flex", alignItems: "center" }}>
           Vendora <span style={badge}>Beta</span>
         </div>
-        <nav>
-          <a style={navLink} href="#features">Features</a>
-          <a style={navLink} href="/terms">Terms</a>
-          <a style={navLink} href="/privacy">Privacy</a>
-          <a style={{ ...navLink, marginLeft: 16 }} href="/signup">Sign Up</a>
-          <a style={{ ...navLink, marginLeft: 16 }} href="/login">Login</a>
+        <nav className="home-nav">
+          <a style={navLink} className="nav-link" href="#features">Features</a>
+          <a style={navLink} className="nav-link" href="/terms">Terms</a>
+          <a style={navLink} className="nav-link" href="/privacy">Privacy</a>
+          <a style={{ ...navLink, marginLeft: 16 }} className="nav-link" href="/signup">Sign Up</a>
+          <a style={{ ...navLink, marginLeft: 16 }} className="nav-link" href="/login">Login</a>
         </nav>
       </header>
 
       <section style={hero}>
-        <div>
+        <div className="hero-content">
           <div style={{ fontSize: 13, fontWeight: 500, letterSpacing: ".5px", textTransform: "uppercase", color: "#7dd3fc", marginBottom: 8 }}>Operate faster</div>
-          <h1 style={h1}>All your vendor operations-orders, rates, deals-in one ultra‑light Progressive Web Application.</h1>
+          <h1 style={h1} className="gradient-text">All your vendor operations-orders, rates, deals-in one ultra‑light Progressive Web Application.</h1>
           <p style={lead}>Vendora centralizes P2P crypto vendor workflows: publish rates, accept customer orders, confirm transactions, push updates, answer queries & stream live activity-without heavyweight dashboards.</p>
 
           <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
-            <a style={btn} href="/signup">Start Free Trial →</a>
-            <a style={btnSecondary} href="#features">See Features</a>
+            <a style={btn} className="primary-btn" href="/signup">Start Free Trial →</a>
+            <a style={btnSecondary} className="secondary-btn" href="#features">See Features</a>
           </div>
           <div style={{ color: "#94a3b8", marginTop: 14 }}>No card required • 14‑day trial • Keep your data</div>
         </div>
 
-        <div style={screen as React.CSSProperties}>
+        <div style={screen as React.CSSProperties} className="hero-screen code-screen">
           <pre style={{ margin: 0 }}><code style={{ fontFamily: "Source Code Pro,monospace", fontSize: 13, color: "#7dd3fc" }}>
 {`POST /api/v1/orders
 201 Created  ⏱ 142ms
@@ -57,7 +58,7 @@ stream: vendor_events
         </div>
       </section>
 
-      <ul style={featuresGrid} id="features">
+      <ul style={featuresGrid} className="features-grid" id="features">
         {[
           ["Straightforward Rates", "Quickly publish buy & sell rates; prevent duplicates automatically."],
           ["Order Lifecycle", "Create, accept, complete or decline - with automatic expiry handling."],
@@ -68,7 +69,7 @@ stream: vendor_events
           ["Customer Queries", "Track and close customer inquiries with vendor-scoped access."],
           ["Secure & Throttled", "JWT auth, per-user rate limits, structured logs and request IDs."]
         ].map(([title, desc]) => (
-          <li key={title} style={feature}>
+          <li key={title} style={feature} className="feature-card">
             <h3 style={{ margin: 0, marginBottom: 8 }}>{title}</h3>
             <p style={{ margin: 0, fontSize: 14, color: "#94a3b8" }}>{desc}</p>
           </li>
@@ -82,7 +83,7 @@ stream: vendor_events
         </p>
       </section>
 
-      <section style={{ maxWidth: 950, margin: "80px auto 20px", padding: "0 28px" }} id="faq" aria-labelledby="faq-heading">
+      <section style={{ maxWidth: 950, margin: "80px auto 20px", padding: "0 28px" }} className="faq-section" id="faq" aria-labelledby="faq-heading">
         <h2 id="faq-heading" style={{ fontSize: 32, margin: "0 0 28px" }}>Frequently Asked Questions</h2>
         {[
           ["What is Vendora?", "Vendora is a lightweight platform for independent crypto vendors to manage rates, customer orders, transactions, proofs, and queries with optional Telegram notifications & real‑time streaming updates."],
@@ -91,14 +92,14 @@ stream: vendor_events
           ["How do I receive notifications?", "Enable web push in the dashboard for browser alerts or connect your Telegram username to receive bot messages for key events like new orders or completed transactions."],
           ["Is my data secure?", "All API requests use JWT authentication, endpoints are rate‑limited, and structured logging plus health checks help monitor stability. Future updates will add stronger security headers & optional audit exports."]
         ].map(([q, a]) => (
-          <div key={q} style={{ background: "#101e33", border: "1px solid #1e2b42", padding: "18px 20px 14px", borderRadius: 14, marginBottom: 14 }}>
+          <div key={q} style={{ background: "#101e33", border: "1px solid #1e2b42", padding: "18px 20px 14px", borderRadius: 14, marginBottom: 14 }} className="faq-item">
             <h3 style={{ margin: "0 0 8px" }}>{q}</h3>
             <p style={{ margin: 0, fontSize: 14, lineHeight: 1.55, color: "#94a3b8" }}>{a}</p>
           </div>
         ))}
       </section>
 
-      <footer style={footer as React.CSSProperties}>
+      <footer style={footer as React.CSSProperties} className="home-footer">
         <div>© <span id="year">{new Date().getFullYear()}</span> Vendora. All rights reserved.</div>
         <div>
           <a style={{ color: "#7dd3fc", marginRight: 12 }} href="/terms">Terms</a>

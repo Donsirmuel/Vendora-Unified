@@ -2,6 +2,8 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView
 from .views import VendorViewSet, BroadcastMessageViewSet, BankDetailViewSet, PlanUpgradeView
+from .api import PaymentRequestViewSet, GlobalPaymentDestinationViewSet
+from .sse import payment_request_stream
 from .auth_views import (
     CustomTokenObtainPairView,
     signup, 
@@ -17,6 +19,8 @@ router.register(r"vendors", VendorViewSet, basename="vendor")
 router.register(r"broadcasts", BroadcastMessageViewSet, basename="broadcast")
 router.register(r"broadcast-messages", BroadcastMessageViewSet, basename="broadcast_messages")  # Alias to match frontend
 router.register(r"bank-details", BankDetailViewSet, basename="bank_detail")
+router.register(r"payment-requests", PaymentRequestViewSet, basename="payment_request")
+router.register(r"global-payment-destinations", GlobalPaymentDestinationViewSet, basename='global_payment_destination')
 
 urlpatterns = [
     # Custom JWT authentication with email support
@@ -39,4 +43,5 @@ urlpatterns = [
 
     # Vendor endpoints
     path("", include(router.urls)),
+    path('payment-requests/stream/', payment_request_stream, name='payment_request_stream'),
 ]

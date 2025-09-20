@@ -18,6 +18,8 @@ class TransactionSerializer(serializers.ModelSerializer):
             "order_amount",
             "order_total_value",
             "proof",
+            "proof_uploaded_at",
+            "created_at",
             "status",
             "completed_at",
             "customer_receiving_details",
@@ -25,7 +27,9 @@ class TransactionSerializer(serializers.ModelSerializer):
             "vendor_proof",
             "vendor_completed_at",
         ]
-        read_only_fields = ["id"]
+        # Prevent status/timestamps from being changed via generic PATCH/PUT.
+        # Status transitions must go through the explicit `complete` / vendor actions.
+        read_only_fields = ["id", "status", "completed_at", "vendor_completed_at"]
 
     def get_order_code(self, obj: Transaction):
         try:

@@ -1,0 +1,84 @@
+- hosts: vendora
+  become: true
+  vars:
+    repo_url: "https://github.com/Donsirmuel/Vendora-Unified.git"
+    app_user: vendora
+    app_dir: /home/vendora/vendora
+  tasks:
+    - name: Ensure apt packages
+      apt:
+        name:
+          - git
+          - python3-venv
+          - python3-pip
+          - nginx
+          - libpq-dev
+        update_cache: yes
+
+    - name: Ensure app user exists
+      user:
+        name: "{{ app_user }}"
+        shell: /bin/bash
+        create_home: yes
+
+    - name: Clone repo
+      git:
+        repo: "{{ repo_url }}"
+        dest: "{{ app_dir }}"
+        version: main
+        force: yes
+        update: yes
+        accept_hostkey: yes
+      become_user: "{{ app_user }}"
+
+    - name: Create venv and install requirements
+      shell: |
+        python3 -m venv {{ app_dir }}/backend/.venv
+        . {{ app_dir }}/backend/.venv/bin/activate
+        pip install --upgrade pip setuptools wheel
+        pip install -r {{ app_dir }}/backend/requirements.txt
+
+    - name: Copy systemd unit
+      copy:
+        src: "{{ app_dir }}/deployment/vendora-unified.service.example"
+        dest: /etc/systemd/system/vendora-unified.service
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Reload systemd and enable service
+      systemd:
+        daemon_reload: yes
+        name: vendora-unified
+        enabled: yes
+        state: restarted
+
+    - name: Ensure nginx site available
+      copy:
+        src: "{{ app_dir }}/deployment/nginx_vendora.conf.example"
+        dest: /etc/nginx/sites-available/vendora
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Enable nginx site
+      file:
+        src: /etc/nginx/sites-available/vendora
+        dest: /etc/nginx/sites-enabled/vendora
+        state: link
+
+    - name: Test nginx and reload
+      shell: nginx -t && systemctl reload nginx
+
+    - name: Run migrations and collectstatic
+      shell: |
+        . {{ app_dir }}/backend/.venv/bin/activate
+        cd {{ app_dir }}/backend
+        python manage.py migrate --noinput
+        python manage.py collectstatic --noinput
+      args:
+        chdir: "{{ app_dir }}/backend"
+
+    - name: Run smoke tests
+      shell: |
+        {{ app_dir }}/scripts/smoke_test.sh https://app.yourdomain.com || true

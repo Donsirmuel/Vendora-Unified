@@ -116,7 +116,7 @@ class VendorViewSet(ModelViewSet):
         serializer = self.get_serializer(user)
         return Response(serializer.data)
 
-    @action(detail=False, methods=["get"], url_path="onboarding")
+    @action(detail=False, methods=["get"], url_path="onboarding", throttle_classes=[])
     def onboarding(self, request):
         """Return dynamic onboarding checklist for the authenticated vendor.
 
@@ -142,7 +142,9 @@ class BankDetailViewSet(ModelViewSet):
         # If setting default, clear existing defaults for this vendor
         is_default = bool(serializer.validated_data.get("is_default", False))
         if is_default:
-            type(serializer.Meta.model).objects.filter(vendor=self.request.user, is_default=True).update(is_default=False)
+            # Use the model class from the serializer to access the manager
+            # (type(...) was incorrect and could reference the metaclass)
+            serializer.Meta.model.objects.filter(vendor=self.request.user, is_default=True).update(is_default=False)
         serializer.save(vendor=self.request.user)
 
     def perform_update(self, serializer):

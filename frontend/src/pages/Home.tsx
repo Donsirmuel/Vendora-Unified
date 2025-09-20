@@ -77,6 +77,12 @@ function StatsCard({ className = '' }: { className?: string }) {
 }
 
 export default function Home(): JSX.Element {
+  // Demo mode: make animations much more visible for recordings/demos.
+  // Enable via URL `?demo=1` or set localStorage.setItem('vendora_demo','1')
+  const isDemo = typeof window !== 'undefined' && (
+    new URLSearchParams(window.location.search).get('demo') === '1' ||
+    localStorage.getItem('vendora_demo') === '1'
+  );
   // Stagger feature reveal on mount
   useEffect(() => {
     const items = Array.from(document.querySelectorAll('#features .feature')) as HTMLElement[];
@@ -170,7 +176,7 @@ export default function Home(): JSX.Element {
         </nav>
       </header>
 
-      <section style={hero} className="home-hero">
+  <section style={hero} className={"home-hero" + (isDemo ? ' demo' : '')}>
         <div className="hero-zoom">
           <div style={{ fontSize: 13, fontWeight: 500, letterSpacing: ".5px", textTransform: "uppercase", color: "#7dd3fc", marginBottom: 8 }}>Operate faster</div>
           <h1 style={h1}>All your vendor operations-orders, rates, deals-in one ultra‑light Progressive Web Application.</h1>

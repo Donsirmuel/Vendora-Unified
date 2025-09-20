@@ -15,6 +15,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useState } from "react";
 import ThemeToggle from '@/components/ThemeToggle';
 import { useAuth } from "@/contexts/AuthContext";
+// TrialBanner intentionally not displayed globally; shown only on Settings page
+import Footer from '@/components/Footer';
 
 interface LayoutProps {
   children: ReactNode;
@@ -148,7 +150,10 @@ const Layout = ({ children, title }: LayoutProps) => {
           {/* Header */}
           {title && (
             <header className="bg-card border-b border-border px-6 py-4" role="banner">
-              <h1 className="text-2xl font-semibold text-foreground">{title}</h1>
+              <div className="flex items-center gap-4">
+                <h1 className="text-2xl font-semibold text-foreground">{title}</h1>
+                {/* Trial indicator moved to Settings page only */}
+              </div>
             </header>
           )}
 
@@ -156,6 +161,7 @@ const Layout = ({ children, title }: LayoutProps) => {
           <main id="main-content" className="p-6 pb-24 safe-pb" role="main" tabIndex={-1}>
             {children}
           </main>
+          <Footer />
         </div>
       </div>
     </div>

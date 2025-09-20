@@ -99,9 +99,9 @@ def handle_start_command(vendor_id: Optional[int] = None) -> Tuple[str, dict]:
         vendor_username = ""
 
     if vendor_username:
-        header = f"Welcome to Vendor - Youre currently trading with {vendor_username}"
+        header = f"Welcome to Vendora - You're currently trading with {vendor_username}"
     else:
-        header = "Welcome to Vendor - Youre currently trading with a vendor"
+        header = "Welcome to Vendora - You're currently trading with a vendor"
     text = f"{header}\n\nWhat would you like to do today?{trust_snippet}{bio_snippet}{extras_snippet}"
     
     buttons = [

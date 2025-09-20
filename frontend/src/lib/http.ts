@@ -86,6 +86,19 @@ http.interceptors.response.use(
     return response;
   },
   async (error) => {
+    // Global account inactive handling: backends return 403 with code 'ACCOUNT_INACTIVE'
+    try {
+      const resp = error.response;
+      if (resp && resp.status === 403 && resp.data && resp.data.code === 'ACCOUNT_INACTIVE') {
+        // Clear tokens and redirect to upgrade page with reason
+        tokenStore.clear();
+        const reason = 'account_inactive';
+        window.location.href = `/upgrade?reason=${reason}`;
+        return Promise.reject(error);
+      }
+    } catch (e) {
+      // swallow
+    }
     const originalRequest: AxiosRequestConfig & { _retry?: boolean } = error.config || {};
 
     // If token is expired and we haven't already tried to refresh

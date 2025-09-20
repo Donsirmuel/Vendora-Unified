@@ -1,0 +1,14 @@
+[Unit]
+Description=Vendora ASGI Uvicorn (example)
+After=network.target
+
+[Service]
+User=vendora
+Group=vendora
+WorkingDirectory=/home/vendora/vendora-unified/backend
+EnvironmentFile=/home/vendora/vendora-unified/backend/.env
+ExecStart=/home/vendora/vendora-unified/venv/bin/uvicorn vendora.asgi:application --uds /run/vendora.sock --workers 2
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

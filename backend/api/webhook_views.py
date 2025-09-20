@@ -430,9 +430,17 @@ def telegram_webhook(request):
                                 # Check transaction completion
                                 from transactions.models import Transaction
                                 txn = Transaction._default_manager.select_related('order').filter(order=order).first()
-                                if txn and (txn.vendor_completed_at or txn.completed_at):
-                                    when = txn.vendor_completed_at or txn.completed_at
-                                    parts.append(f"Completed: {when:%Y-%m-%d %H:%M}")
+                                if txn:
+                                    # If transaction has vendor/customer completion timestamps, show completed time
+                                    if txn.vendor_completed_at or txn.completed_at:
+                                        when = txn.vendor_completed_at or txn.completed_at
+                                        parts.append(f"Completed: {when:%Y-%m-%d %H:%M}")
+                                    else:
+                                        # Show proof upload or creation time for uncompleted transactions
+                                        if getattr(txn, 'proof_uploaded_at', None):
+                                            parts.append(f"Proof uploaded: {txn.proof_uploaded_at:%Y-%m-%d %H:%M}")
+                                        elif getattr(txn, 'created_at', None):
+                                            parts.append(f"Transaction created: {txn.created_at:%Y-%m-%d %H:%M}")
                                 response_text = "\n".join(parts)
                                 reply_markup = None
                             # Reset state after responding

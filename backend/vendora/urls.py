@@ -68,6 +68,7 @@ urlpatterns += [
     re_path(r'^icons/(?P<path>.*)$', lambda r, path: static_serve(r, document_root=str(settings.FRONTEND_DIST / 'icons'), path=path)),
     # Vite build assets (JS/CSS)
     re_path(r'^assets/(?P<path>.*)$', lambda r, path: static_serve(r, document_root=str(settings.FRONTEND_DIST / 'assets'), path=path)),
-    # SPA fallback: serve index.html for any other non-handled route (excluding api/admin/media)
-    re_path(r'^(?!admin/|api/|media/).*$', TemplateView.as_view(template_name='index.html')),
+    # SPA fallback: serve index.html for any other non-handled route.
+    # Exclude admin (with or without trailing slash), api/, and media/ so Django can handle admin redirects
+    re_path(r'^(?!(?:admin(?:/|$)|api/|media/)).*$', TemplateView.as_view(template_name='index.html')),
 ]

@@ -10,6 +10,18 @@ import { Search, MessageCircle, Clock, CheckCircle2, AlertCircle } from "lucide-
 import { http } from "@/lib/http";
 import { getErrorMessage } from "@/lib/errors";
 import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
+import { deleteQuery } from "@/lib/queries";
 
 const Queries = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -18,6 +30,9 @@ const Queries = () => {
   const [loading, setLoading] = useState(true);
   const [replyOpenId, setReplyOpenId] = useState<number | null>(null);
   const [replyText, setReplyText] = useState("");
+  const [deletingAll, setDeletingAll] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+  const [confirmDeleteAllOpen, setConfirmDeleteAllOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -35,6 +50,37 @@ const Queries = () => {
     };
     load();
   }, []);
+
+  async function handleDelete(id: number) {
+    try {
+      await deleteQuery(id);
+      setItems((prev) => prev.filter((p) => p.id !== id));
+      toast({ title: 'Deleted', description: `Query ${id} was deleted.` });
+    } catch (err) {
+      console.error(err);
+      toast({ title: 'Delete failed', description: getErrorMessage(err, 'Failed to delete query'), variant: 'destructive' });
+    } finally {
+      setConfirmDeleteId(null);
+    }
+  }
+
+  async function handleDeleteAll() {
+    setDeletingAll(true);
+    try {
+      for (const q of items) {
+        // eslint-disable-next-line no-await-in-loop
+        await deleteQuery(q.id);
+      }
+      setItems([]);
+      toast({ title: 'Deleted', description: 'All queries were deleted.' });
+    } catch (err) {
+      console.error(err);
+      toast({ title: 'Delete all failed', description: getErrorMessage(err, 'Failed to delete all queries'), variant: 'destructive' });
+    } finally {
+      setDeletingAll(false);
+      setConfirmDeleteAllOpen(false);
+    }
+  }
 
   const sendReply = async (id: number) => {
     try {
@@ -89,9 +135,30 @@ const Queries = () => {
   <Layout>
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold">Customer Queries</h1>
-        <p className="text-muted-foreground">Manage and respond to customer inquiries</p>
+      <div className="flex items-start gap-4">
+        <div>
+          <h1 className="text-2xl font-bold">Customer Queries</h1>
+          <p className="text-muted-foreground">Manage and respond to customer inquiries</p>
+        </div>
+        <div className="ml-auto">
+          <AlertDialog open={confirmDeleteAllOpen} onOpenChange={setConfirmDeleteAllOpen}>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" disabled={deletingAll || items.length === 0}>
+                {deletingAll ? 'Deleting...' : `Delete all (${items.length})`}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete all queries</AlertDialogTitle>
+                <AlertDialogDescription>This will permanently delete all customer queries. This action cannot be undone.</AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDeleteAll}>Delete all</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
       </div>
 
       {/* Filters */}
@@ -161,7 +228,7 @@ const Queries = () => {
               <CardContent>
                 <div className="space-y-4">
                   <p className="text-sm">{query.message}</p>
-                  <div className="flex justify-between items-center">
+                    <div className="flex justify-between items-center">
                     <span className="text-sm text-muted-foreground">Created: {new Date(query.created_at || query.timestamp || Date.now()).toLocaleString()}</span>
                     <div className="space-x-2">
                       {replyOpenId === query.id ? (
@@ -179,6 +246,21 @@ const Queries = () => {
                       <Button size="sm" onClick={()=>markDone(query.id)}>
                         Mark as done
                       </Button>
+                      <AlertDialog open={confirmDeleteId === query.id} onOpenChange={(open)=>{ if (!open) setConfirmDeleteId(null); }}>
+                        <AlertDialogTrigger asChild>
+                          <Button size="sm" variant="outline" onClick={()=>setConfirmDeleteId(query.id)}>🗑️</Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete query {query.id}?</AlertDialogTitle>
+                            <AlertDialogDescription>This will permanently delete the query. This action cannot be undone.</AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={()=>handleDelete(query.id)}>Delete</AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
                   </div>
                 </div>

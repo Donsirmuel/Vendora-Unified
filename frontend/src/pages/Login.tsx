@@ -8,6 +8,7 @@ import { Smartphone, Laptop, Tablet, Monitor } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { getErrorMessage } from "@/lib/errors";
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -15,6 +16,8 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const reason = params.get('reason');
   const { login } = useAuth();
   const { toast } = useToast();
 
@@ -100,7 +103,7 @@ const Login = () => {
 
         {/* Right side - Login Form */}
         <div className="w-full max-w-md mx-auto lg:mx-0">
-          <Card className="bg-gradient-card border-border shadow-card card-anim">
+          <Card className="bg-gradient-card border-border shadow-card card-anim pulse-card">
             <CardHeader className="space-y-1">
               <CardTitle className="text-2xl font-bold">Sign in</CardTitle>
               <CardDescription>
@@ -109,6 +112,14 @@ const Login = () => {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleLogin} className="space-y-4">
+                {reason === 'account_inactive' && (
+                  <Alert className="mb-2">
+                    <div>
+                      <AlertTitle>Account inactive</AlertTitle>
+                      <AlertDescription>Your account access is currently restricted. Please contact support or upgrade your plan to regain service.</AlertDescription>
+                    </div>
+                  </Alert>
+                )}
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
                   <Input

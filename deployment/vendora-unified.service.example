@@ -1,0 +1,42 @@
+[Unit]
+Description=Vendora ASGI (uvicorn) - hardened example
+After=network.target
+
+[Service]
+# Run as an unprivileged dedicated user
+User=vendora
+Group=vendora
+
+# Limit access to the filesystem and kernel
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+NoNewPrivileges=true
+ProtectKernelTunables=true
+ProtectControlGroups=true
+
+# Only allow writing to these paths (adjust as needed)
+ReadWritePaths=/home/vendora/vendora/backend/media /home/vendora/vendora/backend/static /var/log/vendora
+
+# Working directory and environment
+WorkingDirectory=/home/vendora/vendora/backend
+Environment="DJANGO_SETTINGS_MODULE=vendora.settings"
+Environment="ENV=production"
+
+# Use the virtualenv uvicorn binary. Adjust path to your layout.
+ExecStart=/home/vendora/vendora/backend/.venv/bin/uvicorn vendora.asgi:application --host 127.0.0.1 --port 8001 --workers 3
+
+Restart=on-failure
+RestartSec=5s
+
+# Reduce the attack surface by disabling capabilities
+AmbientCapabilities=
+
+[Install]
+WantedBy=multi-user.target
+
+# Notes:
+# - Create the `vendora` user and chown the repository to that user.
+# - Ensure /var/log/vendora exists and is writable by the vendora user if you write logs there.
+# - Keep backend/.env readable only by the vendora user (chmod 600).
+# - For multi-host deployments use Redis for CHANNEL_LAYERS and scale workers appropriately.

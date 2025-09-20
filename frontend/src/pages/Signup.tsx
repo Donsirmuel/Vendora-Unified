@@ -63,11 +63,18 @@ export default function SignupPage() {
     setLoading(true);
     setError('');
     try {
-      await signup(formData);
-      setSuccess('Account created successfully! You can now log in.');
+      const res = await signup(formData);
+      // If trial info present, show expiry
+      const trialExpires = res?.user?.trial_expires_at;
+      if (trialExpires) {
+        const d = new Date(trialExpires);
+        setSuccess(`Account created! Trial active until ${d.toLocaleString()}. You will be redirected to login...`);
+      } else {
+        setSuccess('Account created successfully! You can now log in.');
+      }
       setTimeout(() => {
         navigate('/login');
-      }, 2000);
+      }, 2500);
     } catch (err: any) {
       setError(err.message || 'Signup failed. Please try again.');
     } finally {
@@ -127,7 +134,7 @@ export default function SignupPage() {
         </div>
         {/* Right side - Signup Form */}
         <div className="w-full max-w-md mx-auto lg:mx-0">
-          <Card className="bg-gradient-card border-border shadow-card card-anim">
+          <Card className="bg-gradient-card border-border shadow-card card-anim pulse-card">
             <CardHeader className="space-y-1">
               <CardTitle className="text-2xl font-bold">Create Account</CardTitle>
               <CardDescription>

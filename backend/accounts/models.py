@@ -169,3 +169,48 @@ class BroadcastMessage(models.Model):
 
     def __str__(self):
         return f"{self.message_type}: {self.title} by {self.vendor.name}"
+
+
+class PaymentRequest(models.Model):
+    STATUS_CHOICES = [
+        ("pending", "Pending"),
+        ("approved", "Approved"),
+        ("rejected", "Rejected"),
+    ]
+
+    vendor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="payment_requests")
+    receipt = models.FileField(upload_to="payment_receipts/", null=True, blank=True)
+    note = models.TextField(blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
+    created_at = models.DateTimeField(auto_now_add=True)
+    processed_at = models.DateTimeField(null=True, blank=True)
+    processed_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="processed_payments")
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self) -> str:
+        return f"PaymentRequest:{self.vendor.id}:{self.status}:{self.created_at.isoformat()}"
+
+
+class GlobalPaymentDestination(models.Model):
+    """Owner-managed payment destinations shown to vendors when they want to upgrade.
+
+    Use the admin UI to add bank details or crypto addresses. These are not tied to a vendor.
+    """
+    KIND_CHOICES = [
+        ("bank", "Bank Account"),
+        ("crypto", "Crypto Address"),
+        ("other", "Other"),
+    ]
+    name = models.CharField(max_length=120)
+    kind = models.CharField(max_length=20, choices=KIND_CHOICES, default="bank")
+    details = models.TextField(help_text="Full details to show to vendors (account number, instructions, address, memo, etc.)")
+    is_active = models.BooleanField(default=cast(Any, True))
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-is_active", "-created_at"]
+
+    def __str__(self) -> str:
+        return f"{self.name} ({self.kind})"

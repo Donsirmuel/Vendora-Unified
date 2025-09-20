@@ -1,0 +1,173 @@
+import React, { useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { http } from '@/lib/http';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
+import { useEffect } from 'react';
+import { tokenStore } from '@/lib/http';
+import { usePaymentRequestSocket } from '@/lib/ws';
+import { CardDescription } from '@/components/ui/card';
+
+export default function UpgradePage() {
+  const { user } = useAuth();
+  const [file, setFile] = useState<File | null>(null);
+  const [note, setNote] = useState('');
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!file) {
+      toast({ title: 'Upload a receipt', description: 'Please attach a payment receipt file', variant: 'destructive' });
+      return;
+    }
+    setLoading(true);
+    try {
+      const fd = new FormData();
+      fd.append('receipt', file);
+      fd.append('note', note);
+      const res = await http.post('/api/v1/accounts/payment-requests/', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+      toast({ title: 'Submitted', description: 'Your payment receipt was submitted and is pending review.' });
+      // Poll the latest endpoint with exponential backoff (max ~60s)
+      let cancelled = false;
+      (async () => {
+        let wait = 3000; // initial 3s
+        for (let i = 0; i < 10 && !cancelled; i++) {
+          try {
+            const res = await http.get('/api/v1/accounts/payment-requests/latest/');
+            if (res.status === 200 && res.data) {
+              const pr = res.data;
+              if (pr.status === 'approved') {
+                toast({ title: 'Activated', description: 'Your account has been activated by the admin.' });
+                break;
+              }
+              if (pr.status === 'rejected') {
+                toast({ title: 'Rejected', description: 'Your payment request was rejected. Please contact support.' , variant: 'destructive'});
+                break;
+              }
+            }
+          } catch (err) {
+            // 404 means no payment request yet — keep trying
+          }
+          // sleep
+          await new Promise((r) => setTimeout(r, wait));
+          wait = Math.min(10000, Math.round(wait * 1.6));
+        }
+      })();
+    } catch (e:any) {
+      toast({ title: 'Failed', description: 'Could not submit receipt', variant: 'destructive' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="p-6">
+      <Card className="max-w-2xl mx-auto">
+        <CardHeader>
+          <CardTitle>Upgrade / Activate Account</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="mb-4">To activate your account, please pay to the following details and upload your payment receipt below.</p>
+          <PaymentDestinations />
+          <PendingStateCard />
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium">Receipt</label>
+              <Input type="file" onChange={(e:any)=>setFile(e.target.files?.[0] ?? null)} accept="image/*,application/pdf" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium">Note (optional)</label>
+              <Input value={note} onChange={(e:any)=>setNote(e.target.value)} />
+            </div>
+            <div className="flex gap-2">
+              <Button type="submit" disabled={loading}>{loading ? 'Submitting...' : 'I have paid — Submit receipt'}</Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function PaymentDestinations() {
+  const [items, setItems] = React.useState<any[]>([]);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await http.get('/api/v1/accounts/global-payment-destinations/');
+        if (!cancelled) setItems(res.data.results || res.data);
+      } catch (e:any) {
+        toast({ title: 'Failed to load payment options', description: 'Could not fetch payment destinations', variant: 'destructive' });
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [toast]);
+
+  if (!items || items.length === 0) return (
+    <div className="mb-4">
+      <p><strong>Pay to:</strong> Bank: Example Bank • Acc: 0123456789 • Name: Vendora</p>
+      <p><strong>Reference:</strong> Use your vendor email or external id</p>
+    </div>
+  );
+
+  return (
+    <div className="mb-4">
+      <p className="font-medium">Payment destinations</p>
+      <ul className="mt-2 space-y-2">
+        {items.map(i => (
+          <li key={i.id} className="p-3 border rounded">
+            <p className="font-semibold">{i.name} — {i.kind}</p>
+            <p className="text-sm whitespace-pre-wrap">{i.details}</p>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function PendingStateCard() {
+  const [latest, setLatest] = React.useState<any | null>(null);
+  const { toast } = useToast();
+
+  const load = async () => {
+    try {
+      const res = await http.get('/api/v1/accounts/payment-requests/latest/');
+      if (res.status === 200) setLatest(res.data);
+    } catch (e:any) {
+      setLatest(null);
+    }
+  };
+
+  useEffect(() => {
+    load();
+    // WebSocket connection for live updates
+    const { connected } = usePaymentRequestSocket((data: any) => {
+      // data may be single event or array
+      if (Array.isArray(data)) setLatest(data[data.length - 1]);
+      else setLatest(data);
+    });
+    // cleanup handled by hook
+    return () => {};
+  }, []);
+
+  if (!latest) return null;
+
+  return (
+    <div className="mb-4">
+      <p className="font-medium">Latest payment request</p>
+      <div className="mt-2 p-3 border rounded bg-muted/5">
+        <p className="font-semibold">Status: {latest.status}</p>
+        <p className="text-sm">Submitted: {new Date(latest.created_at).toLocaleString()}</p>
+        {latest.processed_at && <p className="text-sm">Processed: {new Date(latest.processed_at).toLocaleString()} by {latest.processed_by || 'admin'}</p>}
+        {latest.note && <p className="mt-2 whitespace-pre-wrap">{latest.note}</p>}
+      </div>
+    </div>
+  );
+}

@@ -31,6 +31,12 @@ TRIAL_DAYS = int(config('TRIAL_DAYS', default=14))
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 FRONTEND_DIST = (BASE_DIR.parent / 'frontend' / 'dist').resolve()
+# Application version (single source of truth)
+try:
+    with open(BASE_DIR.parent / 'VERSION', 'r', encoding='utf-8') as vf:
+        APP_VERSION = vf.read().strip()
+except Exception:
+    APP_VERSION = '0.0.0'
 
 
 # Quick-start development settings - unsuitable for production
@@ -76,6 +82,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'django_filters',
     'corsheaders',
+    'channels',
     'api',
     'accounts',
     'notifications',
@@ -120,6 +127,26 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'vendora.wsgi.application'
+
+# Channels / ASGI settings (use in-memory layer for single-host deployments)
+ASGI_APPLICATION = 'vendora.asgi.application'
+# If REDIS_URL is provided, use RedisChannelLayer for production scaling
+REDIS_URL = config('REDIS_URL', default='')
+if REDIS_URL:
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels_redis.core.RedisChannelLayer',
+            'CONFIG': {
+                'hosts': [REDIS_URL],
+            },
+        }
+    }
+else:
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels.layers.InMemoryChannelLayer',
+        }
+    }
 
 
 # Database

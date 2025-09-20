@@ -80,6 +80,13 @@ const Dashboard = () => {
     return () => sub.close();
   }, []);
 
+  // Stagger card reveal for a more noticeable dashboard entrance
+  useEffect(() => {
+    const cards = Array.from(document.querySelectorAll('.card-anim')) as HTMLElement[];
+    cards.forEach((c, i) => setTimeout(() => c.classList.add('show'), 90 * i + 50));
+    return () => cards.forEach(c => c.classList.remove('show'));
+  }, []);
+
   // Defer heavy charts to after first paint/idle to improve LCP
   useEffect(() => {
     const schedule = (fn: () => void) =>
@@ -306,8 +313,8 @@ const Dashboard = () => {
   {/* (Legacy inline checklist removed in favour of server-derived OnboardingChecklist component) */}
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      <Card className="card-anim">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <Card className="card-anim">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium">Total Orders Received</CardTitle>
               <ShoppingCart className="h-4 w-4 text-muted-foreground" />
@@ -320,7 +327,7 @@ const Dashboard = () => {
             </CardContent>
           </Card>
 
-      <Card>
+  <Card className="card-anim">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Revenue (₦)</CardTitle>
         <span className="sr-only">NGN</span>
@@ -333,7 +340,7 @@ const Dashboard = () => {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="card-anim">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Completed Transactions</CardTitle>
               <ArrowLeftRight className="h-4 w-4 text-muted-foreground" />
@@ -346,7 +353,7 @@ const Dashboard = () => {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="card-anim">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Pending Queries</CardTitle>
               <MessageCircle className="h-4 w-4 text-muted-foreground" />

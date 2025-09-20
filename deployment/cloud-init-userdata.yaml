@@ -1,0 +1,45 @@
+#cloud-config
+# Cloud-init for Vendora one-shot provisioning (Ubuntu 22.04+)
+# Replace placeholders before using (GIT_REPO, DOMAIN, ADMIN_EMAIL)
+
+users:
+  - name: vendora
+    gecos: Vendora App User
+    sudo: ['ALL=(ALL) NOPASSWD:ALL']
+    groups: users
+    shell: /bin/bash
+    ssh_authorized_keys:
+      - ssh-rsa AAAA... replace-me
+
+package_update: true
+package_upgrade: true
+packages:
+  - git
+  - nginx
+  - python3-venv
+  - python3-pip
+  - build-essential
+  - libpq-dev
+  - certbot
+  - python3-certbot-nginx
+  - ufw
+runcmd:
+  - [ sh, -xc, "mkdir -p /home/vendora && chown vendora:vendora /home/vendora" ]
+  - [ sh, -xc, "cd /home/vendora && sudo -u vendora git clone https://github.com/Donsirmuel/Vendora-Unified.git vendora || (cd vendora && sudo -u vendora git pull)" ]
+  - [ sh, -xc, "cd /home/vendora/vendora/backend && python3 -m venv .venv && . .venv/bin/activate && pip install --upgrade pip setuptools wheel && pip install -r requirements.txt" ]
+  - [ sh, -xc, "mkdir -p /etc/vendora && chown root:root /etc/vendora && chmod 700 /etc/vendora" ]
+  - [ sh, -xc, "cat > /etc/vendora/env <<'ENV'
+# Edit these values after boot and before enabling the service
+SECRET_KEY=replace-me
+DATABASE_URL=postgres://user:pass@host:5432/dbname?sslmode=require
+REDIS_URL=redis://localhost:6379/0
+S3_BUCKET=s3://my-bucket
+ENV
+" ]
+  - [ sh, -xc, "chown root:root /etc/vendora/env && chmod 600 /etc/vendora/env" ]
+  - [ sh, -xc, "cp /home/vendora/vendora/deployment/vendora-unified.service.example /etc/systemd/system/vendora-unified.service" ]
+  - [ sh, -xc, "systemctl daemon-reload && systemctl enable --now vendora-unified || true" ]
+  - [ sh, -xc, "cp /home/vendora/vendora/deployment/nginx_vendora.conf.example /etc/nginx/sites-available/vendora && ln -sf /etc/nginx/sites-available/vendora /etc/nginx/sites-enabled/vendora && nginx -t && systemctl reload nginx" ]
+  - [ sh, -xc, "ufw allow OpenSSH && ufw allow 'Nginx Full' && ufw --force enable" ]
+
+final_message: "Vendora cloud-init finished. Edit /etc/vendora/env with secrets and restart vendora-unified service."

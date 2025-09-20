@@ -2,6 +2,7 @@ from django.http import JsonResponse
 from django.db import connections
 from django.utils.timezone import now
 import socket
+from django.conf import settings
 
 def health_view(request):
     db_ok = True
@@ -16,5 +17,5 @@ def health_view(request):
         'db': db_ok,
         'time': now().isoformat(),
         'host': socket.gethostname(),
-        'version': '1.0.0'
+        'version': getattr(settings, 'APP_VERSION', '0.0.0')
     })

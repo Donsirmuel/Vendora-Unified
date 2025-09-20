@@ -1,0 +1,413 @@
+=== Large files (>1MB) ===
+45941248 /c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/frontend/node_modules/@swc/core-win32-x64-msvc/swc.win32-x64-msvc.node
+18956288 /c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/frontend/node_modules/@img/sharp-win32-x64/lib/libvips-42.dll
+10557952 /c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/frontend/node_modules/@esbuild/win32-x64/esbuild.exe
+9913856 /c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/frontend/node_modules/vite/node_modules/@esbuild/win32-x64/esbuild.exe
+9111680 /c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/frontend/node_modules/typescript/lib/typescript.js
+6211917 /c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/frontend/node_modules/typescript/lib/_tsc.js
+4504586 /c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/frontend/node_modules/tailwindcss/peers/index.js
+4396461 /c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/frontend/node_modules/lucide-react/dist/umd/lucide-react.js.map
+4327927 /c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/frontend/node_modules/lucide-react/dist/cjs/lucide-react.js.map
+3814632 /c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/frontend/node_modules/lucide-react/dist/umd/lucide-react.min.js.map
+2740961 /c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/frontend/node_modules/.vite/deps_temp_d9feaff4/lucide-react.js.map
+2695168 /c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/frontend/node_modules/@rollup/rollup-win32-x64-msvc/rollup.win32-x64-msvc.node
+2386617 /c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/frontend/node_modules/.vite/deps_temp_d9feaff4/recharts.js.map
+2212540 /c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/frontend/node_modules/date-fns/locale/cdn.js.map
+2085917 /c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/frontend/node_modules/vite/dist/node/chunks/dep-D_zLpgQd.js
+1951687 /c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/frontend/node_modules/lucide-react/dist/lucide-react.d.ts
+1904924 /c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/frontend/node_modules/lucide-react/dynamicIconImports.d.ts
+1874901 /c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/frontend/node_modules/typescript/lib/lib.dom.d.ts
+1874478 /c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/frontend/node_modules/lucide-react/dist/lucide-react.prefixed.d.ts
+1871000 /c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/frontend/node_modules/lucide-react/dist/lucide-react.suffixed.d.ts
+1736792 /c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/frontend/node_modules/jiti/dist/babel.js
+1723633 /c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/frontend/node_modules/recharts/umd/Recharts.js.map
+1578343 /c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/frontend/node_modules/date-fns/locale/cdn.min.js.map
+1492553 /c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/frontend/node_modules/.vite/deps_temp_d9feaff4/chunk-R6S4VRB5.js.map
+1421582 /c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/frontend/node_modules/@babel/parser/lib/index.js.map
+1256950 /c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/frontend/node_modules/.vite/deps_temp_d9feaff4/recharts.js
+1158895 /c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/frontend/node_modules/.vite/deps_temp_d9feaff4/lucide-react.js
+1080227 /c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/frontend/node_modules/react-dom/umd/react-dom.development.js
+\n=== .env backups and related ===
+\n=== .env backups and related ===
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/.env
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/.env.bak-with-proxy
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/.env.prod
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/.env.prod.example
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/.env.prod.local
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/frontend/.env
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/frontend/.env.production.example
+\n=== .pyc / __pycache__ ===
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/.env
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/.env.bak-with-proxy
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/.env.prod
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/.env.prod.example
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/.env.prod.local
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/frontend/.env
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/frontend/.env.production.example
+\n=== .pyc / __pycache__ ===
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/management/commands/__pycache__
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/management/__pycache__
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/migrations/__pycache__
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/__pycache__
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/api/management/commands/__pycache__
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/api/migrations/__pycache__
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/api/tests/__pycache__
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/api/__pycache__
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/notifications/migrations/__pycache__
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/notifications/__pycache__
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/orders/migrations/__pycache__
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/orders/__pycache__
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/queries/migrations/__pycache__
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/queries/__pycache__
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/rates/migrations/__pycache__
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/rates/__pycache__
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/tests/__pycache__
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/transactions/migrations/__pycache__
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/transactions/__pycache__
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/vendora/__pycache__
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/__pycache__
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/management/commands/__pycache__
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/management/__pycache__
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/migrations/__pycache__
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/__pycache__
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/api/management/commands/__pycache__
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/api/migrations/__pycache__
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/api/tests/__pycache__
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/api/__pycache__
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/notifications/migrations/__pycache__
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/notifications/__pycache__
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/orders/migrations/__pycache__
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/orders/__pycache__
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/queries/migrations/__pycache__
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/queries/__pycache__
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/rates/migrations/__pycache__
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/rates/__pycache__
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/tests/__pycache__
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/transactions/migrations/__pycache__
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/transactions/__pycache__
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/vendora/__pycache__
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/__pycache__
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/management/commands/__pycache__/backfill_vendor_ids.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/management/commands/__pycache__/send_account_notices.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/management/commands/__pycache__/setup_test_data.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/management/commands/__pycache__/test_auth.cpython-313-pytest-8.4.1.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/management/commands/__pycache__/test_auth.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/management/__pycache__/__init__.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/migrations/__pycache__/0001_initial.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/migrations/__pycache__/0002_broadcastmessage.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/migrations/__pycache__/0003_vendor_auto_expire_minutes.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/migrations/__pycache__/0004_vendor_avatar_bankdetail.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/migrations/__pycache__/0005_vendor_external_vendor_id_vendor_is_service_active_and_more.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/migrations/__pycache__/0006_vendor_unavailable_message.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/migrations/__pycache__/0007_vendor_telegram_username.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/migrations/__pycache__/0008_vendor_bio_vendor_wallet_address_vendor_wallet_chain.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/migrations/__pycache__/0009_notificationlog.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/migrations/__pycache__/0010_paymentrequest.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/migrations/__pycache__/__init__.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/__pycache__/admin.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/__pycache__/api.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/__pycache__/apps.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/__pycache__/auth_views.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/__pycache__/backends.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/__pycache__/emails.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/__pycache__/models.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/__pycache__/serializers.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/__pycache__/signals.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/__pycache__/sse.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/__pycache__/tests.cpython-313-pytest-8.4.1.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/__pycache__/tests.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/__pycache__/tests_paymentrequests.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/__pycache__/urls.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/__pycache__/views.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/__pycache__/__init__.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/api/management/commands/__pycache__/telegram_diag.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/api/management/commands/__pycache__/telegram_poll.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/api/migrations/__pycache__/0001_initial.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/api/migrations/__pycache__/0002_botuser_vendor.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/api/migrations/__pycache__/0003_botuser_temp_query_id.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/api/migrations/__pycache__/__init__.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/api/tests/__pycache__/test_bot_handlers_header.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/api/tests/__pycache__/test_webhook_callback_switch_vendor.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/api/tests/__pycache__/test_webhook_vendor_resolution.cpython-313-pytest-8.4.1.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/api/tests/__pycache__/test_webhook_vendor_resolution.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/api/__pycache__/bot_handlers.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/api/__pycache__/exceptions.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/api/__pycache__/health.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/api/__pycache__/metrics.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/api/__pycache__/models.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/api/__pycache__/permissions.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/api/__pycache__/sse.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/api/__pycache__/telegram_service.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/api/__pycache__/urls.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/api/__pycache__/webhook_views.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/api/__pycache__/__init__.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/notifications/migrations/__pycache__/0001_initial.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/notifications/migrations/__pycache__/0002_pushsubscription.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/notifications/migrations/__pycache__/__init__.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/notifications/__pycache__/admin.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/notifications/__pycache__/apps.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/notifications/__pycache__/models.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/notifications/__pycache__/tests.cpython-313-pytest-8.4.1.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/notifications/__pycache__/tests.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/notifications/__pycache__/urls.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/notifications/__pycache__/views.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/notifications/__pycache__/__init__.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/orders/migrations/__pycache__/0001_initial.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/orders/migrations/__pycache__/0002_alter_order_options.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/orders/migrations/__pycache__/0003_order_customer_chat_id_order_customer_name.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/orders/migrations/__pycache__/0004_order_acceptance_note_order_auto_expire_at_and_more.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/orders/migrations/__pycache__/0005_order_order_code_order_pay_instructions_and_more.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/orders/migrations/__pycache__/0006_order_accepted_at_and_declined_at.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/orders/migrations/__pycache__/0006_order_accepted_at_order_declined_at.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/orders/migrations/__pycache__/0007_order_accepted_at_order_declined_at.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/orders/migrations/__pycache__/0008_order_ord_vsc_idx_order_ord_sc_idx_order_ord_c_idx_and_more.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/orders/migrations/__pycache__/__init__.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/orders/__pycache__/admin.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/orders/__pycache__/apps.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/orders/__pycache__/models.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/orders/__pycache__/serializers.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/orders/__pycache__/tests.cpython-313-pytest-8.4.1.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/orders/__pycache__/tests.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/orders/__pycache__/urls.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/orders/__pycache__/views.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/orders/__pycache__/__init__.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/queries/migrations/__pycache__/0001_initial.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/queries/migrations/__pycache__/0002_alter_query_options.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/queries/migrations/__pycache__/0003_query_contact_query_vendor_alter_query_order.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/queries/migrations/__pycache__/0004_add_status_customer_fields.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/queries/migrations/__pycache__/__init__.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/queries/__pycache__/admin.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/queries/__pycache__/apps.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/queries/__pycache__/models.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/queries/__pycache__/serializers.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/queries/__pycache__/tests.cpython-313-pytest-8.4.1.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/queries/__pycache__/tests.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/queries/__pycache__/urls.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/queries/__pycache__/views.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/queries/__pycache__/__init__.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/rates/migrations/__pycache__/0001_initial.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/rates/migrations/__pycache__/0002_alter_rate_unique_together.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/rates/migrations/__pycache__/0003_rate_bank_details_alter_rate_contract_address.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/rates/migrations/__pycache__/0004_alter_rate_options.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/rates/migrations/__pycache__/__init__.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/rates/__pycache__/admin.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/rates/__pycache__/apps.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/rates/__pycache__/models.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/rates/__pycache__/serializers.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/rates/__pycache__/tests.cpython-313-pytest-8.4.1.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/rates/__pycache__/tests.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/rates/__pycache__/urls.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/rates/__pycache__/views.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/rates/__pycache__/__init__.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/tests/__pycache__/test_accounts_auth.cpython-313-pytest-8.4.1.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/tests/__pycache__/test_account_status.cpython-313-pytest-8.4.1.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/tests/__pycache__/test_broadcasts.cpython-313-pytest-8.4.1.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/tests/__pycache__/test_health.cpython-313-pytest-8.4.1.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/tests/__pycache__/test_metrics.cpython-313-pytest-8.4.1.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/tests/__pycache__/test_notifications.cpython-313-pytest-8.4.1.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/tests/__pycache__/test_orders.cpython-313-pytest-8.4.1.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/tests/__pycache__/test_orders_extended.cpython-313-pytest-8.4.1.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/tests/__pycache__/test_plan_upgrade.cpython-313-pytest-8.4.1.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/tests/__pycache__/test_queries.cpython-313-pytest-8.4.1.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/tests/__pycache__/test_queries_extended.cpython-313-pytest-8.4.1.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/tests/__pycache__/test_rates.cpython-313-pytest-8.4.1.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/tests/__pycache__/test_rates_extended.cpython-313-pytest-8.4.1.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/tests/__pycache__/test_sse.cpython-313-pytest-8.4.1.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/tests/__pycache__/test_sse_extended.cpython-313-pytest-8.4.1.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/tests/__pycache__/test_throttling.cpython-313-pytest-8.4.1.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/tests/__pycache__/test_transactions.cpython-313-pytest-8.4.1.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/tests/__pycache__/test_transactions_extended.cpython-313-pytest-8.4.1.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/tests/__pycache__/test_trial_activation.cpython-313-pytest-8.4.1.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/transactions/migrations/__pycache__/0001_initial.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/transactions/migrations/__pycache__/0002_alter_transaction_options.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/transactions/migrations/__pycache__/0003_transaction_customer_note_and_more.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/transactions/migrations/__pycache__/0004_transaction_vendor_fields.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/transactions/migrations/__pycache__/0005_alter_transaction_status.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/transactions/migrations/__pycache__/0006_alter_transaction_proof_alter_transaction_status.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/transactions/migrations/__pycache__/0007_transaction_txn_sc_idx_and_more.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/transactions/migrations/__pycache__/0008_alter_transaction_options_transaction_created_at_and_more.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/transactions/migrations/__pycache__/0009_backfill_created_at_from_order.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/transactions/migrations/__pycache__/__init__.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/transactions/__pycache__/admin.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/transactions/__pycache__/apps.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/transactions/__pycache__/models.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/transactions/__pycache__/serializers.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/transactions/__pycache__/tests.cpython-313-pytest-8.4.1.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/transactions/__pycache__/tests.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/transactions/__pycache__/urls.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/transactions/__pycache__/views.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/transactions/__pycache__/__init__.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/vendora/__pycache__/settings.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/vendora/__pycache__/sitemaps.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/vendora/__pycache__/throttling.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/vendora/__pycache__/urls.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/vendora/__pycache__/wsgi.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/vendora/__pycache__/__init__.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/__pycache__/conftest.cpython-313-pytest-8.4.1.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/__pycache__/test_auth_complete.cpython-313-pytest-8.4.1.pyc
+\n=== Possible duplicate README / docs copies ===
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/management/commands/__pycache__/backfill_vendor_ids.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/management/commands/__pycache__/send_account_notices.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/management/commands/__pycache__/setup_test_data.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/management/commands/__pycache__/test_auth.cpython-313-pytest-8.4.1.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/management/commands/__pycache__/test_auth.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/management/__pycache__/__init__.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/migrations/__pycache__/0001_initial.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/migrations/__pycache__/0002_broadcastmessage.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/migrations/__pycache__/0003_vendor_auto_expire_minutes.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/migrations/__pycache__/0004_vendor_avatar_bankdetail.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/migrations/__pycache__/0005_vendor_external_vendor_id_vendor_is_service_active_and_more.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/migrations/__pycache__/0006_vendor_unavailable_message.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/migrations/__pycache__/0007_vendor_telegram_username.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/migrations/__pycache__/0008_vendor_bio_vendor_wallet_address_vendor_wallet_chain.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/migrations/__pycache__/0009_notificationlog.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/migrations/__pycache__/0010_paymentrequest.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/migrations/__pycache__/__init__.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/__pycache__/admin.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/__pycache__/api.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/__pycache__/apps.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/__pycache__/auth_views.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/__pycache__/backends.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/__pycache__/emails.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/__pycache__/models.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/__pycache__/serializers.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/__pycache__/signals.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/__pycache__/sse.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/__pycache__/tests.cpython-313-pytest-8.4.1.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/__pycache__/tests.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/__pycache__/tests_paymentrequests.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/__pycache__/urls.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/__pycache__/views.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/accounts/__pycache__/__init__.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/api/management/commands/__pycache__/telegram_diag.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/api/management/commands/__pycache__/telegram_poll.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/api/migrations/__pycache__/0001_initial.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/api/migrations/__pycache__/0002_botuser_vendor.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/api/migrations/__pycache__/0003_botuser_temp_query_id.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/api/migrations/__pycache__/__init__.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/api/tests/__pycache__/test_bot_handlers_header.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/api/tests/__pycache__/test_webhook_callback_switch_vendor.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/api/tests/__pycache__/test_webhook_vendor_resolution.cpython-313-pytest-8.4.1.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/api/tests/__pycache__/test_webhook_vendor_resolution.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/api/__pycache__/bot_handlers.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/api/__pycache__/exceptions.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/api/__pycache__/health.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/api/__pycache__/metrics.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/api/__pycache__/models.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/api/__pycache__/permissions.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/api/__pycache__/sse.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/api/__pycache__/telegram_service.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/api/__pycache__/urls.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/api/__pycache__/webhook_views.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/api/__pycache__/__init__.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/notifications/migrations/__pycache__/0001_initial.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/notifications/migrations/__pycache__/0002_pushsubscription.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/notifications/migrations/__pycache__/__init__.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/notifications/__pycache__/admin.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/notifications/__pycache__/apps.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/notifications/__pycache__/models.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/notifications/__pycache__/tests.cpython-313-pytest-8.4.1.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/notifications/__pycache__/tests.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/notifications/__pycache__/urls.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/notifications/__pycache__/views.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/notifications/__pycache__/__init__.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/orders/migrations/__pycache__/0001_initial.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/orders/migrations/__pycache__/0002_alter_order_options.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/orders/migrations/__pycache__/0003_order_customer_chat_id_order_customer_name.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/orders/migrations/__pycache__/0004_order_acceptance_note_order_auto_expire_at_and_more.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/orders/migrations/__pycache__/0005_order_order_code_order_pay_instructions_and_more.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/orders/migrations/__pycache__/0006_order_accepted_at_and_declined_at.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/orders/migrations/__pycache__/0006_order_accepted_at_order_declined_at.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/orders/migrations/__pycache__/0007_order_accepted_at_order_declined_at.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/orders/migrations/__pycache__/0008_order_ord_vsc_idx_order_ord_sc_idx_order_ord_c_idx_and_more.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/orders/migrations/__pycache__/__init__.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/orders/__pycache__/admin.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/orders/__pycache__/apps.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/orders/__pycache__/models.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/orders/__pycache__/serializers.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/orders/__pycache__/tests.cpython-313-pytest-8.4.1.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/orders/__pycache__/tests.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/orders/__pycache__/urls.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/orders/__pycache__/views.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/orders/__pycache__/__init__.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/queries/migrations/__pycache__/0001_initial.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/queries/migrations/__pycache__/0002_alter_query_options.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/queries/migrations/__pycache__/0003_query_contact_query_vendor_alter_query_order.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/queries/migrations/__pycache__/0004_add_status_customer_fields.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/queries/migrations/__pycache__/__init__.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/queries/__pycache__/admin.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/queries/__pycache__/apps.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/queries/__pycache__/models.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/queries/__pycache__/serializers.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/queries/__pycache__/tests.cpython-313-pytest-8.4.1.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/queries/__pycache__/tests.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/queries/__pycache__/urls.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/queries/__pycache__/views.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/queries/__pycache__/__init__.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/rates/migrations/__pycache__/0001_initial.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/rates/migrations/__pycache__/0002_alter_rate_unique_together.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/rates/migrations/__pycache__/0003_rate_bank_details_alter_rate_contract_address.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/rates/migrations/__pycache__/0004_alter_rate_options.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/rates/migrations/__pycache__/__init__.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/rates/__pycache__/admin.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/rates/__pycache__/apps.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/rates/__pycache__/models.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/rates/__pycache__/serializers.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/rates/__pycache__/tests.cpython-313-pytest-8.4.1.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/rates/__pycache__/tests.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/rates/__pycache__/urls.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/rates/__pycache__/views.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/rates/__pycache__/__init__.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/tests/__pycache__/test_accounts_auth.cpython-313-pytest-8.4.1.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/tests/__pycache__/test_account_status.cpython-313-pytest-8.4.1.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/tests/__pycache__/test_broadcasts.cpython-313-pytest-8.4.1.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/tests/__pycache__/test_health.cpython-313-pytest-8.4.1.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/tests/__pycache__/test_metrics.cpython-313-pytest-8.4.1.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/tests/__pycache__/test_notifications.cpython-313-pytest-8.4.1.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/tests/__pycache__/test_orders.cpython-313-pytest-8.4.1.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/tests/__pycache__/test_orders_extended.cpython-313-pytest-8.4.1.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/tests/__pycache__/test_plan_upgrade.cpython-313-pytest-8.4.1.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/tests/__pycache__/test_queries.cpython-313-pytest-8.4.1.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/tests/__pycache__/test_queries_extended.cpython-313-pytest-8.4.1.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/tests/__pycache__/test_rates.cpython-313-pytest-8.4.1.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/tests/__pycache__/test_rates_extended.cpython-313-pytest-8.4.1.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/tests/__pycache__/test_sse.cpython-313-pytest-8.4.1.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/tests/__pycache__/test_sse_extended.cpython-313-pytest-8.4.1.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/tests/__pycache__/test_throttling.cpython-313-pytest-8.4.1.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/tests/__pycache__/test_transactions.cpython-313-pytest-8.4.1.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/tests/__pycache__/test_transactions_extended.cpython-313-pytest-8.4.1.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/tests/__pycache__/test_trial_activation.cpython-313-pytest-8.4.1.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/transactions/migrations/__pycache__/0001_initial.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/transactions/migrations/__pycache__/0002_alter_transaction_options.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/transactions/migrations/__pycache__/0003_transaction_customer_note_and_more.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/transactions/migrations/__pycache__/0004_transaction_vendor_fields.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/transactions/migrations/__pycache__/0005_alter_transaction_status.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/transactions/migrations/__pycache__/0006_alter_transaction_proof_alter_transaction_status.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/transactions/migrations/__pycache__/0007_transaction_txn_sc_idx_and_more.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/transactions/migrations/__pycache__/0008_alter_transaction_options_transaction_created_at_and_more.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/transactions/migrations/__pycache__/0009_backfill_created_at_from_order.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/transactions/migrations/__pycache__/__init__.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/transactions/__pycache__/admin.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/transactions/__pycache__/apps.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/transactions/__pycache__/models.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/transactions/__pycache__/serializers.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/transactions/__pycache__/tests.cpython-313-pytest-8.4.1.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/transactions/__pycache__/tests.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/transactions/__pycache__/urls.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/transactions/__pycache__/views.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/transactions/__pycache__/__init__.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/vendora/__pycache__/settings.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/vendora/__pycache__/sitemaps.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/vendora/__pycache__/throttling.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/vendora/__pycache__/urls.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/vendora/__pycache__/wsgi.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/vendora/__pycache__/__init__.cpython-313.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/__pycache__/conftest.cpython-313-pytest-8.4.1.pyc
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/backend/__pycache__/test_auth_complete.cpython-313-pytest-8.4.1.pyc
+\n=== Possible duplicate README / docs copies ===
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/deployment/cleanup-report-generator.sh:20:grep -R --line-number "PITCH_VENDORA|PITCH_ORDER_FLOW" "$ROOT_DIR" | head -n 50 >> "$REPORT" || true
+\n=== Unused scripts under backend/scripts ===
+/c/Users/user/Desktop/Vendora-Alpha/Vendora-Unified/deployment/cleanup-report-generator.sh:20:grep -R --line-number "PITCH_VENDORA|PITCH_ORDER_FLOW" "$ROOT_DIR" | head -n 50 >> "$REPORT" || true
+\n=== Unused scripts under backend/scripts ===
+Report generated. Review before deleting any files.
+Report generated. Review before deleting any files.

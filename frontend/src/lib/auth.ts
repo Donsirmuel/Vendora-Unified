@@ -28,7 +28,10 @@ export interface SignupResponse {
   user: {
     id: number;
     email: string;
-  name: string;
+    name?: string;
+    // Trial fields returned by backend signup endpoint
+    is_trial?: boolean;
+    trial_expires_at?: string | null;
   };
 }
 

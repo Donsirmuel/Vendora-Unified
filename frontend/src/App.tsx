@@ -27,6 +27,8 @@ import NotFound from "./pages/NotFound";
 import Home from "./pages/Home";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
+import Upgrade from "./pages/Upgrade";
+import AdminPayments from "./pages/AdminPayments";
 
 const queryClient = new QueryClient();
 
@@ -124,6 +126,17 @@ const App = () => (
             <Route path="/queries" element={
               <ProtectedRoute>
                 <Queries />
+              </ProtectedRoute>
+            } />
+            <Route path="/upgrade" element={
+              <ProtectedRoute>
+                <Upgrade />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/admin/payments" element={
+              <ProtectedRoute>
+                <AdminPayments />
               </ProtectedRoute>
             } />
 

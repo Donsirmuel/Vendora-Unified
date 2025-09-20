@@ -1,0 +1,15 @@
+[Unit]
+Description=Gunicorn instance to serve Vendora-Unified
+After=network.target
+
+[Service]
+User=vendora
+Group=www-data
+WorkingDirectory=/home/vendora/Vendora-Unified/backend
+Environment="PATH=/home/vendora/Vendora-Unified/backend/.venv/bin"
+ExecStart=/home/vendora/Vendora-Unified/backend/.venv/bin/gunicorn vendora.wsgi:application \
+          --bind unix:/run/gunicorn-vendora.sock \
+          --workers 3
+
+[Install]
+WantedBy=multi-user.target

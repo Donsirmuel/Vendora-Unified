@@ -102,6 +102,7 @@ class VendorSerializer(serializers.ModelSerializer):
             "id",
             "email",
             "name",
+            "trial_started_at",
             "telegram_username",
             "bio",
             "wallet_address",
@@ -160,6 +161,8 @@ class VendorSerializer(serializers.ModelSerializer):
                 "plan": getattr(obj, "plan", "trial"),
                 "is_trial": bool(getattr(obj, "is_trial", False)),
                 "trial_expires_at": getattr(obj, "trial_expires_at", None),
+                # expose trial_started_at so frontend can compute fallback expiries
+                "trial_started_at": getattr(obj, "trial_started_at", None),
                 "plan_expires_at": getattr(obj, "plan_expires_at", None),
                 "expired": False,
             }

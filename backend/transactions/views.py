@@ -62,9 +62,9 @@ class TransactionViewSet(ModelViewSet):
         if transaction.status == "declined":
             return Response({"detail": "This transaction is declined and cannot be updated."}, status=status.HTTP_400_BAD_REQUEST)
 
+        # If the request includes files but no explicit status, treat this as a proof update only
+        has_files = bool(request.FILES)
         status_value = request.data.get("status")
-        if status_value not in {"completed", "declined"}:
-            return Response({"detail": "Invalid status"}, status=status.HTTP_400_BAD_REQUEST)
 
         # Allow vendor to upload their own proof file (e.g., transfer receipt)
         if "vendor_proof" in request.FILES:
@@ -73,13 +73,22 @@ class TransactionViewSet(ModelViewSet):
         if "proof" in request.FILES:
             transaction.proof = request.FILES["proof"]
 
-        # Update status and timestamps
-        transaction.status = status_value
-        if status_value == "completed" and not transaction.vendor_completed_at:
-            transaction.vendor_completed_at = timezone.now()
-        if status_value == "completed" and not transaction.completed_at:
-            transaction.completed_at = timezone.now()
-        transaction.save()
+        # If files were uploaded but no status provided, only save the files and mark proof_uploaded_at
+        if has_files and not status_value:
+            transaction.proof_uploaded_at = timezone.now()
+            transaction.save(update_fields=[f for f in ["proof", "vendor_proof", "proof_uploaded_at"] if getattr(transaction, f, None) is not None])
+        else:
+            # Expect a valid status when not just uploading files
+            if status_value not in {"completed", "declined"}:
+                return Response({"detail": "Invalid status"}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Update status and timestamps
+            transaction.status = status_value
+            if status_value == "completed" and not transaction.vendor_completed_at:
+                transaction.vendor_completed_at = timezone.now()
+            if status_value == "completed" and not transaction.completed_at:
+                transaction.completed_at = timezone.now()
+            transaction.save()
 
         # If order is still pending/accepted, mark as completed when transaction is completed
         try:
@@ -146,6 +155,81 @@ class TransactionViewSet(ModelViewSet):
                         f"❌ Order {transaction.order.order_code or transaction.order.id} marked declined by vendor.",
                         chat_id=chat_id,
                     )
+        except Exception:
+            pass
+
+        return Response({"status": transaction.status}, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=["post"], url_path="mark-completed")
+    def mark_completed(self, request, pk=None):
+        """Explicit vendor action to mark a transaction completed.
+
+        This endpoint is intended to be called when the vendor has finished confirming
+        funds/processing and intentionally wants the system to mark the transaction complete.
+        It will set vendor_completed_at and completed_at, update the order, and notify the customer.
+        """
+        from .models import Transaction
+        from django.utils import timezone
+
+        transaction = self.get_object()
+        if transaction.order.vendor != request.user and not request.user.is_staff:
+            return Response({"detail": "Forbidden"}, status=status.HTTP_403_FORBIDDEN)
+
+        if transaction.status == "declined":
+            return Response({"detail": "This transaction is declined and cannot be updated."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Mark timestamps if not already set
+        now = timezone.now()
+        if not transaction.vendor_completed_at:
+            transaction.vendor_completed_at = now
+        if not transaction.completed_at:
+            transaction.completed_at = now
+        transaction.status = "completed"
+        transaction.save()
+
+        # Update order status
+        try:
+            from orders.models import Order
+            order = transaction.order
+            if order.status in {Order.PENDING, Order.ACCEPTED}:
+                order.status = Order.COMPLETED
+                order.save(update_fields=["status"])
+        except Exception:
+            pass
+
+        # Notify customer similar to existing logic in complete()
+        try:
+            chat_id = str(transaction.order.customer_chat_id or "")
+            if chat_id:
+                from api.telegram_service import TelegramBotService
+                from accounts.models import Vendor
+                from typing import Any, cast
+                tgs = TelegramBotService()
+                order = transaction.order
+                vendor = cast(Any, Vendor).objects.filter(id=getattr(order.vendor, "id", None)).first()
+                vendor_name = getattr(vendor, "name", "Your vendor") if vendor else "Your vendor"
+                try:
+                    success_count = type(transaction).objects.filter(order__vendor=vendor, status="completed").count() if vendor else 0
+                except Exception:
+                    success_count = 0
+                caption = (
+                    f"✅ Order {order.order_code or order.id} completed.\n"
+                    f"Asset: {order.asset}\n"
+                    f"Amount: {order.amount}\n\n"
+                    f"Thank you for using Vendora. {vendor_name} has successfully delivered. "
+                    f"{success_count} trades completed without issue."
+                )
+                reply_markup = {"inline_keyboard": [[{"text": "🔁 Repeat this trade", "callback_data": "back_to_menu"}], [{"text": "🏠 Main Menu", "callback_data": "back_to_menu"}]]}
+                if transaction.vendor_proof and transaction.vendor_proof.name:
+                    try:
+                        with transaction.vendor_proof.open("rb") as f:
+                            file_bytes = f.read()
+                        tgs.send_document(file_bytes, filename=transaction.vendor_proof.name.split("/")[-1], caption=caption, chat_id=chat_id)
+                        tgs.send_message("Tap to return to menu.", chat_id=chat_id, reply_markup=reply_markup)
+                    except Exception:
+                        tgs.send_message(caption, chat_id=chat_id, reply_markup=reply_markup)
+                else:
+                    tgs.send_message(caption, chat_id=chat_id, reply_markup=reply_markup)
         except Exception:
             pass
 

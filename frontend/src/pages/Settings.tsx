@@ -16,6 +16,7 @@ import http from "@/lib/http";
 import { getErrorMessage } from "@/lib/errors";
 import { isUpdateAvailable, subscribeToSWUpdate, requestUpdate } from "@/lib/sw-updates";
 import { promptInstall, ensurePushRegistered } from "@/main";
+import { useAuth } from '@/contexts/AuthContext';
 
 const Settings = () => {
   const { toast } = useToast();
@@ -43,6 +44,7 @@ const Settings = () => {
   const [botLink, setBotLink] = useState<string>("");
   const [updateReady, setUpdateReady] = useState<boolean>(() => (typeof window !== 'undefined') ? isUpdateAvailable() : false);
   const [canInstall, setCanInstall] = useState<boolean>(() => typeof window !== 'undefined' && localStorage.getItem('vendora_can_install') === '1');
+  const { user } = useAuth();
 
   useEffect(() => {
     const load = async () => {
@@ -226,6 +228,24 @@ const Settings = () => {
 
   return (
     <Layout title="Settings">
+      {/* Trial / Plan summary - only shown on settings */}
+      {user?.subscription_status && (
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <CardTitle>Account</CardTitle>
+            <CardDescription>Your subscription summary</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div>
+              {user.subscription_status.is_trial ? (
+                <p>You are on a trial account. This trial ends on <strong>{user.subscription_status.trial_expires_at ? new Date(user.subscription_status.trial_expires_at).toLocaleString() : 'N/A'}</strong>.</p>
+              ) : (
+                <p>Your plan: <strong>{user.subscription_status.plan}</strong>{user.subscription_status.plan_expires_at ? <> — expires on <strong>{new Date(user.subscription_status.plan_expires_at).toLocaleString()}</strong></> : null}</p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
       <div className="space-y-8">
         {/* Bot Link Card */}
         <Card className="bg-card border-border">

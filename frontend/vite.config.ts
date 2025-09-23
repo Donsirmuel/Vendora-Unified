@@ -19,14 +19,15 @@ export default defineConfig(({ mode }) => ({
     rollupOptions: {
         output: {
         manualChunks(id) {
+          // Simpler chunking: group all node_modules into a single vendor chunk.
+          // This avoids cross-chunk circular imports where one vendor chunk
+          // imports the React runtime from another vendor chunk and the
+          // import alias can end up undefined at runtime in certain load orders.
           if (id.includes('node_modules')) {
-            // Split charting libraries into their own chunk
-            if (id.includes('chart.js') || id.includes('recharts') || id.includes('apexcharts')) return 'vendor_charts';
-            // UI libs vs utils — split larger dependencies so initial bundle is smaller
-            if (id.includes('node_modules') && (id.includes('lodash') || id.includes('date-fns') || id.includes('dayjs'))) return 'vendor_utils';
-            if (id.includes('node_modules') && (id.includes('@radix-ui') || id.includes('clsx') || id.includes('tailwind') || id.includes('shadcn'))) return 'vendor_ui';
-            return 'vendor_core';
+            return 'vendor';
           }
+
+          // Keep some app-specific chunks separate (optional)
           if (id.includes('ChartsPanel')) return 'charts_panel';
         }
       }

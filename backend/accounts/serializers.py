@@ -102,6 +102,7 @@ class VendorSerializer(serializers.ModelSerializer):
             "id",
             "email",
             "name",
+            "auto_accept",
             "trial_started_at",
             "telegram_username",
             "bio",

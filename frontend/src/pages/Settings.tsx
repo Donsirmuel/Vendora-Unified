@@ -32,6 +32,7 @@ const Settings = () => {
   // Vendor comms fields
   const [telegramUsername, setTelegramUsername] = useState<string>("");
   const [bio, setBio] = useState<string>("");
+  const [autoAccept, setAutoAccept] = useState<boolean>(false);
 
   // Bank form state
   const [bankForm, setBankForm] = useState<Partial<BankDetail>>({ bank_name: "", account_number: "", account_name: "", instructions: "", is_default: false });
@@ -52,6 +53,7 @@ const Settings = () => {
         setLoading(true);
         const profile: VendorProfile = await getVendorProfile();
   setUserName(profile.name || "");
+    setAutoAccept(!!(profile as any).auto_accept);
         setBankDetails(profile.bank_details || "");
   setTelegramUsername((profile as any).telegram_username || "");
   setBio((profile as any).bio || "");
@@ -114,6 +116,7 @@ const Settings = () => {
     try {
       setSaving(true);
   const payload: any = { name: userName, bank_details: bankDetails };
+    payload.auto_accept = autoAccept;
       if (telegramUsername != null) payload.telegram_username = telegramUsername;
       if (bio != null) payload.bio = bio;
       if (autoExpireMinutes === "") {
@@ -124,6 +127,7 @@ const Settings = () => {
   const updated = await updateVendorProfile(payload);
       setUserName(updated.name || "");
       setBankDetails(updated.bank_details || "");
+  setAutoAccept(!!(updated as any).auto_accept);
       setAutoExpireMinutes(
         typeof updated.auto_expire_minutes === "number" ? updated.auto_expire_minutes : ""
       );
@@ -573,6 +577,16 @@ const Settings = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Auto-accept via Bot</Label>
+                <p className="text-sm text-muted-foreground">When enabled, customers who initiate trades with your bot will receive vendor payment details automatically and a transaction will be created on your behalf.</p>
+                <div className="mt-2">
+                  <label className="flex items-center gap-3">
+                    <input type="checkbox" checked={autoAccept} onChange={e => setAutoAccept(e.target.checked)} />
+                    <span className="text-sm">Auto-accept trades (create transactions automatically)</span>
+                  </label>
+                </div>
+              </div>
               <Button asChild variant="ghost" className="justify-start h-auto p-4 mb-2">
                 <Link to="/availability">
                   <div>

@@ -53,6 +53,9 @@ class Vendor(AbstractBaseUser, PermissionsMixin):
     # If null/blank, fallback to global settings.ORDER_AUTO_EXPIRE_MINUTES.
     auto_expire_minutes = models.PositiveIntegerField(null=True, blank=True)
     is_available = models.BooleanField(default=cast(Any, True))
+    # When enabled, the vendor opts in to auto-accept flows from the bot.
+    # The bot will auto-create a transaction and present payment details to the customer.
+    auto_accept = models.BooleanField(default=cast(Any, False))
     unavailable_message = models.TextField(blank=True)
     is_staff = models.BooleanField(default=cast(Any, False))
     is_superuser = models.BooleanField(default=cast(Any, False))

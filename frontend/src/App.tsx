@@ -140,10 +140,8 @@ const App = () => (
               </ProtectedRoute>
             } />
 
-            {/* Default Redirects - Changed to signup */}
-            <Route path="/" element={
-              isAuthenticated() ? <Navigate to="/dashboard" replace /> : <Navigate to="/signup" replace />
-            } />
+            {/* Default Redirects */}
+            {/* No duplicate root route here — keep Home as the public default above */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

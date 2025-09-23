@@ -35,10 +35,13 @@ def compute_onboarding(vendor: Vendor):
         has_order = False
     steps.append({"id": "order", "label": "Process first order", "done": has_order})
     # 4 Enable web push (placeholder: check any push subscription if model exists)
+    # Detect whether the vendor has any push subscriptions recorded.
+    # Note: PushSubscription model does not have an `is_active` field, so checking
+    # `.exists()` for any subscriptions is the correct approach.
     push_enabled = False
     try:
         from notifications.models import PushSubscription  # type: ignore
-        push_enabled = getattr(PushSubscription, "objects", None) is not None and PushSubscription.objects.filter(vendor=vendor, is_active=True).exists()  # type: ignore
+        push_enabled = getattr(PushSubscription, "objects", None) is not None and PushSubscription.objects.filter(vendor=vendor).exists()  # type: ignore
     except Exception:
         push_enabled = False
     steps.append({"id": "push", "label": "Enable browser notifications", "done": push_enabled})

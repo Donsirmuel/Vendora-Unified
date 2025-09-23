@@ -585,7 +585,78 @@ def handle_order_creation(callback_data: str, chat_id: Optional[str] = None) -> 
                 _send_push(vendor, "New pending order", f"Order {order.order_code or order.pk} created", url="/orders")
             except Exception:
                 pass
+            # If vendor has auto_accept enabled, mark order accepted, create a Transaction,
+            # and prompt the customer to upload proof (auto-accept flow).
+            try:
+                if getattr(vendor, "auto_accept", False):
+                    # Harden: perform acceptance + transaction creation atomically
+                    from django.db import transaction as django_transaction
+                    from transactions.models import Transaction
+                    from django.utils import timezone as dj_tz
 
+                    with django_transaction.atomic():
+                        # Lock the fresh order row to avoid concurrent accept/decline races
+                        locked_order = Order.objects.select_for_update().get(id=order.id)
+                        # Only accept if still pending
+                        if locked_order.status != Order.PENDING:
+                            # Someone else handled it; fall back to pending response
+                            raise RuntimeError('Order no longer pending')
+
+                        locked_order.status = Order.ACCEPTED
+                        locked_order.accepted_at = dj_tz.now()
+                        locked_order.save(update_fields=["status", "accepted_at"])
+
+                        # Choose best payment details
+                        pay_details = getattr(locked_order, "pay_instructions", "") or ""
+                        send_details = getattr(locked_order, "send_instructions", "") or ""
+                        try:
+                            if locked_order.type == Order.BUY and rate_obj and getattr(rate_obj, "bank_details", None):
+                                pay_details = rate_obj.bank_details
+                            if locked_order.type == Order.SELL and rate_obj and getattr(rate_obj, "contract_address", None):
+                                send_details = rate_obj.contract_address
+                        except Exception:
+                            pass
+
+                        txn = Transaction.objects.create(
+                            order=locked_order,
+                            customer_receiving_details=pay_details or send_details or "",
+                            status="uncompleted",
+                        )
+
+                    # Persist bot user context: ask customer for proof (outside transaction)
+                    try:
+                        bu = cast(Any, BotUser)._default_manager.get(chat_id=str(chat_id))
+                        bu.state = "awaiting_proof"
+                        bu.temp_order_id = str(order.id)
+                        bu.save(update_fields=["state", "temp_order_id"])
+                    except Exception:
+                        pass
+
+                    # Message customer with payment details and next steps
+                    instructions = []
+                    if pay_details:
+                        instructions.append(f"Payment details:\n{pay_details}")
+                    if send_details:
+                        instructions.append(f"Send instructions:\n{send_details}")
+                    instr_text = "\n\n".join(instructions) if instructions else "Please follow the vendor's payment instructions."
+
+                    text = (
+                        f"✅ Your order {order.order_code or order.id} was accepted automatically by the vendor.\n\n"
+                        f"Please complete payment now and upload proof (photo or file) in this chat. After you upload proof we'll process the transaction and notify both parties.\n\n{instr_text}"
+                    )
+
+                    buttons = [[{"text": "🏠 Main Menu", "callback_data": "back_to_menu"}]]
+                    reply_markup = create_inline_keyboard(buttons)
+                    try:
+                        _send_push(vendor, "Transaction created", f"Transaction for Order {order.order_code or order.pk} created", url="/transactions")
+                    except Exception:
+                        pass
+                    return text, reply_markup
+            except Exception:
+                # Fallthrough to default pending response on any error
+                pass
+
+            # Default: pending acceptance message
             text = f"""
 Thanks! Your order with Order ID: {order.order_code or order.id} has been created and is pending acceptance from the vendor. You'll be notified when it's accepted.
 """
@@ -595,7 +666,6 @@ Thanks! Your order with Order ID: {order.order_code or order.id} has been create
                     {"text": "🏠 Main Menu", "callback_data": "back_to_menu"}
                 ]
             ]
-            
             reply_markup = create_inline_keyboard(buttons)
             return text, reply_markup
             

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import "./home.css";
+import { promptInstall } from '@/main';
 
 // Animated number counter (simple requestAnimationFrame based)
 function AnimatedNumber({ value, duration = 1400 }: { value: number; duration?: number }) {
@@ -256,6 +257,48 @@ export default function Home(): JSX.Element {
             <p style={{ margin: 0, fontSize: 14, lineHeight: 1.55, color: "#94a3b8" }}>{a}</p>
           </div>
         ))}
+      </section>
+
+      {/* PWA install guide */}
+      <section style={{ maxWidth: 950, margin: "40px auto 8px", padding: "20px 28px", background: '#071028', borderRadius: 12, border: '1px solid #122033' }} id="install-guide">
+        <h2 style={{ fontSize: 28, margin: '0 0 12px' }}>Install Vendora on your device</h2>
+        <p style={{ color: '#94a3b8', marginTop: 0 }}>For the best experience install Vendora as an app. Follow the steps for your device below.</p>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: 12, marginTop: 16 }}>
+          <div style={{ padding: 14, background: '#071a2b', borderRadius: 10, border: '1px solid #0f2434' }}>
+            <strong>Android (Chrome)</strong>
+            <ol style={{ marginTop: 8, color: '#94a3b8', paddingLeft: 16 }}>
+              <li>Open Vendora in Chrome.</li>
+              <li>Tap the three-dot menu → "Add to Home screen".</li>
+              <li>Confirm to install — the PWA will appear on your launcher.</li>
+            </ol>
+          </div>
+
+          <div style={{ padding: 14, background: '#071a2b', borderRadius: 10, border: '1px solid #0f2434' }}>
+            <strong>iPhone (Safari)</strong>
+            <ol style={{ marginTop: 8, color: '#94a3b8', paddingLeft: 16 }}>
+              <li>Open Vendora in Safari.</li>
+              <li>Tap the Share icon (bottom) → "Add to Home Screen".</li>
+              <li>Tap Add — Vendora will be added to your home screen.</li>
+            </ol>
+          </div>
+
+          <div style={{ padding: 14, background: '#071a2b', borderRadius: 10, border: '1px solid #0f2434' }}>
+            <strong>Desktop (Chrome / Edge / Firefox)</strong>
+            <ol style={{ marginTop: 8, color: '#94a3b8', paddingLeft: 16 }}>
+              <li>Open Vendora in your browser.</li>
+              <li>Chrome / Edge: Click the install icon in the address bar or go to the menu → "Install".</li>
+              <li>Firefox: Use the page menu → "Install Website…" if available, or use the browser profile to create a shortcut.</li>
+            </ol>
+          </div>
+        </div>
+
+        <div style={{ marginTop: 16, display: 'flex', gap: 12, alignItems: 'center' }}>
+          <button className="cta" style={{ background: '#0ea5b7', color: '#041e28', padding: '10px 16px', borderRadius: 10, border: 'none', fontWeight: 600 }} onClick={async () => { await promptInstall(); }}>
+            Install Vendora (if supported)
+          </button>
+          <div style={{ color: '#94a3b8' }}>If your browser supports install prompts this button will trigger it.</div>
+        </div>
       </section>
 
       <footer style={footer as React.CSSProperties}>

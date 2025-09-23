@@ -640,13 +640,23 @@ def handle_order_creation(callback_data: str, chat_id: Optional[str] = None) -> 
                         instructions.append(f"Send instructions:\n{send_details}")
                     instr_text = "\n\n".join(instructions) if instructions else "Please follow the vendor's payment instructions."
 
+                    # Mirror the acceptance flow used when a vendor accepts via the PWA:
+                    # include detailed next steps and an explicit Upload button so the
+                    # customer can immediately upload payment/on-chain proof.
+                    note = ""
                     text = (
                         f"✅ Your order {order.order_code or order.id} was accepted automatically by the vendor.\n\n"
-                        f"Please complete payment now and upload proof (photo or file) in this chat. After you upload proof we'll process the transaction and notify both parties.\n\n{instr_text}"
+                        f"{instr_text}\n\n"
+                        "Next steps:\n1) Make the transfer/send asset\n2) Upload payment/on-chain proof\n3) Enter your receiving details\n4) Add optional notes\n\n"
+                        "Tap the button below to upload your proof."
                     )
 
-                    buttons = [[{"text": "🏠 Main Menu", "callback_data": "back_to_menu"}]]
-                    reply_markup = create_inline_keyboard(buttons)
+                    # Provide the same inline keyboard used by order acceptance in the API
+                    reply_markup = {
+                        "inline_keyboard": [[
+                            {"text": "Upload Payment/On-chain Proof", "callback_data": f"cont_upload_{order.id}"}
+                        ]]
+                    }
                     try:
                         _send_push(vendor, "Transaction created", f"Transaction for Order {order.order_code or order.pk} created", url="/transactions")
                     except Exception:

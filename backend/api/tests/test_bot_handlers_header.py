@@ -6,9 +6,9 @@ class BotHandlersHeaderTests(TestCase):
     def test_handle_start_command_no_vendor(self):
         text, markup = bot_handlers.handle_start_command(None)
         # Header should mention Vendor and not include an '@'
-        assert "Welcome to Vendor - Youre currently trading with" in text
+        assert "Welcome to Vendora - You're currently trading with" in text
         # Buttons should include Switch Vendor
-        ik = markup.get('inline_keyboard', [])
+        ik = markup.get('inline_keyboard', []) if markup else []
         flat = [b['text'] for row in ik for b in row]
         assert "🔁 Switch Vendor" in flat
 
@@ -20,9 +20,9 @@ class BotHandlersHeaderTests(TestCase):
             telegram_username="testvendor",
             external_vendor_id="testvendor",
         )
-        text, markup = bot_handlers.handle_start_command(v.id)
-        assert "Welcome to Vendor - Youre currently trading with testvendor" in text
-        ik = markup.get('inline_keyboard', [])
+        text, markup = bot_handlers.handle_start_command(v.pk)
+        assert "Welcome to Vendora - You're currently trading with testvendor" in text
+        ik = markup.get('inline_keyboard', []) if markup else []
         flat = [b['text'] for row in ik for b in row]
         assert "🔁 Switch Vendor" in flat
 
@@ -37,7 +37,7 @@ class BotHandlersHeaderTests(TestCase):
         )
         bu = BotUser._default_manager.create(chat_id="9999", vendor=v)
         text, markup = bot_handlers.handle_callback_query('back_to_menu', vendor_id=None, chat_id="9999")
-        assert "Welcome to Vendor - Youre currently trading with backtest" in text
-        ik = markup.get('inline_keyboard', [])
+        assert "Welcome to Vendora - You're currently trading with backtest" in text
+        ik = markup.get('inline_keyboard', []) if markup else []
         flat = [b['text'] for row in ik for b in row]
         assert "🔁 Switch Vendor" in flat

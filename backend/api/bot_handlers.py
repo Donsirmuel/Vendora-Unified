@@ -604,7 +604,39 @@ def handle_order_creation(callback_data: str, chat_id: Optional[str] = None) -> 
 
                         locked_order.status = Order.ACCEPTED
                         locked_order.accepted_at = dj_tz.now()
-                        locked_order.save(update_fields=["status", "accepted_at"])
+                        # Populate pay_instructions / send_instructions similar to manual accept flow
+                        try:
+                            # If BUY and no pay_instructions, prefer default BankDetail then rate.bank_details
+                            if locked_order.type == Order.BUY and not getattr(locked_order, 'pay_instructions', None):
+                                try:
+                                    from accounts.models import BankDetail as _BankDetail
+                                    bd = _BankDetail._default_manager.filter(vendor=locked_order.vendor).order_by('-is_default', '-created_at').first()
+                                    if bd:
+                                        locked_order.pay_instructions = (
+                                            f"Bank: {bd.bank_name}\nAccount Name: {bd.account_name}\nAccount Number: {bd.account_number}\n"
+                                            + (f"Instructions: {bd.instructions}" if bd.instructions else "")
+                                        )
+                                    else:
+                                        if rate_obj and getattr(rate_obj, 'bank_details', None):
+                                            locked_order.pay_instructions = rate_obj.bank_details or locked_order.pay_instructions
+                                except Exception:
+                                    # fallback to rate bank details if available
+                                    try:
+                                        if rate_obj and getattr(rate_obj, 'bank_details', None):
+                                            locked_order.pay_instructions = rate_obj.bank_details or locked_order.pay_instructions
+                                    except Exception:
+                                        pass
+                            # If SELL and no send_instructions, prefer rate.contract_address
+                            if locked_order.type == Order.SELL and not getattr(locked_order, 'send_instructions', None):
+                                try:
+                                    if rate_obj and getattr(rate_obj, 'contract_address', None):
+                                        locked_order.send_instructions = rate_obj.contract_address or locked_order.send_instructions
+                                except Exception:
+                                    pass
+                        except Exception:
+                            pass
+
+                        locked_order.save(update_fields=["status", "accepted_at", "pay_instructions", "send_instructions"])
 
                         # Choose best payment details
                         pay_details = getattr(locked_order, "pay_instructions", "") or ""
@@ -617,9 +649,9 @@ def handle_order_creation(callback_data: str, chat_id: Optional[str] = None) -> 
                         except Exception:
                             pass
 
+                        # Create an uncompleted Transaction (do not pre-fill customer_receiving_details)
                         txn = Transaction.objects.create(
                             order=locked_order,
-                            customer_receiving_details=pay_details or send_details or "",
                             status="uncompleted",
                         )
 

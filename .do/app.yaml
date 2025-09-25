@@ -1,0 +1,74 @@
+spec:
+  name: vendora-unified
+  services:
+  # Backend API service
+  - name: backend
+    source_dir: backend
+    github:
+      repo: Donsirmuel/Vendora-Unified
+      branch: main
+      deploy_on_push: true
+    run_command: gunicorn vendora.asgi:application -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8080
+    environment_slug: python
+    instance_count: 1
+    instance_size_slug: basic-xxs
+    http_port: 8080
+    health_check:
+      http_path: /api/v1/health/
+    envs:
+    - key: DIGITALOCEAN_APP_PLATFORM
+      value: "true"
+    - key: DEBUG
+      value: "false"
+    - key: SECRET_KEY
+      scope: RUN_TIME
+      type: SECRET
+    - key: DATABASE_URL
+      scope: RUN_TIME
+      type: SECRET
+    - key: ALLOWED_HOSTS
+      value: "api.yourdomain.com,yourdomain.com"
+    - key: CSRF_TRUSTED_ORIGINS
+      value: "https://api.yourdomain.com,https://app.yourdomain.com"
+    - key: PRODUCTION_CORS_ORIGINS
+      value: "https://app.yourdomain.com,https://yourdomain.com"
+    - key: TELEGRAM_BOT_TOKEN
+      scope: RUN_TIME
+      type: SECRET
+    - key: TELEGRAM_BOT_USERNAME
+      value: "YourBotUsername"
+    - key: TELEGRAM_WEBHOOK_URL
+      value: "https://api.yourdomain.com/api/v1/telegram/webhook/"
+    - key: TELEGRAM_WEBHOOK_SECRET
+      scope: RUN_TIME
+      type: SECRET
+    - key: FRONTEND_URL
+      value: "https://app.yourdomain.com"
+    
+  # Frontend static site
+  - name: frontend
+    source_dir: frontend
+    github:
+      repo: Donsirmuel/Vendora-Unified
+      branch: main
+      deploy_on_push: true
+    build_command: npm ci && npm run build
+    environment_slug: node-js
+    instance_count: 1
+    instance_size_slug: basic-xxs
+    type: STATIC_SITE
+    envs:
+    - key: VITE_API_BASE
+      value: "https://api.yourdomain.com"
+    - key: VITE_WS_PROTOCOL
+      value: "wss"
+    - key: VITE_API_HOST
+      value: "api.yourdomain.com"
+
+  domains:
+  - name: api.yourdomain.com
+    type: PRIMARY
+    zone: yourdomain.com
+  - name: app.yourdomain.com
+    type: ALIAS
+    zone: yourdomain.com

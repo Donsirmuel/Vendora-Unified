@@ -428,12 +428,13 @@ _cors = str(config(
 ))
 CORS_ALLOWED_ORIGINS = [o.strip() for o in str(_cors).split(',') if o.strip()]
 
-# Add production origins for Render
+# Add production origins from environment
 if not DEBUG:
-    CORS_ALLOWED_ORIGINS.extend([
-        'https://vendora-frontend.onrender.com',
-        'https://your-custom-domain.com'  # Replace with your domain
-    ])
+    production_origins = str(config('PRODUCTION_CORS_ORIGINS', default=''))
+    if production_origins and production_origins.lower() not in ('true', 'false'):
+        CORS_ALLOWED_ORIGINS.extend([
+            o.strip() for o in production_origins.split(',') if o.strip()
+        ])
 
 # In development, reflect any origin to avoid preflight blocks when using different local hosts/ports
 if DEBUG:
@@ -534,12 +535,10 @@ if SENTRY_DSN:
     except Exception:  # pragma: no cover
         pass
 
-# Production settings for Render
-if os.environ.get('RENDER'):
+# Production settings for DigitalOcean App Platform
+if os.environ.get('DIGITALOCEAN_APP_PLATFORM'):
     DEBUG = False
-    # Add Render domains to ALLOWED_HOSTS
-    render_hosts = ['vendora-backend.onrender.com', 'your-custom-domain.com']
-    ALLOWED_HOSTS.extend(render_hosts)
+    # Production hosts will be handled via ALLOWED_HOSTS environment variable
     
     # Use dj-database-url for DATABASE_URL parsing (replaces existing logic)
     if DATABASE_URL:

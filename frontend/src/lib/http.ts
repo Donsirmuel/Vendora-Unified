@@ -45,7 +45,7 @@ export const tokenStore = new TokenStorage();
 
 // Create axios instance
 const http = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE || 'https://vendora-backend.onrender.com',
+  baseURL: import.meta.env.VITE_API_BASE || 'http://127.0.0.1:8000',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',

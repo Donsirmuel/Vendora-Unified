@@ -8,8 +8,8 @@ export function usePaymentRequestSocket(onMessage: (data: any) => void) {
   useEffect(() => {
     const token = tokenStore.getAccessToken();
     const protocol = import.meta.env.VITE_WS_PROTOCOL || (window.location.protocol === 'https:' ? 'wss' : 'ws');
-const host = import.meta.env.VITE_API_HOST || 'vendora-backend.onrender.com';
-const url = `${protocol}://${host}/ws/payment-requests/`;
+    const host = import.meta.env.VITE_API_HOST || '127.0.0.1:8000';
+    const url = `${protocol}://${host}/ws/payment-requests/`;
     // Pass JWT via subprotocol to avoid leaking in URLs
     const protocols = token ? [`jwt.${token}`] : undefined;
     const ws = new WebSocket(url, protocols);

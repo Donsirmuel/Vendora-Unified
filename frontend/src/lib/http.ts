@@ -45,7 +45,7 @@ export const tokenStore = new TokenStorage();
 
 // Create axios instance
 const http = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE || 'http://127.0.0.1:8000',
+  baseURL: import.meta.env.VITE_API_BASE || 'https://vendora-backend.onrender.com',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
@@ -127,7 +127,7 @@ http.interceptors.response.use(
       }
 
       isRefreshing = true;
-      const baseURL = import.meta.env.VITE_API_BASE || 'http://127.0.0.1:8000';
+      const baseURL = import.meta.env.VITE_API_BASE || 'https://vendora-backend.onrender.com';
       refreshPromise = axios
         .post(`${baseURL}/api/v1/accounts/token/refresh/`, { refresh: refreshToken })
         .then((refreshResponse) => {

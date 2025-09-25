@@ -17,6 +17,7 @@ from datetime import timedelta
 from urllib.parse import urlparse, parse_qs
 import logging
 import json
+import dj_database_url
 
 SENTRY_DSN_RAW = config('SENTRY_DSN', default='')
 SENTRY_DSN = str(SENTRY_DSN_RAW) if SENTRY_DSN_RAW not in (True, False) else None
@@ -427,6 +428,13 @@ _cors = str(config(
 ))
 CORS_ALLOWED_ORIGINS = [o.strip() for o in str(_cors).split(',') if o.strip()]
 
+# Add production origins for Render
+if not DEBUG:
+    CORS_ALLOWED_ORIGINS.extend([
+        'https://vendora-frontend.onrender.com',
+        'https://your-custom-domain.com'  # Replace with your domain
+    ])
+
 # In development, reflect any origin to avoid preflight blocks when using different local hosts/ports
 if DEBUG:
     CORS_ALLOW_ALL_ORIGINS = True
@@ -525,3 +533,16 @@ if SENTRY_DSN:
         )
     except Exception:  # pragma: no cover
         pass
+
+# Production settings for Render
+if os.environ.get('RENDER'):
+    DEBUG = False
+    # Add Render domains to ALLOWED_HOSTS
+    render_hosts = ['vendora-backend.onrender.com', 'your-custom-domain.com']
+    ALLOWED_HOSTS.extend(render_hosts)
+    
+    # Use dj-database-url for DATABASE_URL parsing (replaces existing logic)
+    if DATABASE_URL:
+        DATABASES = {
+            'default': dj_database_url.parse(DATABASE_URL)
+        }

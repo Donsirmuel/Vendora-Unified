@@ -257,3 +257,33 @@ class PlanUpgradeView(APIView):
         from .serializers import VendorSerializer
         out = VendorSerializer(vendor, context={'request': request})
         return Response(out.data, status=status.HTTP_200_OK)
+
+
+class DailyUsageView(APIView):
+    """GET endpoint to get vendor's daily order usage and limits."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):  # type: ignore[override]
+        vendor = request.user
+        from django.utils import timezone
+        
+        today = timezone.now().date()
+        
+        # Reset counter if it's a new day
+        if vendor.daily_orders_date != today:
+            vendor.daily_orders_count = 0
+            vendor.daily_orders_date = today
+            vendor.save(update_fields=['daily_orders_count', 'daily_orders_date'])
+        
+        is_free_plan = vendor.is_on_free_plan()
+        daily_order_limit = vendor.get_daily_order_limit()
+        orders_remaining = max(0, daily_order_limit - vendor.daily_orders_count) if daily_order_limit > 0 else -1
+        
+        return Response({
+            "daily_orders_count": vendor.daily_orders_count,
+            "daily_order_limit": daily_order_limit,
+            "is_free_plan": is_free_plan,
+            "orders_remaining": orders_remaining,
+            "plan": vendor.plan,
+            "date": today.isoformat()
+        }, status=status.HTTP_200_OK)

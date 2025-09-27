@@ -67,15 +67,20 @@ class Vendor(AbstractBaseUser, PermissionsMixin):
     trial_expires_at = models.DateTimeField(null=True, blank=True)
     PLAN_CHOICES = [
         ("trial", "Trial"),
+        ("none", "Free Plan"),
         ("monthly", "Monthly"),
-        ("yearly", "Yearly"),
+        ("quarterly", "3-Month Plan"),
+        ("semi-annual", "6-Month Plan"),
+        ("yearly", "Annual Plan"),
         ("perpetual", "Perpetual"),
-        ("none", "None"),
     ]
     plan = models.CharField(max_length=20, choices=PLAN_CHOICES, default="trial")
     plan_expires_at = models.DateTimeField(null=True, blank=True)
     # Service gate separate from Django is_active (login)
     is_service_active = models.BooleanField(default=cast(Any, True))
+    # Free plan daily order limit tracking
+    daily_orders_count = models.PositiveIntegerField(default=0)
+    daily_orders_date = models.DateField(null=True, blank=True)
     # Public ID used by customers to connect via bot (/start vendor_<idOrCode>)
     external_vendor_id = models.CharField(max_length=64, null=True, blank=True, unique=True)
     # Optional manual crypto payment metadata
@@ -108,6 +113,52 @@ class Vendor(AbstractBaseUser, PermissionsMixin):
             send_plan_changed_email(self, str(old_plan), plan)
         except Exception:
             pass
+
+    def is_on_free_plan(self) -> bool:
+        """Check if vendor is on free plan (none plan or trial without paid features)."""
+        return self.plan == 'none' or (self.is_trial and not self.is_service_active)
+
+    def get_daily_order_limit(self) -> int:
+        """Get daily order limit based on plan."""
+        if self.is_on_free_plan():
+            return 10  # Free plan limit
+        return -1  # Unlimited for paid plans
+
+    def can_accept_order(self) -> tuple[bool, str]:
+        """Check if vendor can accept a new order based on daily limits."""
+        from django.utils import timezone
+        
+        # Paid plans have unlimited orders
+        if not self.is_on_free_plan():
+            return True, ""
+        
+        today = timezone.now().date()
+        
+        # Reset counter if it's a new day
+        if self.daily_orders_date != today:
+            self.daily_orders_count = 0
+            self.daily_orders_date = today
+            self.save(update_fields=['daily_orders_count', 'daily_orders_date'])
+        
+        limit = self.get_daily_order_limit()
+        if self.daily_orders_count >= limit:
+            return False, f"{self.name} can't take any more orders for today, check back tomorrow!"
+        
+        return True, ""
+
+    def increment_daily_orders(self):
+        """Increment daily order count."""
+        from django.utils import timezone
+        
+        today = timezone.now().date()
+        
+        # Reset counter if it's a new day
+        if self.daily_orders_date != today:
+            self.daily_orders_count = 0
+            self.daily_orders_date = today
+        
+        self.daily_orders_count += 1
+        self.save(update_fields=['daily_orders_count', 'daily_orders_date'])
 
 class NotificationLog(models.Model):
     KIND_CHOICES = [

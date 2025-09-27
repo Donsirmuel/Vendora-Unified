@@ -544,6 +544,11 @@ def handle_order_creation(callback_data: str, chat_id: Optional[str] = None) -> 
                 if pea and pea < now:
                     return ("Vendor subscription expired. Please contact the vendor.", {})
             
+            # Check daily order limit for free plan
+            can_accept, limit_message = vendor.can_accept_order()
+            if not can_accept:
+                return (limit_message, {})
+            
             # Create order in database
             order = cast(Any, Order).objects.create(
                 vendor=vendor,
@@ -578,6 +583,10 @@ def handle_order_creation(callback_data: str, chat_id: Optional[str] = None) -> 
                 bu.save(update_fields=["state", "temp_order_id", "temp_type", "temp_asset", "temp_amount"])
             except cast(Any, BotUser).DoesNotExist:
                 pass
+
+            # Increment daily order count for free plan users
+            if vendor.is_on_free_plan():
+                vendor.increment_daily_orders()
 
             # Push notify vendor about new pending order (bot-created)
             try:

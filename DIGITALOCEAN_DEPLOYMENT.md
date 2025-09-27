@@ -27,11 +27,11 @@
 
 ## Deployment Steps
 
-### Step 1: Update Domain References
-Before creating the app, replace `yourdomain.com` in these files with your actual domain:
+### Step 1: Domain Configuration ✅
+Your domain configuration is already set up for `vendora.page`:
 
-1. **`.do/app.yaml`** - Lines 27, 29, 31, 35, 40, 49, 52, 58-63
-2. **`frontend/.env.production.example`** - Line 2
+1. **`.do/app.yaml`** - Updated with `api.vendora.page` and `app.vendora.page`
+2. **`frontend/.env.production.example`** - Updated with `api.vendora.page`
 
 ### Step 2: Environment Variables Preparation
 Prepare these environment variables for DigitalOcean:
@@ -44,9 +44,9 @@ DEBUG=false
 DIGITALOCEAN_APP_PLATFORM=true
 
 # Domain Configuration
-ALLOWED_HOSTS=api.yourdomain.com,yourdomain.com
-CSRF_TRUSTED_ORIGINS=https://api.yourdomain.com,https://app.yourdomain.com
-PRODUCTION_CORS_ORIGINS=https://app.yourdomain.com,https://yourdomain.com
+ALLOWED_HOSTS=api.vendora.page,vendora.page
+CSRF_TRUSTED_ORIGINS=https://api.vendora.page,https://app.vendora.page
+PRODUCTION_CORS_ORIGINS=https://app.vendora.page,https://vendora.page
 
 # Database
 DATABASE_URL=your-neon-postgres-connection-string
@@ -54,18 +54,18 @@ DATABASE_URL=your-neon-postgres-connection-string
 # Telegram Bot
 TELEGRAM_BOT_TOKEN=your-bot-token
 TELEGRAM_BOT_USERNAME=your-bot-username
-TELEGRAM_WEBHOOK_URL=https://api.yourdomain.com/api/v1/telegram/webhook/
+TELEGRAM_WEBHOOK_URL=https://api.vendora.page/api/v1/telegram/webhook/
 TELEGRAM_WEBHOOK_SECRET=your-webhook-secret
 
 # Frontend
-FRONTEND_URL=https://app.yourdomain.com
+FRONTEND_URL=https://app.vendora.page
 ```
 
 #### Frontend Build Environment Variables:
 ```bash
-VITE_API_BASE=https://api.yourdomain.com
+VITE_API_BASE=https://api.vendora.page
 VITE_WS_PROTOCOL=wss
-VITE_API_HOST=api.yourdomain.com
+VITE_API_HOST=api.vendora.page
 ```
 
 ### Step 3: Create DigitalOcean App
@@ -111,6 +111,10 @@ VITE_API_HOST=api.yourdomain.com
    Answer: [your-do-app-url]
    TTL: 300
    ```
+   
+   **Note**: Your domains will be:
+   - Backend API: `api.vendora.page`
+   - Frontend App: `app.vendora.page`
 
 ### Step 5: Update Telegram Webhook
 
@@ -120,7 +124,7 @@ After deployment, update your Telegram bot webhook:
 curl -X POST "https://api.telegram.org/bot<YOUR_BOT_TOKEN>/setWebhook" \
      -H "Content-Type: application/json" \
      -d '{
-       "url": "https://api.yourdomain.com/api/v1/telegram/webhook/",
+       "url": "https://api.vendora.page/api/v1/telegram/webhook/",
        "secret_token": "your-webhook-secret"
      }'
 ```
@@ -128,11 +132,11 @@ curl -X POST "https://api.telegram.org/bot<YOUR_BOT_TOKEN>/setWebhook" \
 ### Step 6: Verify Deployment
 
 1. **Check Health Endpoints**:
-   - Backend: `https://api.yourdomain.com/health/`
-   - Simple check: `https://api.yourdomain.com/healthz/`
+   - Backend: `https://api.vendora.page/health/`
+   - Simple check: `https://api.vendora.page/healthz/`
 
 2. **Test Frontend**:
-   - Visit: `https://app.yourdomain.com`
+   - Visit: `https://app.vendora.page`
    - Verify API connectivity
 
 3. **Test Telegram Bot**:

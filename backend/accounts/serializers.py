@@ -119,6 +119,10 @@ class VendorSerializer(serializers.ModelSerializer):
             "subscription_status",
             "bot_username",
             "bot_link",
+            "plan",
+            "is_trial",
+            "daily_orders_count",
+            "daily_orders_date",
         ]
         read_only_fields = ["id", "is_staff", "is_superuser"]
 
@@ -276,9 +280,16 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
 class PlanUpgradeSerializer(serializers.Serializer):
     """Serializer to handle plan upgrades from trial to a paid tier.
 
-    Supports: monthly, yearly, perpetual. Optional explicit duration override.
+    Supports: none (free), monthly, quarterly, semi-annual, yearly, perpetual. Optional explicit duration override.
     """
-    plan = serializers.ChoiceField(choices=[('monthly','Monthly'),('yearly','Yearly'),('perpetual','Perpetual')])
+    plan = serializers.ChoiceField(choices=[
+        ('none','Free Plan'),
+        ('monthly','Monthly'),
+        ('quarterly','3-Month Plan'),
+        ('semi-annual','6-Month Plan'),
+        ('yearly','Annual Plan'),
+        ('perpetual','Perpetual')
+    ])
     duration_days = serializers.IntegerField(required=False, min_value=1, max_value=400)
 
     def validate(self, attrs):
@@ -299,10 +310,15 @@ class PlanUpgradeSerializer(serializers.Serializer):
         # Idempotent if already on plan (non-trial)
         if vendor.plan == plan and not vendor.is_trial:
             return vendor
-        if plan != 'perpetual' and duration_days is None:
+        if plan not in ('perpetual', 'none') and duration_days is None:
             from django.conf import settings
+            # Set default durations based on plan type
             if plan == 'monthly':
                 duration_days = int(getattr(settings, 'PLAN_DAYS_MONTHLY', 30))
+            elif plan == 'quarterly':
+                duration_days = int(getattr(settings, 'PLAN_DAYS_QUARTERLY', 90))
+            elif plan == 'semi-annual':
+                duration_days = int(getattr(settings, 'PLAN_DAYS_SEMI_ANNUAL', 180))
             elif plan == 'yearly':
                 duration_days = int(getattr(settings, 'PLAN_DAYS_YEARLY', 365))
         vendor.set_plan(plan, duration_days=duration_days)

@@ -20,6 +20,7 @@ import { listOrders, acceptOrder, declineOrder, Order } from "@/lib/orders";
 import { useToast } from "@/hooks/use-toast";
 import { getErrorMessage } from "@/lib/errors";
 import { connectSSE } from "@/lib/sse";
+import { FreePlanLimitAlert, FreePlanUsageWidget } from "@/components/FreePlanComponents";
 
 const Orders = () => {
   const { toast } = useToast();
@@ -181,6 +182,10 @@ const Orders = () => {
   return (
     <Layout>
       <div className="space-y-6">
+        {/* Free Plan Components */}
+        <FreePlanLimitAlert />
+        <FreePlanUsageWidget />
+        
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>

@@ -187,7 +187,7 @@ export default function Home(): JSX.Element {
             <a className="cta" style={btn} href="/signup">Start Free Trial →</a>
             <a className="cta" style={btnSecondary} href="#features">See Features</a>
           </div>
-          <div style={{ color: "#94a3b8", marginTop: 14 }}>No card required • 14‑day trial • Keep your data</div>
+          <div style={{ color: "#94a3b8", marginTop: 14 }}>No card required • 14‑day trial • Maximize your Productivity</div>
         </div>
 
         <div style={screen as React.CSSProperties}>
@@ -236,11 +236,148 @@ export default function Home(): JSX.Element {
         ))}
       </ul>
 
-      <section style={{ maxWidth: 900, margin: "30px auto 0", padding: "0 28px" }}>
-        <span style={{ background: "#1e293b", display: "inline-block", padding: "4px 10px", borderRadius: 999, fontSize: 11, letterSpacing: ".5px", textTransform: "uppercase", fontWeight: 600, color: "#7dd3fc" }}>Pricing (Preview)</span>
-        <p style={{ fontSize: 15, lineHeight: 1.6, color: "#94a3b8", maxWidth: 720, marginTop: 10 }}>
-          During beta your first <strong style={{ color: "#fff" }}>14 days are free</strong>. Afterwards choose a simple monthly plan (coming soon). Need volume pricing? <a style={{ color: "#7dd3fc" }} href="mailto:hello@vendora.page?subject=Vendora%20Early%20Access">Contact us</a>.
-        </p>
+      <section style={{ maxWidth: 1100, margin: "60px auto 0", padding: "0 28px" }}>
+        <div style={{ textAlign: "center", marginBottom: 40 }}>
+          <span style={{ background: "#1e293b", display: "inline-block", padding: "4px 10px", borderRadius: 999, fontSize: 11, letterSpacing: ".5px", textTransform: "uppercase", fontWeight: 600, color: "#7dd3fc" }}>Simple Pricing</span>
+          <h2 style={{ fontSize: 32, margin: "16px 0 8px", color: "#fff" }}>Choose Your Plan</h2>
+          <p style={{ fontSize: 16, lineHeight: 1.6, color: "#94a3b8", maxWidth: 600, margin: "0 auto" }}>
+            Start with our <strong style={{ color: "#fff" }}>Free Plan</strong> (up to 10 orders/day) or upgrade for unlimited orders at just <strong style={{ color: "#0ea5b7" }}>$0.75/day</strong>.
+          </p>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 24, maxWidth: 1000, margin: "0 auto" }}>
+          {/* Free Plan */}
+          <div style={{ background: "#101e33", border: "1px solid #1e2b42", padding: "24px", borderRadius: 16, position: "relative" }}>
+            <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 8, color: "#fff" }}>Free Plan</div>
+            <div style={{ fontSize: 32, fontWeight: 700, color: "#0ea5b7", marginBottom: 4 }}>$0<span style={{ fontSize: 16, color: "#94a3b8" }}>/month</span></div>
+            <p style={{ color: "#94a3b8", fontSize: 14, marginBottom: 20 }}>Perfect for getting started</p>
+            <ul style={{ listStyle: "none", padding: 0, margin: "0 0 24px", color: "#94a3b8" }}>
+              <li style={{ marginBottom: 8, display: "flex", alignItems: "center" }}>
+                <span style={{ color: "#0ea5b7", marginRight: 8 }}>✓</span>
+                Up to 10 orders per day
+              </li>
+              <li style={{ marginBottom: 8, display: "flex", alignItems: "center" }}>
+                <span style={{ color: "#0ea5b7", marginRight: 8 }}>✓</span>
+                Basic rate management
+              </li>
+              <li style={{ marginBottom: 8, display: "flex", alignItems: "center" }}>
+                <span style={{ color: "#0ea5b7", marginRight: 8 }}>✓</span>
+                Telegram bot integration
+              </li>
+              <li style={{ marginBottom: 8, display: "flex", alignItems: "center" }}>
+                <span style={{ color: "#0ea5b7", marginRight: 8 }}>✓</span>
+                Basic support
+              </li>
+            </ul>
+            <a style={{ ...btn, width: "100%", justifyContent: "center", background: "#1e293b", color: "#f1f5f9" }} href="/signup">Get Started Free</a>
+          </div>
+
+          {/* Monthly Plan */}
+          <div style={{ background: "linear-gradient(145deg, #0ea5b7, #0891b2)", border: "1px solid #0ea5b7", padding: "24px", borderRadius: 16, position: "relative", transform: "scale(1.05)" }}>
+            <div style={{ position: "absolute", top: -10, left: "50%", transform: "translateX(-50%)", background: "#fbbf24", color: "#92400e", padding: "4px 12px", borderRadius: 999, fontSize: 11, fontWeight: 600 }}>MOST POPULAR</div>
+            <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 8, color: "#041e28" }}>Monthly Plan</div>
+            <div style={{ fontSize: 32, fontWeight: 700, color: "#041e28", marginBottom: 4 }}>$22.99<span style={{ fontSize: 16, color: "#164e63" }}>/month</span></div>
+            <p style={{ color: "#164e63", fontSize: 14, marginBottom: 20 }}>$0.75 per day • Unlimited orders</p>
+            <ul style={{ listStyle: "none", padding: 0, margin: "0 0 24px", color: "#164e63" }}>
+              <li style={{ marginBottom: 8, display: "flex", alignItems: "center" }}>
+                <span style={{ color: "#041e28", marginRight: 8 }}>✓</span>
+                Unlimited orders per day
+              </li>
+              <li style={{ marginBottom: 8, display: "flex", alignItems: "center" }}>
+                <span style={{ color: "#041e28", marginRight: 8 }}>✓</span>
+                Advanced rate management
+              </li>
+              <li style={{ marginBottom: 8, display: "flex", alignItems: "center" }}>
+                <span style={{ color: "#041e28", marginRight: 8 }}>✓</span>
+                Full Telegram bot features
+              </li>
+              <li style={{ marginBottom: 8, display: "flex", alignItems: "center" }}>
+                <span style={{ color: "#041e28", marginRight: 8 }}>✓</span>
+                Priority support
+              </li>
+              <li style={{ marginBottom: 8, display: "flex", alignItems: "center" }}>
+                <span style={{ color: "#041e28", marginRight: 8 }}>✓</span>
+                Real-time notifications
+              </li>
+            </ul>
+            <a style={{ ...btn, width: "100%", justifyContent: "center", background: "#041e28", color: "#0ea5b7" }} href="/upgrade">Upgrade Now</a>
+          </div>
+
+          {/* Quarterly Plan */}
+          <div style={{ background: "#101e33", border: "1px solid #1e2b42", padding: "24px", borderRadius: 16, position: "relative" }}>
+            <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 8, color: "#fff" }}>3-Month Plan</div>
+            <div style={{ fontSize: 32, fontWeight: 700, color: "#0ea5b7", marginBottom: 4 }}>$68.97<span style={{ fontSize: 16, color: "#94a3b8" }}>/3 months</span></div>
+            <p style={{ color: "#94a3b8", fontSize: 14, marginBottom: 20 }}>$0.75 per day • Save with longer commitment</p>
+            <ul style={{ listStyle: "none", padding: 0, margin: "0 0 24px", color: "#94a3b8" }}>
+              <li style={{ marginBottom: 8, display: "flex", alignItems: "center" }}>
+                <span style={{ color: "#0ea5b7", marginRight: 8 }}>✓</span>
+                Everything in Monthly
+              </li>
+              <li style={{ marginBottom: 8, display: "flex", alignItems: "center" }}>
+                <span style={{ color: "#0ea5b7", marginRight: 8 }}>✓</span>
+                Extended commitment savings
+              </li>
+              <li style={{ marginBottom: 8, display: "flex", alignItems: "center" }}>
+                <span style={{ color: "#0ea5b7", marginRight: 8 }}>✓</span>
+                Quarterly business reports
+              </li>
+            </ul>
+            <a style={{ ...btn, width: "100%", justifyContent: "center", background: "#1e293b", color: "#f1f5f9" }} href="/upgrade">Choose Plan</a>
+          </div>
+
+          {/* 6-Month Plan */}
+          <div style={{ background: "#101e33", border: "1px solid #1e2b42", padding: "24px", borderRadius: 16, position: "relative" }}>
+            <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 8, color: "#fff" }}>6-Month Plan</div>
+            <div style={{ fontSize: 32, fontWeight: 700, color: "#0ea5b7", marginBottom: 4 }}>$137.94<span style={{ fontSize: 16, color: "#94a3b8" }}>/6 months</span></div>
+            <p style={{ color: "#94a3b8", fontSize: 14, marginBottom: 20 }}>$0.75 per day • Better value</p>
+            <ul style={{ listStyle: "none", padding: 0, margin: "0 0 24px", color: "#94a3b8" }}>
+              <li style={{ marginBottom: 8, display: "flex", alignItems: "center" }}>
+                <span style={{ color: "#0ea5b7", marginRight: 8 }}>✓</span>
+                Everything in Monthly
+              </li>
+              <li style={{ marginBottom: 8, display: "flex", alignItems: "center" }}>
+                <span style={{ color: "#0ea5b7", marginRight: 8 }}>✓</span>
+                Semi-annual savings
+              </li>
+              <li style={{ marginBottom: 8, display: "flex", alignItems: "center" }}>
+                <span style={{ color: "#0ea5b7", marginRight: 8 }}>✓</span>
+                Advanced analytics
+              </li>
+            </ul>
+            <a style={{ ...btn, width: "100%", justifyContent: "center", background: "#1e293b", color: "#f1f5f9" }} href="/upgrade">Choose Plan</a>
+          </div>
+
+          {/* Annual Plan */}
+          <div style={{ background: "#101e33", border: "1px solid #1e2b42", padding: "24px", borderRadius: 16, position: "relative" }}>
+            <div style={{ position: "absolute", top: -10, right: 16, background: "#10b981", color: "#064e3b", padding: "4px 8px", borderRadius: 999, fontSize: 10, fontWeight: 600 }}>BEST VALUE</div>
+            <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 8, color: "#fff" }}>Annual Plan</div>
+            <div style={{ fontSize: 32, fontWeight: 700, color: "#0ea5b7", marginBottom: 4 }}>$275.88<span style={{ fontSize: 16, color: "#94a3b8" }}>/year</span></div>
+            <p style={{ color: "#94a3b8", fontSize: 14, marginBottom: 20 }}>$0.75 per day • Maximum savings</p>
+            <ul style={{ listStyle: "none", padding: 0, margin: "0 0 24px", color: "#94a3b8" }}>
+              <li style={{ marginBottom: 8, display: "flex", alignItems: "center" }}>
+                <span style={{ color: "#0ea5b7", marginRight: 8 }}>✓</span>
+                Everything in Monthly
+              </li>
+              <li style={{ marginBottom: 8, display: "flex", alignItems: "center" }}>
+                <span style={{ color: "#0ea5b7", marginRight: 8 }}>✓</span>
+                Annual commitment savings
+              </li>
+              <li style={{ marginBottom: 8, display: "flex", alignItems: "center" }}>
+                <span style={{ color: "#0ea5b7", marginRight: 8 }}>✓</span>
+                Premium support & features
+              </li>
+              <li style={{ marginBottom: 8, display: "flex", alignItems: "center" }}>
+                <span style={{ color: "#0ea5b7", marginRight: 8 }}>✓</span>
+                Annual business insights
+              </li>
+            </ul>
+            <a style={{ ...btn, width: "100%", justifyContent: "center", background: "#1e293b", color: "#f1f5f9" }} href="/upgrade">Choose Plan</a>
+          </div>
+        </div>
+
+        <div style={{ textAlign: "center", marginTop: 32, color: "#94a3b8", fontSize: 14 }}>
+          All plans include a <strong style={{ color: "#fff" }}>14-day free trial</strong>. Cancel anytime. <a style={{ color: "#7dd3fc" }} href="mailto:hello@vendora.page?subject=Vendora%20Pricing">Questions about pricing?</a>
+        </div>
       </section>
 
       <section style={{ maxWidth: 950, margin: "80px auto 20px", padding: "0 28px" }} id="faq" aria-labelledby="faq-heading">

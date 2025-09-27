@@ -37,7 +37,7 @@ export interface SignupResponse {
 
 export interface SubscriptionStatus {
   active: boolean;
-  plan: 'trial' | 'monthly' | 'yearly' | 'perpetual' | 'none';
+  plan: 'trial' | 'none' | 'monthly' | 'quarterly' | 'semi-annual' | 'yearly' | 'perpetual';
   is_trial: boolean;
   trial_expires_at?: string | null;
   plan_expires_at?: string | null;
@@ -54,6 +54,10 @@ export interface VendorProfile {
   is_staff: boolean;
   is_superuser: boolean;
   is_active: boolean;
+  // Daily order tracking for free plan limits
+  daily_orders_count?: number;
+  daily_order_limit?: number;
+  daily_orders_date?: string;
   // Provided by backend serializer for licensing/trial UI
   subscription_status?: SubscriptionStatus;
 }

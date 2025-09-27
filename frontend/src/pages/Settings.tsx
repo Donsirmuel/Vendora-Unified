@@ -1,5 +1,21 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link } from        // Load bank details, rates, and daily usage
+        const [banksRes, ratesRes] = await Promise.all([
+          listBankDetails(1),
+          listRates(1)
+        ]);
+        setBankList(banksRes.results);
+        setRates(ratesRes.results);
+        
+        // Load daily usage for free plan users
+        if (user?.subscription_status?.plan === 'none' || user?.subscription_status?.is_trial) {
+          try {
+            const usageRes = await http.get('/api/v1/accounts/daily-usage/');
+            setDailyUsage(usageRes.data);
+          } catch (err) {
+            console.warn('Could not load daily usage:', err);
+          }
+        }-router-dom";
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,7 +23,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { User, DollarSign, Moon, Sun, Settings as SettingsIcon, Plus, Trash2, Pencil, Copy } from "lucide-react";
+import { User, DollarSign, Moon, Sun, Settings as SettingsIcon, Plus, Trash2, Pencil, Copy, CreditCard, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { getVendorProfile, updateVendorProfile, VendorProfile } from "@/lib/auth";
 import { listBankDetails, createBankDetail, updateBankDetail, deleteBankDetail, BankDetail } from "@/lib/bankDetails";
@@ -17,6 +33,7 @@ import { getErrorMessage } from "@/lib/errors";
 import { isUpdateAvailable, subscribeToSWUpdate, requestUpdate } from "@/lib/sw-updates";
 import { promptInstall, ensurePushRegistered } from "@/main";
 import { useAuth } from '@/contexts/AuthContext';
+import { FreePlanOrderCounter, FreePlanBanner } from '@/components/FreePlanComponents';
 
 const Settings = () => {
   const { toast } = useToast();
@@ -45,6 +62,7 @@ const Settings = () => {
   const [botLink, setBotLink] = useState<string>("");
   const [updateReady, setUpdateReady] = useState<boolean>(() => (typeof window !== 'undefined') ? isUpdateAvailable() : false);
   const [canInstall, setCanInstall] = useState<boolean>(() => typeof window !== 'undefined' && localStorage.getItem('vendora_can_install') === '1');
+  const [dailyUsage, setDailyUsage] = useState<{ daily_orders_count: number; daily_order_limit: number } | null>(null);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -247,6 +265,78 @@ const Settings = () => {
                 <p>Your plan: <strong>{user.subscription_status.plan}</strong>{user.subscription_status.plan_expires_at ? <> — expires on <strong>{new Date(user.subscription_status.plan_expires_at).toLocaleString()}</strong></> : null}</p>
               )}
             </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Plan & Usage Information */}
+      {user?.subscription_status && (
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CreditCard className="w-5 h-5" />
+              Plan & Usage
+            </CardTitle>
+            <CardDescription>Your current plan details and daily usage</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Plan Information */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-muted-foreground">Current Plan</Label>
+                <div className="flex items-center gap-2">
+                  <span className="text-lg font-semibold">
+                    {user.subscription_status.is_trial ? 'Trial' : 
+                     user.subscription_status.plan === 'none' ? 'Free Plan' :
+                     user.subscription_status.plan === 'monthly' ? 'Monthly Plan' :
+                     user.subscription_status.plan === 'quarterly' ? '3-Month Plan' :
+                     user.subscription_status.plan === 'semi-annual' ? '6-Month Plan' :
+                     user.subscription_status.plan === 'yearly' ? 'Annual Plan' :
+                     user.subscription_status.plan === 'perpetual' ? 'Perpetual Plan' :
+                     user.subscription_status.plan}
+                  </span>
+                  {(user.subscription_status.plan === 'none' || user.subscription_status.is_trial) && (
+                    <Button asChild size="sm" variant="outline">
+                      <Link to="/upgrade">Upgrade</Link>
+                    </Button>
+                  )}
+                </div>
+              </div>
+              
+              {user.subscription_status.plan_expires_at && (
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-muted-foreground">Plan Expires</Label>
+                  <div className="text-lg">
+                    {new Date(user.subscription_status.plan_expires_at).toLocaleDateString()}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Daily Usage for Free Plan Users */}
+            {(user.subscription_status.plan === 'none' || user.subscription_status.is_trial) && dailyUsage && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4" />
+                  <Label className="text-sm font-medium">Daily Orders Usage</Label>
+                </div>
+                <FreePlanOrderCounter 
+                  currentOrders={dailyUsage.daily_orders_count} 
+                  maxOrders={dailyUsage.daily_order_limit} 
+                />
+                {dailyUsage.daily_orders_count >= dailyUsage.daily_order_limit && (
+                  <FreePlanBanner />
+                )}
+              </div>
+            )}
+
+            {/* Unlimited Plan Message */}
+            {!user.subscription_status.is_trial && user.subscription_status.plan !== 'none' && (
+              <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
+                <TrendingUp className="w-4 h-4" />
+                <span className="text-sm font-medium">Unlimited daily orders</span>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}

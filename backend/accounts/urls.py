@@ -1,7 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView
-from .views import VendorViewSet, BroadcastMessageViewSet, BankDetailViewSet, PlanUpgradeView
+from .views import VendorViewSet, BroadcastMessageViewSet, BankDetailViewSet, PlanUpgradeView, DailyUsageView
 from .api import PaymentRequestViewSet, GlobalPaymentDestinationViewSet
 from .sse import payment_request_stream
 from .auth_views import (
@@ -32,6 +32,7 @@ urlpatterns = [
     path('password-reset/', request_password_reset, name='password_reset'),
     path('password-reset/confirm/', confirm_password_reset, name='password_reset_confirm'),
     path('upgrade/', PlanUpgradeView.as_view(), name='plan_upgrade'),
+    path('daily-usage/', DailyUsageView.as_view(), name='daily_usage'),
 
     # Vendor management
     path('vendors/', VendorViewSet.as_view({'get': 'list', 'post': 'create'}), name='vendor_list'),

@@ -27,23 +27,23 @@ spec:
       scope: RUN_TIME
       type: SECRET
     - key: ALLOWED_HOSTS
-      value: "api.yourdomain.com,yourdomain.com"
+      value: "api.vendora.page,vendora.page"
     - key: CSRF_TRUSTED_ORIGINS
-      value: "https://api.yourdomain.com,https://app.yourdomain.com"
+      value: "https://api.vendora.page,https://app.vendora.page"
     - key: PRODUCTION_CORS_ORIGINS
-      value: "https://app.yourdomain.com,https://yourdomain.com"
+      value: "https://app.vendora.page,https://vendora.page"
     - key: TELEGRAM_BOT_TOKEN
       scope: RUN_TIME
       type: SECRET
     - key: TELEGRAM_BOT_USERNAME
       value: "YourBotUsername"
     - key: TELEGRAM_WEBHOOK_URL
-      value: "https://api.yourdomain.com/api/v1/telegram/webhook/"
+      value: "https://api.vendora.page/api/v1/telegram/webhook/"
     - key: TELEGRAM_WEBHOOK_SECRET
       scope: RUN_TIME
       type: SECRET
     - key: FRONTEND_URL
-      value: "https://app.yourdomain.com"
+      value: "https://app.vendora.page"
     
   # Frontend static site
   - name: frontend
@@ -59,16 +59,16 @@ spec:
     type: STATIC_SITE
     envs:
     - key: VITE_API_BASE
-      value: "https://api.yourdomain.com"
+      value: "https://api.vendora.page"
     - key: VITE_WS_PROTOCOL
       value: "wss"
     - key: VITE_API_HOST
-      value: "api.yourdomain.com"
+      value: "api.vendora.page"
 
   domains:
-  - name: api.yourdomain.com
+  - name: api.vendora.page
     type: PRIMARY
-    zone: yourdomain.com
-  - name: app.yourdomain.com
+    zone: vendora.page
+  - name: app.vendora.page
     type: ALIAS
-    zone: yourdomain.com
+    zone: vendora.page

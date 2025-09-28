@@ -1,21 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from        // Load bank details, rates, and daily usage
-        const [banksRes, ratesRes] = await Promise.all([
-          listBankDetails(1),
-          listRates(1)
-        ]);
-        setBankList(banksRes.results);
-        setRates(ratesRes.results);
-        
-        // Load daily usage for free plan users
-        if (user?.subscription_status?.plan === 'none' || user?.subscription_status?.is_trial) {
-          try {
-            const usageRes = await http.get('/api/v1/accounts/daily-usage/');
-            setDailyUsage(usageRes.data);
-          } catch (err) {
-            console.warn('Could not load daily usage:', err);
-          }
-        }-router-dom";
+import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -33,7 +17,7 @@ import { getErrorMessage } from "@/lib/errors";
 import { isUpdateAvailable, subscribeToSWUpdate, requestUpdate } from "@/lib/sw-updates";
 import { promptInstall, ensurePushRegistered } from "@/main";
 import { useAuth } from '@/contexts/AuthContext';
-import { FreePlanOrderCounter, FreePlanBanner } from '@/components/FreePlanComponents';
+import { FreePlanUsageWidget, FreePlanLimitAlert } from '@/components/FreePlanComponents';
 
 const Settings = () => {
   const { toast } = useToast();
@@ -62,7 +46,7 @@ const Settings = () => {
   const [botLink, setBotLink] = useState<string>("");
   const [updateReady, setUpdateReady] = useState<boolean>(() => (typeof window !== 'undefined') ? isUpdateAvailable() : false);
   const [canInstall, setCanInstall] = useState<boolean>(() => typeof window !== 'undefined' && localStorage.getItem('vendora_can_install') === '1');
-  const [dailyUsage, setDailyUsage] = useState<{ daily_orders_count: number; daily_order_limit: number } | null>(null);
+  // daily usage is handled inside the FreePlan components which fetch their own data
   const { user } = useAuth();
 
   useEffect(() => {
@@ -314,19 +298,14 @@ const Settings = () => {
             </div>
 
             {/* Daily Usage for Free Plan Users */}
-            {(user.subscription_status.plan === 'none' || user.subscription_status.is_trial) && dailyUsage && (
+            {(user.subscription_status.plan === 'none' || user.subscription_status.is_trial) && (
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <TrendingUp className="w-4 h-4" />
                   <Label className="text-sm font-medium">Daily Orders Usage</Label>
                 </div>
-                <FreePlanOrderCounter 
-                  currentOrders={dailyUsage.daily_orders_count} 
-                  maxOrders={dailyUsage.daily_order_limit} 
-                />
-                {dailyUsage.daily_orders_count >= dailyUsage.daily_order_limit && (
-                  <FreePlanBanner />
-                )}
+                <FreePlanUsageWidget />
+                <FreePlanLimitAlert />
               </div>
             )}
 

@@ -6,6 +6,8 @@ import './index.css'
 import './pages/home.css'
 import { http, tokenStore } from '@/lib/http'
 import { setUpdateAvailable } from '@/lib/sw-updates'
+import { requestUpdate, subscribeToSWUpdate } from '@/lib/sw-updates'
+import { toast } from '@/components/ui/use-toast'
 
 createRoot(document.getElementById("root")!).render(
 	<ErrorBoundary>
@@ -20,8 +22,12 @@ async function registerPush() {
 		const reg = await navigator.serviceWorker.register('/sw.js');
 		// Optionally trigger skipWaiting when an update is found (without forcing a reload here)
 		if (reg.waiting) {
-			// Mark update available and wait for user to trigger
-			setUpdateAvailable(true);
+			// Auto-request activation so users don't have to hard-refresh in production
+			try {
+				await requestUpdate();
+				// show a subtle toast so user knows new version applied
+				toast({ title: 'Updated', description: 'New version activated — reloading…' });
+			} catch {}
 		}
 		reg.addEventListener('updatefound', () => {
 			const newWorker = reg.installing;
@@ -32,10 +38,12 @@ async function registerPush() {
 				}
 			});
 		});
+
+		// When a new service worker takes control, reload once to apply the new code
 		navigator.serviceWorker.addEventListener('controllerchange', () => {
-			// New SW took control; reload to apply
 			window.location.reload();
 		});
+
 	// If already subscribed, reuse
 	let existing = await reg.pushManager.getSubscription();
 	if (!existing) {

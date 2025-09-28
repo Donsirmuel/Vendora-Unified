@@ -1,3 +1,4 @@
+import React, { Suspense, lazy } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -7,28 +8,28 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { isAuthenticated } from "@/lib/auth";
 
-// Auth pages
+// Public / light pages
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import PasswordReset from "./pages/PasswordReset";
 import PasswordResetConfirm from "./pages/PasswordResetConfirm";
-
-// Protected pages
-import Dashboard from "./pages/Dashboard";
-import Orders from "./pages/Orders";
-import OrderDetails from "./pages/OrderDetails";
-import Transactions from "./pages/Transactions";
-import TransactionDetails from "./pages/TransactionDetails";
-import Settings from "./pages/Settings";
-import Availability from "./pages/Availability";
-import BroadcastMessages from "./pages/BroadcastMessages";
-import Queries from "./pages/Queries";
 import NotFound from "./pages/NotFound";
 import Home from "./pages/Home";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
-import Upgrade from "./pages/Upgrade";
-import AdminPayments from "./pages/AdminPayments";
+
+// Lazy-loaded heavy pages (route-based code splitting)
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Orders = lazy(() => import("./pages/Orders"));
+const OrderDetails = lazy(() => import("./pages/OrderDetails"));
+const Transactions = lazy(() => import("./pages/Transactions"));
+const TransactionDetails = lazy(() => import("./pages/TransactionDetails"));
+const Settings = lazy(() => import("./pages/Settings"));
+const Availability = lazy(() => import("./pages/Availability"));
+const BroadcastMessages = lazy(() => import("./pages/BroadcastMessages"));
+const Queries = lazy(() => import("./pages/Queries"));
+const Upgrade = lazy(() => import("./pages/Upgrade"));
+const AdminPayments = lazy(() => import("./pages/AdminPayments"));
 
 const queryClient = new QueryClient();
 
@@ -83,62 +84,117 @@ const App = () => (
             } />
 
             {/* Protected Dashboard Routes */}
-            <Route path="/dashboard" element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            } />
-            <Route path="/orders" element={
-              <ProtectedRoute>
-                <Orders />
-              </ProtectedRoute>
-            } />
-            <Route path="/orders/:id" element={
-              <ProtectedRoute>
-                <OrderDetails />
-              </ProtectedRoute>
-            } />
-            <Route path="/transactions" element={
-              <ProtectedRoute>
-                <Transactions />
-              </ProtectedRoute>
-            } />
-            <Route path="/transactions/:id" element={
-              <ProtectedRoute>
-                <TransactionDetails />
-              </ProtectedRoute>
-            } />
-            <Route path="/settings" element={
-              <ProtectedRoute>
-                <Settings />
-              </ProtectedRoute>
-            } />
-            <Route path="/availability" element={
-              <ProtectedRoute>
-                <Availability />
-              </ProtectedRoute>
-            } />
-            <Route path="/broadcast-messages" element={
-              <ProtectedRoute>
-                <BroadcastMessages />
-              </ProtectedRoute>
-            } />
-            <Route path="/queries" element={
-              <ProtectedRoute>
-                <Queries />
-              </ProtectedRoute>
-            } />
-            <Route path="/upgrade" element={
-              <ProtectedRoute>
-                <Upgrade />
-              </ProtectedRoute>
-            } />
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <Suspense fallback={<div className="p-8 text-center text-muted-foreground">Loading dashboard…</div>}>
+                    <Dashboard />
+                  </Suspense>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/orders"
+              element={
+                <ProtectedRoute>
+                  <Suspense fallback={<div className="p-8 text-center text-muted-foreground">Loading orders…</div>}>
+                    <Orders />
+                  </Suspense>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/orders/:id"
+              element={
+                <ProtectedRoute>
+                  <Suspense fallback={<div className="p-8 text-center text-muted-foreground">Loading order…</div>}>
+                    <OrderDetails />
+                  </Suspense>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/transactions"
+              element={
+                <ProtectedRoute>
+                  <Suspense fallback={<div className="p-8 text-center text-muted-foreground">Loading transactions…</div>}>
+                    <Transactions />
+                  </Suspense>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/transactions/:id"
+              element={
+                <ProtectedRoute>
+                  <Suspense fallback={<div className="p-8 text-center text-muted-foreground">Loading transaction…</div>}>
+                    <TransactionDetails />
+                  </Suspense>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <ProtectedRoute>
+                  <Suspense fallback={<div className="p-8 text-center text-muted-foreground">Loading settings…</div>}>
+                    <Settings />
+                  </Suspense>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/availability"
+              element={
+                <ProtectedRoute>
+                  <Suspense fallback={<div className="p-8 text-center text-muted-foreground">Loading…</div>}>
+                    <Availability />
+                  </Suspense>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/broadcast-messages"
+              element={
+                <ProtectedRoute>
+                  <Suspense fallback={<div className="p-8 text-center text-muted-foreground">Loading…</div>}>
+                    <BroadcastMessages />
+                  </Suspense>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/queries"
+              element={
+                <ProtectedRoute>
+                  <Suspense fallback={<div className="p-8 text-center text-muted-foreground">Loading…</div>}>
+                    <Queries />
+                  </Suspense>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/upgrade"
+              element={
+                <ProtectedRoute>
+                  <Suspense fallback={<div className="p-8 text-center text-muted-foreground">Loading…</div>}>
+                    <Upgrade />
+                  </Suspense>
+                </ProtectedRoute>
+              }
+            />
 
-            <Route path="/admin/payments" element={
-              <ProtectedRoute>
-                <AdminPayments />
-              </ProtectedRoute>
-            } />
+            <Route
+              path="/admin/payments"
+              element={
+                <ProtectedRoute>
+                  <Suspense fallback={<div className="p-8 text-center text-muted-foreground">Loading…</div>}>
+                    <AdminPayments />
+                  </Suspense>
+                </ProtectedRoute>
+              }
+            />
 
             {/* Default Redirects */}
             {/* No duplicate root route here — keep Home as the public default above */}

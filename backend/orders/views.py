@@ -85,6 +85,14 @@ class OrderViewSet(ModelViewSet):
         # Manual gating on accept
         try:
             vendor = request.user
+            # Enforce daily free-plan limits
+            try:
+                can_accept, msg = vendor.can_accept_order()
+                if not can_accept:
+                    return Response({"detail": msg}, status=status.HTTP_403_FORBIDDEN)
+            except Exception:
+                # If the helper fails for any reason, allow fallback to existing logic
+                pass
             from django.utils import timezone
             now = timezone.now()
             if not getattr(vendor, "is_service_active", True):

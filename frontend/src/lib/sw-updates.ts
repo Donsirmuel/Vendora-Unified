@@ -21,7 +21,16 @@ export async function requestUpdate(): Promise<boolean> {
   try {
     const reg = await navigator.serviceWorker.getRegistration();
     if (reg?.waiting) {
+      // Ask waiting worker to skipWaiting and wait for it to take control
       reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+      // Wait for controllerchange so the new SW controls the page
+      await new Promise<void>((resolve) => {
+        const handler = () => {
+          navigator.serviceWorker.removeEventListener('controllerchange', handler);
+          resolve();
+        };
+        navigator.serviceWorker.addEventListener('controllerchange', handler);
+      });
       return true;
     }
   } catch {}

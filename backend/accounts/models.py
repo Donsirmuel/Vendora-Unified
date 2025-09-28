@@ -81,6 +81,8 @@ class Vendor(AbstractBaseUser, PermissionsMixin):
     # Free plan daily order limit tracking
     daily_orders_count = models.PositiveIntegerField(default=0)
     daily_orders_date = models.DateField(null=True, blank=True)
+    # Optional per-vendor override for daily order limit. If null, free plan uses global default.
+    daily_order_limit = models.IntegerField(null=True, blank=True, default=None)
     # Public ID used by customers to connect via bot (/start vendor_<idOrCode>)
     external_vendor_id = models.CharField(max_length=64, null=True, blank=True, unique=True)
     # Optional manual crypto payment metadata
@@ -120,9 +122,19 @@ class Vendor(AbstractBaseUser, PermissionsMixin):
 
     def get_daily_order_limit(self) -> int:
         """Get daily order limit based on plan."""
+        # If a vendor-specific limit is set, use it (>=0 means limit, -1 means unlimited)
+        if self.daily_order_limit is not None:
+            try:
+                val = int(self.daily_order_limit)
+                return val
+            except Exception:
+                pass
+
         if self.is_on_free_plan():
-            return 10  # Free plan limit
-        return -1  # Unlimited for paid plans
+            # Default free plan limit
+            return 10
+        # Paid plans or unspecified -> unlimited
+        return -1
 
     def can_accept_order(self) -> tuple[bool, str]:
         """Check if vendor can accept a new order based on daily limits."""

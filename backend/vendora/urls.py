@@ -25,6 +25,8 @@ from django.http import JsonResponse
 from api.health import health_view
 from api.metrics import metrics_view
 from django.views.static import serve as static_serve
+from django.http import HttpResponse
+from functools import partial
 from api.sse import sse_stream
 
 urlpatterns = [
@@ -62,13 +64,34 @@ if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 urlpatterns += [
-    # PWA essentials
-    re_path(r'^manifest\.webmanifest$', lambda r: static_serve(r, path='manifest.webmanifest', document_root=str(settings.FRONTEND_DIST))),
-    re_path(r'^sw\.js$', lambda r: static_serve(r, path='sw.js', document_root=str(settings.FRONTEND_DIST))),
-    re_path(r'^icons/(?P<path>.*)$', lambda r, path: static_serve(r, document_root=str(settings.FRONTEND_DIST / 'icons'), path=path)),
-    # Vite build assets (JS/CSS)
-    re_path(r'^assets/(?P<path>.*)$', lambda r, path: static_serve(r, document_root=str(settings.FRONTEND_DIST / 'assets'), path=path)),
-    # SPA fallback: serve index.html for any other non-handled route.
+    # PWA essentials - serve with conservative cache headers so browsers revalidate quickly
+    re_path(r'^manifest\.webmanifest$', lambda r: _static_with_headers(r, path='manifest.webmanifest', document_root=str(settings.FRONTEND_DIST), cache='short')),
+    re_path(r'^sw\.js$', lambda r: _static_with_headers(r, path='sw.js', document_root=str(settings.FRONTEND_DIST), cache='short')),
+    re_path(r'^icons/(?P<path>.*)$', lambda r, path: _static_with_headers(r, path=path, document_root=str(settings.FRONTEND_DIST / 'icons'), cache='assets')),
+    # Vite build assets (JS/CSS) - these are hashed filenames so safe to cache long-term
+    re_path(r'^assets/(?P<path>.*)$', lambda r, path: _static_with_headers(r, path=path, document_root=str(settings.FRONTEND_DIST / 'assets'), cache='assets')),
+    # SPA fallback: serve index.html (no-store/no-cache) for any other non-handled route so clients revalidate HTML
     # Exclude admin (with or without trailing slash), api/, and media/ so Django can handle admin redirects
-    re_path(r'^(?!(?:admin(?:/|$)|api/|media/)).*$', TemplateView.as_view(template_name='index.html')),
+    re_path(r'^(?!(?:admin(?:/|$)|api/|media/)).*$', lambda r: _static_with_headers(r, path='index.html', document_root=str(settings.FRONTEND_DIST), cache='short')),
 ]
+
+
+# Helper to wrap Django's static serve and ensure appropriate Cache-Control headers
+def _static_with_headers(request, path, document_root, cache='short'):
+    """Serve a static file but override Cache-Control depending on the type.
+
+    cache: 'short' -> no-cache (index.html, sw.js, manifest)
+           'assets' -> long-lived immutable caching for hashed assets
+    """
+    resp = static_serve(request, path=path, document_root=document_root)
+    if not isinstance(resp, HttpResponse):
+        return resp
+    # Short/volatile resources should be revalidated by browsers immediately
+    if cache == 'short':
+        resp["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        resp["Pragma"] = "no-cache"
+        resp["Expires"] = "0"
+    elif cache == 'assets':
+        # Safe long caching for fingerprinted assets
+        resp["Cache-Control"] = "public, max-age=31536000, immutable"
+    return resp

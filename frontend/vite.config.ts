@@ -17,19 +17,24 @@ export default defineConfig(({ mode }) => ({
   ].filter(Boolean),
   build: {
     rollupOptions: {
-        output: {
-        manualChunks(id) {
-          // Simpler chunking: group all node_modules into a single vendor chunk.
-          // This avoids cross-chunk circular imports where one vendor chunk
-          // imports the React runtime from another vendor chunk and the
-          // import alias can end up undefined at runtime in certain load orders.
-          if (id.includes('node_modules')) {
-            return 'vendor';
-          }
+            output: {
+            manualChunks(id) {
+            if (!id) return;
+            // Group all node_modules into a single vendor chunk to avoid
+            // cross-chunk circular dependencies (React + other libs).
+            // This simplifies bundling and prevents runtime import/init races.
+            // Place some very large libraries into their own chunks so they
+            // don't inflate the main vendor bundle. Keep React/runtime in
+            // vendor to avoid cross-chunk initialization problems.
+            if (id.includes('node_modules')) {
+              if (id.includes('recharts')) return 'vendor-recharts';
+              if (id.includes('lucide-react')) return 'vendor-icons';
+              return 'vendor';
+            }
 
-          // Keep some app-specific chunks separate (optional)
-          if (id.includes('ChartsPanel')) return 'charts_panel';
-        }
+            // Keep some app-specific chunks separate (optional)
+            if (id.includes('ChartsPanel')) return 'charts_panel';
+          }
       }
     },
     chunkSizeWarningLimit: 700,

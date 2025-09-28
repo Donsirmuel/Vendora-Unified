@@ -161,3 +161,6 @@ export function FreePlanUsageWidget() {
     </Card>
   );
 }
+
+// No legacy aliases — import the modern component names:
+// FreePlanUsageWidget, FreePlanLimitAlert

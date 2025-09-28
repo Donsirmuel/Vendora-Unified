@@ -12,10 +12,20 @@ from django.conf import settings
 
 @admin.register(Vendor)
 class VendorAdmin(admin.ModelAdmin):
-	list_display = ("email", "name", "telegram_username", "plan", "is_trial", "is_service_active", "daily_orders_count", "daily_order_limit_display", "trial_expires_at", "plan_expires_at")
+	list_display = ("email", "name", "telegram_username", "plan", "is_trial", "is_service_active", "daily_orders_count", "daily_order_limit", "daily_order_limit_display", "trial_expires_at", "plan_expires_at")
+	list_editable = ("daily_orders_count","daily_order_limit")
 	search_fields = ("email", "name", "external_vendor_id", "telegram_username")
 	list_filter = ("is_trial", "plan", "is_service_active", "daily_orders_date")
 	actions = ("start_14_day_trial", "activate_free_plan", "activate_monthly", "activate_quarterly", "activate_semi_annual", "activate_yearly", "activate_perpetual", "revoke_service", "reset_daily_orders", "generate_external_ids")
+	# Add action form for custom plan/duration and custom daily limit
+	from django.contrib.admin.helpers import ActionForm
+
+	class CustomActionForm(ActionForm):
+		custom_plan = forms.ChoiceField(required=False, choices=(('', '---'), ('none','Free'), ('monthly','Monthly'), ('quarterly','3-Month'), ('semi-annual','6-Month'), ('yearly','Annual'), ('perpetual','Perpetual')))
+		duration_days = forms.IntegerField(required=False, min_value=0, label=_('Activation days (0 for perpetual)'))
+		custom_daily_limit = forms.IntegerField(required=False, min_value=-1, label=_('Custom daily limit (-1 for unlimited)'))
+
+	action_form = CustomActionForm
 	readonly_fields = ("daily_order_limit_display", "plan_status_display")
 	
 	fieldsets = (
@@ -26,7 +36,7 @@ class VendorAdmin(admin.ModelAdmin):
 			"fields": ("plan", "is_trial", "trial_started_at", "trial_expires_at", "plan_expires_at", "plan_status_display")
 		}),
 		("Daily Limits (Free Plan)", {
-			"fields": ("daily_orders_count", "daily_orders_date", "daily_order_limit_display"),
+				"fields": ("daily_orders_count", "daily_orders_date", "daily_order_limit", "daily_order_limit_display"),
 			"description": "Free plan users are limited to 10 orders per day. This counter resets daily."
 		}),
 		("Service Status", {
@@ -195,6 +205,53 @@ class VendorAdmin(admin.ModelAdmin):
 				v.save(update_fields=["external_vendor_id"])
 				updated += 1
 		self.message_user(request, f"Generated IDs for {updated} vendors")
+
+	@admin.action(description="Apply custom plan / duration / daily limit to selected vendors")
+	def apply_custom_plan_and_limits(self, request, queryset):
+		# Read values from the action form POST data
+		plan = request.POST.get('custom_plan')
+		days = request.POST.get('duration_days')
+		custom_limit = request.POST.get('custom_daily_limit')
+		updated = 0
+		from django.utils import timezone
+		for v in queryset:
+			changed = False
+			# Apply selected plan and optional duration
+			if plan:
+				v.plan = plan
+				v.is_trial = False
+				if days and str(days).strip() != '':
+					try:
+						d = int(days)
+						if d > 0:
+							v.plan_expires_at = timezone.now() + timedelta(days=d)
+						else:
+							v.plan_expires_at = None
+					except Exception:
+						# ignore parse errors and leave expiration unchanged
+						pass
+				changed = True
+
+			# Apply custom daily limit (best-effort). There's no dedicated field for "daily limit",
+			# so this action will only adjust the counter if a non-negative limit is provided.
+			if custom_limit and str(custom_limit).strip() != '':
+				try:
+					cl = int(custom_limit)
+					if cl >= 0:
+						# Reduce the current counter to the new limit if needed.
+						v.daily_orders_count = min(v.daily_orders_count, cl)
+					changed = True
+				except Exception:
+					# ignore parse errors
+					pass
+
+			if changed:
+				v.save()
+				updated += 1
+		self.message_user(request, f"Applied custom plan/limits to {updated} vendors")
+
+	# expose the custom apply action in the admin actions tuple
+	actions = ("start_14_day_trial", "activate_free_plan", "activate_monthly", "activate_quarterly", "activate_semi_annual", "activate_yearly", "activate_perpetual", "revoke_service", "reset_daily_orders", "generate_external_ids", "apply_custom_plan_and_limits")
 
 
 

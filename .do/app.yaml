@@ -14,7 +14,7 @@ spec:
     instance_size_slug: basic-xxs
     http_port: 8080
     health_check:
-      http_path: /api/v1/health/
+      http_path: /health/
     envs:
     - key: DIGITALOCEAN_APP_PLATFORM
       value: "true"

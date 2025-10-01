@@ -4,6 +4,7 @@ set -e
 
 echo "Starting Vendora backend..."
 echo "Working directory: $(pwd)"
+echo "Python version: $(python --version 2>&1 || python3 --version 2>&1)"
 echo "Python path: $PYTHONPATH"
 echo "Django settings: $DJANGO_SETTINGS_MODULE"
 
@@ -21,9 +22,9 @@ python manage.py migrate --noinput
 echo "Collecting static files..."
 python manage.py collectstatic --noinput --clear
 
-# Start Gunicorn with ASGI
+# Start Gunicorn with ASGI using python -m to ensure correct environment
 echo "Starting Gunicorn with Uvicorn workers..."
-exec gunicorn vendora.asgi:application \
+exec python -m gunicorn vendora.asgi:application \
   -k uvicorn.workers.UvicornWorker \
   --bind 0.0.0.0:8080 \
   --workers 1 \

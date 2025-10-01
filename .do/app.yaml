@@ -8,7 +8,7 @@ spec:
       repo: Donsirmuel/Vendora-Unified
       branch: main
       deploy_on_push: true
-    run_command: gunicorn vendora.asgi:application -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8080
+    run_command: cd backend && gunicorn vendora.asgi:application -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8080 --workers 1 --timeout 120
     environment_slug: python
     instance_count: 1
     instance_size_slug: basic-xxs
@@ -20,6 +20,8 @@ spec:
       value: "true"
     - key: DEBUG
       value: "false"
+    - key: DJANGO_SETTINGS_MODULE
+      value: "vendora.settings"
     - key: SECRET_KEY
       scope: RUN_TIME
       type: SECRET
@@ -52,10 +54,10 @@ spec:
       repo: Donsirmuel/Vendora-Unified
       branch: main
       deploy_on_push: true
-    build_command: npm ci && npm run build
+    build_command: npm ci --prefer-offline && NODE_OPTIONS="--max-old-space-size=1024" npm run build
     environment_slug: node-js
     instance_count: 1
-    instance_size_slug: basic-xxs
+    instance_size_slug: basic-xs
     type: STATIC_SITE
     envs:
     - key: VITE_API_BASE

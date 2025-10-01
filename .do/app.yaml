@@ -8,7 +8,7 @@ spec:
       repo: Donsirmuel/Vendora-Unified
       branch: main
       deploy_on_push: true
-    run_command: python -m gunicorn vendora.asgi:application -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8080
+    run_command: gunicorn --pythonpath . vendora.asgi:application -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8080 --workers 1
     environment_slug: python
     instance_count: 1
     instance_size_slug: basic-xxs
@@ -55,10 +55,10 @@ spec:
       branch: main
       deploy_on_push: true
     build_command: npm ci --prefer-offline && NODE_OPTIONS="--max-old-space-size=1024" npm run build
+    output_dir: dist
     environment_slug: node-js
     instance_count: 1
     instance_size_slug: basic-xs
-    type: STATIC_SITE
     envs:
     - key: VITE_API_BASE
       value: "https://api.vendora.page"

@@ -33,11 +33,4 @@ python manage.py collectstatic --noinput --clear
 # Start Gunicorn with ASGI using python -m to ensure correct environment
 echo "Starting Gunicorn with Uvicorn workers..."
 echo "Command: python -m gunicorn vendora.asgi:application -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8080"
-exec python -m gunicorn vendora.asgi:application \
-  -k uvicorn.workers.UvicornWorker \
-  --bind 0.0.0.0:8080 \
-  --workers 1 \
-  --timeout 120 \
-  --log-level info \
-  --access-logfile - \
-  --error-logfile -
+exec python -m gunicorn vendora.asgi:application -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8080 --workers 1 --timeout 120 --log-level info --access-logfile - --error-logfile -

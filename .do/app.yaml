@@ -8,7 +8,7 @@ spec:
       repo: Donsirmuel/Vendora-Unified
       branch: main
       deploy_on_push: true
-    run_command: gunicorn --pythonpath . vendora.asgi:application -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8080 --workers 1
+    run_command: daphne -b 0.0.0.0 -p 8080 vendora.asgi:application
     environment_slug: python
     instance_count: 1
     instance_size_slug: basic-xxs

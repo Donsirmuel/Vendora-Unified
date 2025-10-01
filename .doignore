@@ -1,0 +1,23 @@
+# Files to ignore for DigitalOcean App Platform deployment
+# Docker-related files (use deployment/docker/ for droplet deployments)
+Dockerfile*
+docker-compose*.yml
+docker-entrypoint.sh
+
+# Development files
+.env.local
+.env.development
+*.log
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Backup files
+*.bak
+*.tmp
+*~

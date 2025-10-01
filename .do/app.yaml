@@ -54,11 +54,11 @@ spec:
       repo: Donsirmuel/Vendora-Unified
       branch: main
       deploy_on_push: true
-    build_command: npm ci --prefer-offline && NODE_OPTIONS="--max-old-space-size=1024" npm run build
+    build_command: npm ci --prefer-offline --no-audit --no-fund && NODE_OPTIONS="--max-old-space-size=2048 --max-semi-space-size=128" npm run build
     output_dir: dist
     environment_slug: node-js
     instance_count: 1
-    instance_size_slug: basic-xs
+    instance_size_slug: apps-s-1vcpu-2gb
     envs:
     - key: VITE_API_BASE
       value: "https://api.vendora.page"

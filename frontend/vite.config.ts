@@ -17,27 +17,25 @@ export default defineConfig(({ mode }) => ({
   ].filter(Boolean),
   build: {
     rollupOptions: {
-            output: {
-            manualChunks(id) {
-            if (!id) return;
-            // Group all node_modules into a single vendor chunk to avoid
-            // cross-chunk circular dependencies (React + other libs).
-            // This simplifies bundling and prevents runtime import/init races.
-            // Place some very large libraries into their own chunks so they
-            // don't inflate the main vendor bundle. Keep React/runtime in
-            // vendor to avoid cross-chunk initialization problems.
-            if (id.includes('node_modules')) {
-              if (id.includes('recharts')) return 'vendor-recharts';
-              if (id.includes('lucide-react')) return 'vendor-icons';
-              return 'vendor';
-            }
-
-            // Keep some app-specific chunks separate (optional)
-            if (id.includes('ChartsPanel')) return 'charts_panel';
+      output: {
+        manualChunks(id) {
+          if (!id) return;
+          // Aggressive chunking to reduce memory usage during build
+          if (id.includes('node_modules')) {
+            if (id.includes('recharts')) return 'vendor-recharts';
+            if (id.includes('lucide-react')) return 'vendor-icons';
+            if (id.includes('react') || id.includes('react-dom')) return 'vendor-react';
+            return 'vendor';
           }
+          // Keep app chunks small
+          if (id.includes('ChartsPanel')) return 'charts_panel';
+        }
       }
     },
-    chunkSizeWarningLimit: 700,
+    chunkSizeWarningLimit: 1000,
+    // Reduce memory usage during build
+    minify: 'esbuild',
+    sourcemap: false,
   },
   resolve: {
     alias: {

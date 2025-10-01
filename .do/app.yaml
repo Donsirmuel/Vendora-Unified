@@ -1,11 +1,5 @@
 spec:
   name: vendora-unified
-  # GitHub source configuration - applies to all services
-  github:
-    repo: Donsirmuel/Vendora-Unified
-    branch: main
-    deploy_on_push: true
-  
   services:
   # Backend API service
   - name: backend
@@ -54,10 +48,8 @@ spec:
     - key: FRONTEND_URL
       value: "https://app.vendora.page"
     
-  # Frontend static site (use DigitalOcean static_site type)
+  static_sites:
   - name: frontend
-    type: static
-    # Artifact branch contains only dist/ at repo root.
     github:
       repo: Donsirmuel/Vendora-Unified
       branch: frontend-build-artifacts

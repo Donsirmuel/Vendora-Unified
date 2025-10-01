@@ -1,10 +1,18 @@
 # Quick Deployment Reference for DigitalOcean
 
-## Files Modified in This Fix
+## Recent Fixes (October 2024)
 
+### Latest: GitHub Configuration Fix
+**See `FRONTEND_DEPLOYMENT_FIX.md` for details**
+- Moved `github:` section from service level to spec level in `.do/app.yaml`
+- This fixes "failed to launch: determine start command" errors
+- Both backend and frontend now share the same GitHub source configuration
+
+### Previous Fixes
 1. **`.do/app.yaml`** - Main deployment configuration
    - Fixed backend `run_command` path
    - Fixed frontend static site configuration
+   - **NEW**: Fixed GitHub configuration placement
 
 2. **`backend/start.sh`** - Backend startup script  
    - Added database migrations
@@ -24,6 +32,7 @@
 - [x] Added migrations to startup
 - [x] Made scripts executable
 - [x] Cleaned environment files
+- [x] **NEW**: Fixed GitHub configuration placement in app.yaml
 
 ## Next Steps for User
 
@@ -79,5 +88,6 @@ npm run preview
 
 ## Support
 
-See `DIGITALOCEAN_FIXES.md` for detailed explanation of all changes.
-See `DIGITALOCEAN_DEPLOYMENT.md` for full deployment guide.
+- **Latest Fix**: See `FRONTEND_DEPLOYMENT_FIX.md` for GitHub configuration fix (October 2024)
+- **Previous Fixes**: See `DIGITALOCEAN_FIXES.md` for detailed explanation of all changes
+- **Full Guide**: See `DIGITALOCEAN_DEPLOYMENT.md` for complete deployment guide

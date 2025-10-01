@@ -12,7 +12,7 @@ jobs:
   build-frontend:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       actions: write
     steps:
       - name: Checkout
@@ -52,15 +52,37 @@ jobs:
           set -e
           git config user.name "github-actions"
           git config user.email "actions@users.noreply.github.com"
-          # Fetch existing branch if present
+          
+          # Create a temporary directory for the artifacts branch
+          TEMP_DIR=$(mktemp -d)
+          
+          # Copy the built dist directory to temp (preserve dist folder structure)
+          mkdir -p "$TEMP_DIR/dist"
+          cp -r frontend/dist/* "$TEMP_DIR/dist/"
+          
+          # Fetch the artifacts branch if it exists
           git fetch origin $TARGET_BRANCH || true
-          # Create worktree for branch manipulation (safer than orphan wipe of root)
-          git checkout -B $TARGET_BRANCH
-          # Ensure frontend/dist exists (it does) and commit only that subtree + minimal files
-          # Optionally prune old dist contents
-          git add frontend/dist
+          
+          # Create an orphan branch (clean history) for artifacts
+          git checkout --orphan $TARGET_BRANCH
+          
+          # Remove all files from git index
+          git rm -rf . || true
+          
+          # Copy the dist directory structure
+          cp -r "$TEMP_DIR"/* .
+          
+          # Add all files
+          git add .
+          
+          # Commit the changes
           git commit -m "ci: update built frontend dist for ${GITHUB_SHA}" || echo "No changes to commit"
-          git push origin $TARGET_BRANCH
+          
+          # Force push to the artifacts branch
+          git push -f origin $TARGET_BRANCH
+          
+          # Clean up
+          rm -rf "$TEMP_DIR"
 
       - name: Summary
         run: |

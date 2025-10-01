@@ -53,12 +53,12 @@ spec:
   - name: frontend
     type: static
     # Serve pre-built artifacts from dedicated branch produced by CI.
-    source_dir: frontend
+    # The frontend-build-artifacts branch contains only the built dist files.
     github:
       repo: Donsirmuel/Vendora-Unified
       branch: frontend-build-artifacts
       deploy_on_push: true
-    # No build_command: artifacts are already present in dist/ on that branch.
+    # No build_command: artifacts are already built and ready in dist/ directory
     output_dir: dist
     envs:
     - key: VITE_API_BASE

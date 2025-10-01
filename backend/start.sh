@@ -1,5 +1,6 @@
 #!/bin/bash
 # DigitalOcean App Platform startup script
+set -e
 
 echo "Starting Vendora backend..."
 echo "Working directory: $(pwd)"
@@ -12,7 +13,16 @@ export DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE:-vendora.settings}
 # Add current directory to Python path
 export PYTHONPATH="${PYTHONPATH}:$(pwd)"
 
+# Run migrations
+echo "Running database migrations..."
+python manage.py migrate --noinput
+
+# Collect static files
+echo "Collecting static files..."
+python manage.py collectstatic --noinput --clear
+
 # Start Gunicorn with ASGI
+echo "Starting Gunicorn with Uvicorn workers..."
 exec gunicorn vendora.asgi:application \
   -k uvicorn.workers.UvicornWorker \
   --bind 0.0.0.0:8080 \

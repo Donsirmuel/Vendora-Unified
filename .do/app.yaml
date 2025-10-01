@@ -8,8 +8,8 @@ spec:
       repo: Donsirmuel/Vendora-Unified
       branch: main
       deploy_on_push: true
-  # Use a robust start script that prefers gunicorn+uvicorn, falls back to daphne, then runserver
-  run_command: "./backend/start_backend.sh"
+    # Use a robust start script that prefers gunicorn+uvicorn, falls back to daphne, then runserver
+    run_command: "bash start.sh"
     environment_slug: python
     instance_count: 1
     instance_size_slug: basic-xxs
@@ -48,19 +48,16 @@ spec:
     - key: FRONTEND_URL
       value: "https://app.vendora.page"
     
-  # Frontend static site (use DigitalOcean static_site block so no start command is required)
+  # Frontend static site (use DigitalOcean static_site type)
   - name: frontend
+    type: static
     source_dir: frontend
     github:
       repo: Donsirmuel/Vendora-Unified
       branch: main
       deploy_on_push: true
-    static_site:
-      build_command: >-
-        npm ci --prefer-offline --no-audit --no-fund && NODE_OPTIONS=--max-old-space-size=2048 npm run build
-      output_dir: dist
-    instance_count: 1
-    instance_size_slug: apps-s-2vcpu-2gb
+    build_command: npm ci --prefer-offline --no-audit && npm run build
+    output_dir: dist
     envs:
     - key: VITE_API_BASE
       value: "https://api.vendora.page"

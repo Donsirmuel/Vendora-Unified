@@ -36,7 +36,7 @@ spec:
       scope: RUN_TIME
       type: SECRET
     - key: TELEGRAM_BOT_USERNAME
-      value: "YourBotUsername"
+      value: "VendoraUnifiedBot"
     - key: TELEGRAM_WEBHOOK_URL
       value: "https://api.vendora.page/api/v1/telegram/webhook/"
     - key: TELEGRAM_WEBHOOK_SECRET

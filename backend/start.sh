@@ -2,15 +2,32 @@
 # DigitalOcean App Platform startup script
 set -e
 
-echo "Starting Vendora backend..."
+echo "=== Vendora Backend Startup ==="
 echo "Working directory: $(pwd)"
 echo "Python version: $(python --version 2>&1 || python3 --version 2>&1)"
 echo "Python path: $PYTHONPATH"
 echo "Django settings: $DJANGO_SETTINGS_MODULE"
-echo "Directory listing:"
+
+# List directory contents
+echo ""
+echo "=== Directory listing ==="
 ls -la
-echo "Checking vendora module:"
-ls -la vendora/ 2>/dev/null || echo "vendora directory not found"
+
+# Check if vendora module exists
+echo ""
+echo "=== Checking vendora module ==="
+if [ -d "vendora" ]; then
+  ls -la vendora/
+  if [ -f "vendora/asgi.py" ]; then
+    echo "✓ vendora/asgi.py found"
+  else
+    echo "✗ vendora/asgi.py NOT found"
+    exit 1
+  fi
+else
+  echo "✗ vendora directory NOT found"
+  exit 1
+fi
 
 # Set Django settings if not already set
 export DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE:-vendora.settings}
@@ -19,25 +36,37 @@ export DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE:-vendora.settings}
 export PYTHONPATH="${PYTHONPATH}:$(pwd)"
 
 # Verify gunicorn is available
-echo "Gunicorn version:"
-python -m gunicorn --version || echo "Gunicorn not found via python -m"
+echo ""
+echo "=== Checking gunicorn ==="
+if python -m gunicorn --version; then
+  echo "✓ Gunicorn is available"
+else
+  echo "✗ Gunicorn not found"
+  exit 1
+fi
+
+# Check if database is accessible
+echo ""
+echo "=== Database connectivity ==="
+if python manage.py check --database default; then
+  echo "✓ Database is accessible"
+else
+  echo "✗ Database check failed (will continue anyway)"
+fi
 
 # Run migrations
-echo "Running database migrations..."
+echo ""
+echo "=== Running database migrations ==="
 python manage.py migrate --noinput
 
 # Collect static files
-echo "Collecting static files..."
+echo ""
+echo "=== Collecting static files ==="
 python manage.py collectstatic --noinput --clear
 
 # Start Gunicorn with ASGI using python -m to ensure correct environment
-echo "Starting Gunicorn with Uvicorn workers..."
+echo ""
+echo "=== Starting Gunicorn with Uvicorn workers ==="
 echo "Command: python -m gunicorn vendora.asgi:application -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8080"
-exec python -m gunicorn vendora.asgi:application \
-  -k uvicorn.workers.UvicornWorker \
-  --bind 0.0.0.0:8080 \
-  --workers 1 \
-  --timeout 120 \
-  --log-level info \
-  --access-logfile - \
-  --error-logfile -
+echo "Starting server..."
+exec python -m gunicorn vendora.asgi:application -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8080 --workers 1 --timeout 120 --log-level info --access-logfile - --error-logfile -

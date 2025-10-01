@@ -8,8 +8,8 @@ spec:
       repo: Donsirmuel/Vendora-Unified
       branch: main
       deploy_on_push: true
-    # Use Gunicorn with Uvicorn worker for ASGI; include worker tmp dir to avoid /tmp tmpfs issues
-    run_command: gunicorn vendora.asgi:application -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8080 --workers 1 --timeout 120 --worker-tmp-dir /dev/shm
+  # Use Gunicorn with Uvicorn worker for ASGI; include worker tmp dir to avoid /tmp tmpfs issues
+  run_command: "gunicorn vendora.asgi:application -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8080 --workers 1 --timeout 120 --worker-tmp-dir /dev/shm"
     environment_slug: python
     instance_count: 1
     instance_size_slug: basic-xxs
@@ -48,16 +48,17 @@ spec:
     - key: FRONTEND_URL
       value: "https://app.vendora.page"
     
-  # Frontend static site
+  # Frontend static site (use DigitalOcean static_site block so no start command is required)
   - name: frontend
     source_dir: frontend
     github:
       repo: Donsirmuel/Vendora-Unified
       branch: main
       deploy_on_push: true
-    build_command: npm ci --prefer-offline --no-audit --no-fund && NODE_OPTIONS="--max-old-space-size=2048 --max-semi-space-size=128" npm run build
-    output_dir: dist
-    environment_slug: node-js
+    static_site:
+      build_command: >-
+        npm ci --prefer-offline --no-audit --no-fund && NODE_OPTIONS=--max-old-space-size=2048 npm run build
+      output_dir: dist
     instance_count: 1
     instance_size_slug: apps-s-2vcpu-2gb
     envs:

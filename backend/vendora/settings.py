@@ -233,8 +233,13 @@ STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'static'
 STATICFILES_DIRS = [
     # Serve built frontend assets (JS/CSS) under /static when present
-    str(FRONTEND_DIST / 'assets')
+    # Only include the frontend assets dir if it exists in the runtime image/build.
 ]
+
+# Conditionally append the frontend assets directory if the frontend has been built
+frontend_assets_dir = FRONTEND_DIST / 'assets'
+if frontend_assets_dir.exists():
+    STATICFILES_DIRS.append(str(frontend_assets_dir))
 
 # Efficient static files in production
 if not DEBUG:

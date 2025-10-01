@@ -9,16 +9,18 @@ https://docs.djangoproject.com/en/5.2/howto/deployment/asgi/
 
 import os
 
-from channels.routing import ProtocolTypeRouter, URLRouter
-from channels.auth import AuthMiddlewareStack
-from accounts.ws_auth import JwtAuthMiddleware
-from django.core.asgi import get_asgi_application
 import os
+from django.core.asgi import get_asgi_application
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'vendora.settings')
 
+# Initialize Django ASGI application early to populate app registry
 django_asgi_app = get_asgi_application()
 
+# Now import Channels routing and any app-specific middleware/routings
+from channels.routing import ProtocolTypeRouter, URLRouter
+from channels.auth import AuthMiddlewareStack
+from accounts.ws_auth import JwtAuthMiddleware
 # Import websocket url patterns
 from accounts import routing as accounts_routing
 

@@ -1,5 +1,13 @@
 # DigitalOcean Deployment Guide for Vendora
 
+> **⚠️ IMPORTANT UPDATE (January 2025):**  
+> Recent fixes have been applied to resolve deployment errors. See `DIGITALOCEAN_FIXES.md` for details about:
+> - Fixed backend `run_command` path in `.do/app.yaml`
+> - Fixed frontend static site configuration
+> - Added automatic migrations and static file collection on backend startup
+> 
+> Quick reference: See `QUICK_DEPLOY.md` for a fast deployment checklist.
+
 ## Pre-Deployment Checklist ✅
 
 ### 1. Repository Status

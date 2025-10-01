@@ -8,14 +8,13 @@ spec:
       repo: Donsirmuel/Vendora-Unified
       branch: main
       deploy_on_push: true
-    # Use a robust start script that prefers gunicorn+uvicorn, falls back to daphne, then runserver
-    run_command: "bash start.sh"
+    # Procfile in backend/ directory defines the start command
     environment_slug: python
     instance_count: 1
     instance_size_slug: basic-xxs
     http_port: 8080
     health_check:
-      http_path: /api/v1/health/
+      http_path: /health/
     envs:
     - key: DIGITALOCEAN_APP_PLATFORM
       value: "true"

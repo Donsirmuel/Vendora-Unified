@@ -30,7 +30,7 @@ spec:
       scope: RUN_TIME
       type: SECRET
     - key: ALLOWED_HOSTS
-      value: "api.vendora.page,vendora.page"
+      value: "api.vendora.page,app.vendora.page,vendora.page"
     - key: CSRF_TRUSTED_ORIGINS
       value: "https://api.vendora.page,https://app.vendora.page"
     - key: PRODUCTION_CORS_ORIGINS

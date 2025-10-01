@@ -10,10 +10,15 @@ spec:
   # Backend API service
   - name: backend
     source_dir: backend
-    # Procfile in backend/ directory defines the start command
+    github:
+      repo: Donsirmuel/Vendora-Unified
+      branch: main
+      deploy_on_push: true
+    # Explicit run command (still honors Procfile steps inside start.sh)
+    run_command: "bash start.sh"
     environment_slug: python
     instance_count: 1
-    instance_size_slug: basic-xxs
+    instance_size_slug: apps-s-1vcpu-2gb
     http_port: 8080
     health_check:
       http_path: /health/
@@ -52,13 +57,12 @@ spec:
   # Frontend static site (use DigitalOcean static_site type)
   - name: frontend
     type: static
-    # Serve pre-built artifacts from dedicated branch produced by CI.
-    # The frontend-build-artifacts branch contains only the built dist files.
+    # Artifact branch contains only dist/ at repo root.
     github:
       repo: Donsirmuel/Vendora-Unified
       branch: frontend-build-artifacts
       deploy_on_push: true
-    # No build_command: artifacts are already built and ready in dist/ directory
+    source_dir: .
     output_dir: dist
     envs:
     - key: VITE_API_BASE

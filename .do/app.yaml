@@ -8,7 +8,8 @@ spec:
       repo: Donsirmuel/Vendora-Unified
       branch: main
       deploy_on_push: true
-    run_command: daphne -b 0.0.0.0 -p 8080 vendora.asgi:application
+  # Use Gunicorn with Uvicorn worker for ASGI; include worker tmp dir to avoid /tmp tmpfs issues
+  run_command: gunicorn vendora.asgi:application -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8080 --workers 1 --timeout 120 --worker-tmp-dir /dev/shm
     environment_slug: python
     instance_count: 1
     instance_size_slug: basic-xxs
@@ -58,7 +59,7 @@ spec:
     output_dir: dist
     environment_slug: node-js
     instance_count: 1
-    instance_size_slug: apps-s-1vcpu-2gb
+  instance_size_slug: apps-s-2vcpu-2gb
     envs:
     - key: VITE_API_BASE
       value: "https://api.vendora.page"

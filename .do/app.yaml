@@ -52,11 +52,13 @@ spec:
   # Frontend static site (use DigitalOcean static_site type)
   - name: frontend
     type: static
+    # Serve pre-built artifacts from dedicated branch produced by CI.
     source_dir: frontend
-    # Frontend build is now handled by GitHub Actions (see .github/workflows/frontend-build.yml).
-    # Keep build_command here as a fallback; you can later replace with a lightweight copy
-    # step if you introduce artifact download.
-    build_command: npm ci --prefer-offline --no-audit && npm run build
+    github:
+      repo: Donsirmuel/Vendora-Unified
+      branch: frontend-build-artifacts
+      deploy_on_push: true
+    # No build_command: artifacts are already present in dist/ on that branch.
     output_dir: dist
     envs:
     - key: VITE_API_BASE

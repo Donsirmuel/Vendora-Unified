@@ -45,24 +45,24 @@ jobs:
           name: frontend-dist-${{ github.sha }}
           path: frontend/dist
           retention-days: 7
-
-      # Optional: push dist to a deploy branch (commented out)
-      # - name: Publish dist to deploy branch
-      #   if: false  # enable if you want to push built assets
-      #   run: |
-      #     git config user.name "github-actions"
-      #     git config user.email "actions@users.noreply.github.com"
-      #     rm -rf frontend-dist-publish
-      #     mkdir frontend-dist-publish
-      #     cp -R frontend/dist/* frontend-dist-publish/
-      #     git checkout --orphan frontend-build-artifacts || git checkout frontend-build-artifacts
-      #     git reset --hard
-      #     rm -rf * .[^.]* || true
-      #     cp -R frontend-dist-publish/* .
-      #     git add -A
-      #     git commit -m "ci: frontend build artifact for ${GITHUB_SHA}" || echo "No changes"
-      #     git push origin HEAD:frontend-build-artifacts -f
+      - name: Publish dist to frontend-build-artifacts branch
+        env:
+          TARGET_BRANCH: frontend-build-artifacts
+        run: |
+          set -e
+          git config user.name "github-actions"
+          git config user.email "actions@users.noreply.github.com"
+          # Fetch existing branch if present
+          git fetch origin $TARGET_BRANCH || true
+          # Create worktree for branch manipulation (safer than orphan wipe of root)
+          git checkout -B $TARGET_BRANCH
+          # Ensure frontend/dist exists (it does) and commit only that subtree + minimal files
+          # Optionally prune old dist contents
+          git add frontend/dist
+          git commit -m "ci: update built frontend dist for ${GITHUB_SHA}" || echo "No changes to commit"
+          git push origin $TARGET_BRANCH
 
       - name: Summary
         run: |
           echo "Frontend build complete. Artifact uploaded as frontend-dist-${GITHUB_SHA}" >> $GITHUB_STEP_SUMMARY
+          echo "Published dist to branch: frontend-build-artifacts" >> $GITHUB_STEP_SUMMARY

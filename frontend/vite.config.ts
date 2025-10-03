@@ -24,7 +24,11 @@ export default defineConfig(({ mode }) => ({
           if (id.includes('node_modules')) {
             if (id.includes('recharts')) return 'vendor-recharts';
             if (id.includes('lucide-react')) return 'vendor-icons';
-            if (id.includes('react') || id.includes('react-dom')) return 'vendor-react';
+            // Bundle React and all React-dependent packages together to prevent
+            // "Cannot read properties of undefined (reading 'createContext')" errors
+            if (id.includes('react') || id.includes('react-dom') || 
+                id.includes('@radix-ui') || id.includes('next-themes') || 
+                id.includes('@tanstack/react-query')) return 'vendor-react';
             return 'vendor';
           }
           // Keep app chunks small

@@ -1,6 +1,7 @@
 from rest_framework import status
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.permissions import AllowAny
+from rest_framework.authentication import BaseAuthentication
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django.contrib.auth.tokens import default_token_generator
@@ -18,12 +19,20 @@ logger = logging.getLogger(__name__)
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):
-    """Custom token view that uses email instead of username"""
+    """Custom token view that uses email instead of username.
+
+    We explicitly disable SessionAuthentication here to avoid CSRF enforcement
+    for pure API credential exchange (mobile / SPA). SimpleJWT normally works
+    without a CSRF token, but including SessionAuthentication globally can
+    trigger a 403 if the framework treats the request as a session-based auth.
+    """
     serializer_class = CustomTokenObtainPairSerializer
+    authentication_classes: list[type[BaseAuthentication]] = []  # type: ignore[assignment]
 
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
+@authentication_classes([])  # Disable SessionAuthentication to prevent CSRF 403
 def signup(request):
     """Vendor registration endpoint"""
     serializer = VendorRegistrationSerializer(data=request.data)

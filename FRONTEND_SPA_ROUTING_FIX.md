@@ -8,6 +8,14 @@ Users were getting 404 errors when trying to access routes like `/signup`, `/log
 GET https://vendora.page/signup 404 (Not Found)
 ```
 
+## Additional Issue - MIME Type Error (Fixed)
+After the initial fix, a new error appeared:
+```
+main.tsx:1 Failed to load module script: Expected a JavaScript-or-Wasm module script but the server responded with a MIME type of "text/html". Strict MIME type checking is enforced for module scripts per HTML spec.
+```
+
+This occurred because the `404.html` file was referencing `/src/main.tsx` directly, which doesn't exist in the built output. Vite needs to process HTML files to transform TypeScript module references into the actual built JavaScript bundles.
+
 ## Root Cause
 The issue occurred because DigitalOcean's static site hosting was trying to find actual files at these paths (e.g., `/signup/index.html`), but these are client-side routes handled by React Router. Without proper configuration:
 
@@ -15,16 +23,19 @@ The issue occurred because DigitalOcean's static site hosting was trying to find
 
 2. **Missing error_document configuration**: The `.do/app.yaml` didn't have an `error_document` directive to tell DigitalOcean what to serve when a route is not found.
 
+3. **404.html not processed by Vite**: The `404.html` file was being copied as-is without Vite transforming the module script references, causing the MIME type error.
+
 ## Solution
 
-### Change 1: Move 404.html to public directory
+### Change 1: Configure 404.html as a Vite build entry point
 **Before:**
-- `frontend/404.html` - Not included in build
+- `frontend/public/404.html` - Copied as-is to `dist/`, with unprocessed `/src/main.tsx` reference
 
 **After:**
-- `frontend/public/404.html` - Automatically copied to `dist/` by Vite
+- `frontend/404.html` - Processed by Vite as a multi-page app entry, transforming script references to built bundles
+- Updated `vite.config.ts` to include both `index.html` and `404.html` as input entry points
 
-This ensures that the 404.html file is included in the build output that gets deployed to DigitalOcean.
+This ensures that Vite processes the 404.html file during build, transforming the TypeScript module reference `/src/main.tsx` into the actual built JavaScript bundle paths like `/assets/main-[hash].js`.
 
 ### Change 2: Configure error_document in app.yaml
 **Before:**
@@ -55,6 +66,24 @@ static_sites:
     envs:
       # ... environment variables
 ```
+
+### vite.config.ts Changes
+**Added multi-page app configuration:**
+```typescript
+build: {
+  rollupOptions: {
+    input: {
+      main: path.resolve(__dirname, 'index.html'),
+      404: path.resolve(__dirname, '404.html'),  // ← Added this entry
+    },
+    output: {
+      // ... existing chunk configuration
+    }
+  }
+}
+```
+
+This ensures Vite processes both HTML files during build, transforming module script references into the built bundle paths.
 
 ## How It Works
 
@@ -101,19 +130,33 @@ The `404.html` file is designed specifically for SPA fallback routing:
 </html>
 ```
 
+**After build (processed by Vite):**
+```html
+<script type="module" crossorigin src="/assets/vendor-[hash].js"></script>
+<script type="module" crossorigin src="/assets/vendor-recharts-[hash].js"></script>
+<script type="module" crossorigin src="/assets/charts_panel-[hash].js"></script>
+<script type="module" crossorigin src="/assets/main-[hash].js"></script>
+<link rel="stylesheet" crossorigin href="/assets/main-[hash].css">
+```
+
 Key features:
-- Loads the same React app entry point (`/src/main.tsx`)
+- Source references the same React app entry point (`/src/main.tsx`) which Vite transforms to built bundles
 - Shows a loading message while React initializes
 - Sets a flag (`window.__VENDORA_FALLBACK__`) for detection if needed
 - Uses `noindex` to prevent search engines from indexing the fallback page
 
 ## Files Changed
 
-1. **frontend/404.html → frontend/public/404.html** (moved)
-   - Relocated to ensure Vite includes it in the build output
+1. **frontend/public/404.html → frontend/404.html** (moved)
+   - Moved from `public/` to root directory to be processed as a Vite build entry point
+   - Now transforms `/src/main.tsx` references to built bundle paths during build
 
-2. **.do/app.yaml** (modified)
-   - Added `error_document: 404.html` to the frontend static site configuration
+2. **frontend/vite.config.ts** (modified)
+   - Added `input` configuration to `rollupOptions` with both `index.html` and `404.html` as entry points
+   - Enables Vite to process 404.html as a multi-page app entry
+
+3. **.do/app.yaml** (already configured)
+   - Has `error_document: 404.html` configured for the frontend static site
 
 ## Deployment
 

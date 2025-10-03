@@ -60,8 +60,8 @@
     <script>
       try {
         const stored = localStorage.getItem('vendora_theme');
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        const theme = stored || (prefersDark ? 'dark' : 'light');
+        // Default to 'dark' theme if no preference is stored
+        const theme = stored || 'dark';
         if (theme === 'dark') document.documentElement.classList.add('dark');
         else document.documentElement.classList.remove('dark');
         document.documentElement.style.setProperty('color-scheme', theme === 'dark' ? 'dark' : 'light');

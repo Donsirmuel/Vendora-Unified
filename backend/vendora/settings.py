@@ -52,6 +52,12 @@ ALLOWED_HOSTS = [h.strip() for h in str(config('ALLOWED_HOSTS', default='127.0.0
 if 'testserver' not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append('testserver')
 CSRF_TRUSTED_ORIGINS = [o.strip() for o in str(config('CSRF_TRUSTED_ORIGINS', default='http://127.0.0.1:8000')).split(',') if o.strip()]
+if 'https://vendora.page' not in CSRF_TRUSTED_ORIGINS:
+    CSRF_TRUSTED_ORIGINS.append('https://vendora.page')
+if 'https://app.vendora.page' not in CSRF_TRUSTED_ORIGINS:
+    CSRF_TRUSTED_ORIGINS.append('https://app.vendora.page')
+if 'https://api.vendora.page' not in CSRF_TRUSTED_ORIGINS:
+    CSRF_TRUSTED_ORIGINS.append('https://api.vendora.page')
 
 # Telegram Bot Configuration
 TELEGRAM_BOT_TOKEN = str(config('TELEGRAM_BOT_TOKEN', default='')).strip()
@@ -93,12 +99,48 @@ INSTALLED_APPS = [
     'transactions',
 ]
 
+# Middleware helpers (kept in settings module for compact deployment; could be split out)
+from django.utils.deprecation import MiddlewareMixin  # type: ignore
+from typing import Callable
+
+class ApiCsrfExemptMiddleware(MiddlewareMixin):
+    """Lightweight CSRF bypass for explicit API auth endpoints.
+
+    We already rely on JWT (stateless) for authentication. CSRF protection
+    is only required for cookie-authenticated browser sessions. Our SPA
+    performs cross-origin JSON POSTs without a CSRF cookie, which causes
+    Django's CsrfViewMiddleware to block requests (403) when SessionAuthentication
+    is globally enabled and the Referer header is absent.
+
+    Instead of disabling CsrfViewMiddleware globally, we mark request paths
+    under /api/ that are explicitly safe (signup, token obtain/refresh) as
+    CSRF exempt before CsrfViewMiddleware processes them.
+    """
+    EXEMPT_SUFFIXES = (
+        '/accounts/signup/',
+        '/accounts/token/',
+        '/accounts/token/refresh/',
+    )
+
+    def process_view(self, request, view_func: Callable, view_args, view_kwargs):  # type: ignore[override]
+        path = request.path or ''
+        if path.startswith('/api/') and any(path.endswith(suf) for suf in self.EXEMPT_SUFFIXES):
+            # Mark the request so CsrfViewMiddleware skips enforcement
+            setattr(request, 'csrf_processing_done', True)
+            try:
+                print(f'[csrf-exempt] Bypassed CSRF for {path}')
+            except Exception:
+                pass
+        return None
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
+    # Mark certain API endpoints as CSRF exempt before Django's CsrfViewMiddleware runs
+    'vendora.settings.ApiCsrfExemptMiddleware',
     # Simple request id injection (fallback). Real impl could use a lib.
     'vendora.settings.RequestIDMiddleware',
     'vendora.settings.SecurityHeadersMiddleware',

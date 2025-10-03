@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Vendora – App</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <!-- SPA Fallback: This page is served by DigitalOcean for unknown paths.
+         It bootstraps the React application so client-side routing can render
+         the correct /signup, /login, /terms etc. routes. -->
+    <script>
+      // Optional: flag so app could detect it was loaded via fallback if needed
+      window.__VENDORA_FALLBACK__ = true;
+    </script>
+    <style>
+      body { margin:0; font-family: system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,sans-serif; }
+      .boot { padding:2rem; text-align:center; color:#0ea5b7; font-size:14px; }
+      .boot span { opacity:.6; }
+    </style>
+  </head>
+  <body>
+    <div id="root">
+      <div class="boot">Loading Vendora… <span>(routing)</span></div>
+    </div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

@@ -22,13 +22,11 @@ export default defineConfig(({ mode }) => ({
           if (!id) return;
           // Aggressive chunking to reduce memory usage during build
           if (id.includes('node_modules')) {
+            // Keep recharts separate as it's large and only used in specific pages
             if (id.includes('recharts')) return 'vendor-recharts';
-            if (id.includes('lucide-react')) return 'vendor-icons';
-            // Bundle React and all React-dependent packages together to prevent
-            // "Cannot read properties of undefined (reading 'createContext')" errors
-            if (id.includes('react') || id.includes('react-dom') || 
-                id.includes('@radix-ui') || id.includes('next-themes') || 
-                id.includes('@tanstack/react-query')) return 'vendor-react';
+            // Bundle all other node_modules together to avoid circular dependencies
+            // between chunks. Previously splitting into vendor-react and vendor
+            // caused "Cannot access 'R' before initialization" errors.
             return 'vendor';
           }
           // Keep app chunks small

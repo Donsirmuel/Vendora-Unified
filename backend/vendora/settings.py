@@ -339,7 +339,15 @@ class SecurityHeadersMiddleware(MiddlewareMixin):  # type: ignore
 
 # Account status enforcement middleware
 class AccountStatusMiddleware(MiddlewareMixin):  # type: ignore
-    ALLOW_PATH_SUFFIXES = {"/api/v1/accounts/token/", "/api/v1/accounts/signup/", "/api/v1/accounts/password-reset/", "/api/v1/accounts/password-reset/confirm/"}
+    # Paths that should bypass account status checks
+    # Include both with and without trailing slashes to handle all cases
+    ALLOW_PATH_SUFFIXES = {
+        "/api/v1/accounts/token/", "/api/v1/accounts/token",
+        "/api/v1/accounts/signup/", "/api/v1/accounts/signup",
+        "/api/v1/accounts/password-reset/", "/api/v1/accounts/password-reset",
+        "/api/v1/accounts/password-reset/confirm/", "/api/v1/accounts/password-reset/confirm",
+        "/api/v1/accounts/token/refresh/", "/api/v1/accounts/token/refresh"
+    }
 
     def _maybe_authenticate_jwt(self, request):
         """If AuthenticationMiddleware hasn't populated an authenticated user yet but an

@@ -12,7 +12,7 @@ from django.template.loader import render_to_string
 from django.conf import settings
 from typing import Any, cast
 from .models import Vendor
-from .serializers import VendorRegistrationSerializer, CustomTokenObtainPairSerializer
+from .serializers import CustomTokenObtainPairSerializer, VendorRegistrationSerializer
 import logging
 
 logger = logging.getLogger(__name__)

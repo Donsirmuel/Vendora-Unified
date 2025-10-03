@@ -447,6 +447,34 @@ if DEBUG:
 
 CORS_ALLOW_CREDENTIALS = True
 
+# --- Production CORS hardening / enforcement ---
+if os.environ.get('DIGITALOCEAN_APP_PLATFORM'):
+    # Ensure primary frontend origins are always present even if env var was missing
+    _required_frontend_origins = [
+        'https://vendora.page',
+        'https://app.vendora.page',
+    ]
+    for _o in _required_frontend_origins:
+        if _o not in CORS_ALLOWED_ORIGINS:
+            CORS_ALLOWED_ORIGINS.append(_o)
+    # Explicit list of allowed methods/headers for clarity (django-cors-headers defaults are broad but we pin them)
+    CORS_ALLOW_ALL_ORIGINS = False  # be explicit in prod
+    CORS_ALLOW_METHODS = [
+        'GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'
+    ]
+    CORS_ALLOW_HEADERS = [
+        'Accept', 'Accept-Language', 'Content-Language', 'Content-Type', 'Authorization', 'Origin', 'X-Requested-With'
+    ]
+    # Common response headers the frontend may need to read (optional)
+    CORS_EXPOSE_HEADERS = [
+        'Content-Length', 'Content-Type', 'X-Request-ID'
+    ]
+    # Reduce confusion: log effective CORS list once (stdout)
+    try:
+        print('[startup] Effective CORS_ALLOWED_ORIGINS:', CORS_ALLOWED_ORIGINS)
+    except Exception:
+        pass
+
 
 # Use custom user model
 AUTH_USER_MODEL = 'accounts.Vendor'

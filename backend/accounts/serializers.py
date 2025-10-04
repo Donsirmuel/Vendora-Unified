@@ -46,12 +46,19 @@ class VendorRegistrationSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({
                 'password_confirm': 'Passwords do not match.'
             })
+        email = attrs.get('email') or ''
+        username = attrs.get('username') or ''
+        if email:
+            normalized = Vendor.objects.normalize_email(email.strip())  # type: ignore[attr-defined]
+            attrs['email'] = normalized
+        attrs['username'] = username.strip()
         return attrs
 
     def validate_email(self, value):
-        if Vendor.objects.filter(email=value).exists():
+        normalized = Vendor.objects.normalize_email((value or '').strip())  # type: ignore[attr-defined]
+        if Vendor.objects.filter(email=normalized).exists():
             raise serializers.ValidationError('A vendor with this email already exists.')
-        return value
+        return normalized
 
     def validate_username(self, value: str) -> str:
         value = (value or '').strip()
@@ -70,23 +77,39 @@ class VendorRegistrationSerializer(serializers.ModelSerializer):
         username = validated_data.pop('username')
         validated_data.pop('password_confirm')
         password = validated_data.pop('password')
-        vendor = Vendor(**validated_data)
-        # Set display name and public code from username
-        vendor.name = username
-        vendor.external_vendor_id = username
-        vendor.set_password(password)
-        # Initialize trial automatically if not explicitly disabled
+        email = validated_data.pop('email')
+
+        vendor = Vendor.objects.create_user(  # type: ignore[attr-defined]
+            email=email,
+            password=password,
+            name=username,
+            external_vendor_id=username,
+            **validated_data,
+        )
+
         from django.utils import timezone
         from django.conf import settings
         from datetime import timedelta
-        if getattr(vendor, 'is_trial', True) and not vendor.trial_started_at and not vendor.trial_expires_at:
-                now = timezone.now()
-                days = int(getattr(settings, 'TRIAL_DAYS', 14) or 14)
-                vendor.trial_started_at = now  # type: ignore[assignment]
-                vendor.trial_expires_at = now + timedelta(days=days)  # type: ignore[assignment]
-                vendor.plan = 'trial'
-                vendor.is_service_active = True  # type: ignore[assignment]
-        vendor.save()
+
+        update_fields: list[str] = []
+        now = timezone.now()
+        if not getattr(vendor, 'trial_started_at', None):
+            vendor.trial_started_at = now  # type: ignore[assignment]
+            update_fields.append('trial_started_at')
+        if not getattr(vendor, 'trial_expires_at', None):
+            days = int(getattr(settings, 'TRIAL_DAYS', 14) or 14)
+            vendor.trial_expires_at = now + timedelta(days=days)  # type: ignore[assignment]
+            update_fields.append('trial_expires_at')
+        if not getattr(vendor, 'plan', None):
+            vendor.plan = 'trial'
+            update_fields.append('plan')
+        if not getattr(vendor, 'is_service_active', True):
+            vendor.is_service_active = True  # type: ignore[assignment]
+            update_fields.append('is_service_active')
+
+        if update_fields:
+            vendor.save(update_fields=update_fields)
+
         return vendor
 
 class VendorSerializer(serializers.ModelSerializer):

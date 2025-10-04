@@ -74,8 +74,9 @@ export interface PasswordResetConfirm {
 
 export async function login(credentials: LoginCredentials): Promise<LoginResponse> {
   try {
+    const email = credentials.email.trim().toLowerCase();
     const response = await http.post<LoginResponse>('/api/v1/accounts/token/', {
-      email: credentials.email,  // Backend expects 'email' field
+      email,
       password: credentials.password
     });
     const tokens = response.data;
@@ -99,7 +100,13 @@ export async function login(credentials: LoginCredentials): Promise<LoginRespons
 
 export async function signup(credentials: SignupCredentials): Promise<SignupResponse> {
   try {
-    const response = await http.post<SignupResponse>('/api/v1/accounts/signup/', credentials);
+    const payload: SignupCredentials = {
+      email: credentials.email.trim().toLowerCase(),
+      username: credentials.username.trim(),
+      password: credentials.password,
+      password_confirm: credentials.password_confirm,
+    };
+    const response = await http.post<SignupResponse>('/api/v1/accounts/signup/', payload);
     return response.data;
   } catch (error: any) {
     const data = error?.response?.data;

@@ -4,7 +4,7 @@ const Footer: React.FC = () => {
   const telegram = (import.meta.env.VITE_TELEGRAM_CONTACT as string) || '';
   const telegramHref = telegram ? `https://t.me/${telegram.replace(/^@/, '')}` : '#';
   return (
-    <footer className="w-full border-t border-border bg-card px-6 py-4 fixed bottom-0 left-0">
+    <footer className="w-full border-t border-border bg-card px-6 py-4 mt-auto">
       <div className="max-w-7xl mx-auto flex items-center justify-between text-sm text-muted-foreground">
         <div>© {new Date().getFullYear()} Vendora</div>
         <div>

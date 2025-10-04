@@ -44,7 +44,7 @@ def compute_onboarding(vendor: Vendor):
         push_enabled = getattr(PushSubscription, "objects", None) is not None and PushSubscription.objects.filter(vendor=vendor).exists()  # type: ignore
     except Exception:
         push_enabled = False
-    steps.append({"id": "push", "label": "Enable browser notifications", "done": push_enabled})
+    steps.append({"id": "push", "label": "Enable notifications", "done": push_enabled})
     # 5 Telegram connected (telegram_username or external id usable)
     from django.conf import settings
     telegram_connected = bool(vendor.telegram_username or getattr(settings, 'TELEGRAM_BOT_TOKEN', ''))

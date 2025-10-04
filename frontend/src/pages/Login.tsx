@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,15 @@ const Login = () => {
   const { login } = useAuth();
   const { toast } = useToast();
 
+  useEffect(() => {
+    const root = document.documentElement;
+    const hadDark = root.classList.contains('dark');
+    if (!hadDark) root.classList.add('dark');
+    return () => {
+      if (!hadDark) root.classList.remove('dark');
+    };
+  }, []);
+
   // Get the intended destination from navigation state
   const from = (location.state as any)?.from?.pathname || "/dashboard";
 
@@ -29,7 +38,8 @@ const Login = () => {
     setIsLoading(true);
     
     try {
-      await login(email, password);
+  const normalizedEmail = email.trim().toLowerCase();
+  await login(normalizedEmail, password);
       toast({
         title: "Login Successful",
         description: "Welcome back to Vendora!",
@@ -48,7 +58,7 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4 page-anim light-dimmer light-dimmer--soft">
+  <div className="min-h-screen bg-background flex items-center justify-center p-4 page-anim bg-[radial-gradient(circle_at_top,_rgba(59,130,246,0.12),_rgba(15,23,42,0)_60%)]">
       <div className="w-full max-w-6xl grid lg:grid-cols-2 gap-8 items-center">
         
         {/* Left side - Branding & Features */}
@@ -160,11 +170,6 @@ const Login = () => {
                 </Button>
               </form>
               
-              <div className="mt-6 text-center">
-                <p className="text-sm text-muted-foreground">
-                  Test credentials: test@vendor.com / testpass123
-                </p>
-              </div>
               <div className="mt-6 text-center">
                 <p className="text-sm text-gray-600">
                   Don't have an account?{' '}

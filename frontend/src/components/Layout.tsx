@@ -145,9 +145,7 @@ const Layout = ({ children, title }: LayoutProps) => {
       )}
 
       {/* Main content */}
-  <div className="lg:ml-64">
-        <div className="flex-1">
-          {/* Header */}
+      <div className="lg:ml-64 flex flex-col min-h-dvh">
           {title && (
             <header className="bg-card border-b border-border px-6 py-4" role="banner">
               <div className="flex items-center gap-4">
@@ -158,13 +156,12 @@ const Layout = ({ children, title }: LayoutProps) => {
           )}
 
           {/* Page content */}
-          <main id="main-content" className="p-6 pb-24 safe-pb" role="main" tabIndex={-1}>
+          <main id="main-content" className="flex-1 p-6 pb-12 safe-pb" role="main" tabIndex={-1}>
             {children}
           </main>
           <Footer />
         </div>
       </div>
-    </div>
   );
 };
 

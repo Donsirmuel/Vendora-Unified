@@ -15,17 +15,25 @@ createRoot(document.getElementById("root")!).render(
 	</ErrorBoundary>
 );
 
+export type PushRegistrationResult =
+	| 'subscribed'
+	| 'permission-blocked'
+	| 'prompt-required'
+	| 'unsupported'
+	| 'error'
+	| 'unauthenticated';
+
 // Register service worker and subscribe to push when available
-async function registerPush() {
-	if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+async function registerPush({ promptPermission = false, force = false }: { promptPermission?: boolean; force?: boolean } = {}): Promise<PushRegistrationResult> {
+	if (!('serviceWorker' in navigator) || !('PushManager' in window) || typeof Notification === 'undefined') {
+		return 'unsupported';
+	}
 	try {
 		const reg = await navigator.serviceWorker.register('/sw.js');
 		// Optionally trigger skipWaiting when an update is found (without forcing a reload here)
 		if (reg.waiting) {
-			// Auto-request activation so users don't have to hard-refresh in production
 			try {
 				await requestUpdate();
-				// show a subtle toast so user knows new version applied
 				toast({ title: 'Updated', description: 'New version activated — reloading…' });
 			} catch {}
 		}
@@ -44,24 +52,37 @@ async function registerPush() {
 			window.location.reload();
 		});
 
-	// If already subscribed, reuse
-	let existing = await reg.pushManager.getSubscription();
-	if (!existing) {
-		const perm = await Notification.requestPermission();
-		if (perm !== 'granted') return;
-		const vapidResp = await http.get<{ publicKey: string }>('/api/v1/notifications/vapid-key/');
-		const vapidKey = vapidResp.data?.publicKey;
-		existing = await reg.pushManager.subscribe({
-			userVisibleOnly: true,
-			applicationServerKey: vapidKey ? urlBase64ToUint8Array(vapidKey) : undefined,
-		});
-	}
-	// Persist (idempotent on endpoint via backend update_or_create)
-	if (existing) {
-		await http.post('/api/v1/notifications/subscribe/', existing);
-	}
+		let subscription = await reg.pushManager.getSubscription();
+		if (force && subscription) {
+			await subscription.unsubscribe().catch(() => {});
+			subscription = null;
+		}
+
+		let permission: NotificationPermission = Notification.permission;
+		if (!subscription) {
+			if (permission === 'default') {
+				if (!promptPermission) {
+					return 'prompt-required';
+				}
+				permission = await Notification.requestPermission();
+			}
+			if (permission !== 'granted') {
+				return permission === 'denied' ? 'permission-blocked' : 'prompt-required';
+			}
+			const vapidResp = await http.get<{ publicKey: string }>('/api/v1/notifications/vapid-key/');
+			const vapidKey = vapidResp.data?.publicKey;
+			subscription = await reg.pushManager.subscribe({
+				userVisibleOnly: true,
+				applicationServerKey: vapidKey ? urlBase64ToUint8Array(vapidKey) : undefined,
+			});
+		}
+		if (subscription) {
+			await http.post('/api/v1/notifications/subscribe/', subscription);
+			return 'subscribed';
+		}
+		return 'error';
 	} catch (e) {
-		// Ignore failures silently for now
+		return 'error';
 	}
 }
 
@@ -74,19 +95,24 @@ function urlBase64ToUint8Array(base64String: string) {
 	return outputArray;
 }
 
-export async function ensurePushRegistered(force = false) {
+export async function ensurePushRegistered(options: { force?: boolean; prompt?: boolean } = {}): Promise<PushRegistrationResult> {
+	const { force = false, prompt = false } = options;
 	try {
-		if (!tokenStore.get()?.access) return;
-		if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+		if (!tokenStore.get()?.access) return 'unauthenticated';
+		if (!('serviceWorker' in navigator) || !('PushManager' in window) || typeof Notification === 'undefined') {
+			return 'unsupported';
+		}
 		const reg = await navigator.serviceWorker.ready;
-		const sub = await reg.pushManager.getSubscription();
-		if (force && sub) {
-			await sub.unsubscribe().catch(()=>{});
+		if (!force) {
+			const existing = await reg.pushManager.getSubscription();
+			if (existing && Notification.permission === 'granted') {
+				return 'subscribed';
+			}
 		}
-		if (force || !sub) {
-			await registerPush();
-		}
-	} catch {}
+		return await registerPush({ promptPermission: prompt, force });
+	} catch {
+		return 'error';
+	}
 }
 
 if (tokenStore.get()?.access) {
@@ -94,7 +120,7 @@ if (tokenStore.get()?.access) {
 		("requestIdleCallback" in window
 			? (window as any).requestIdleCallback(fn)
 			: setTimeout(fn, 1500));
-	schedule(()=>ensurePushRegistered());
+	schedule(() => ensurePushRegistered());
 }
 
 // Custom install prompt (deferred)

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,15 @@ export default function SignupPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
+  useEffect(() => {
+    const root = document.documentElement;
+    const hadDark = root.classList.contains('dark');
+    if (!hadDark) root.classList.add('dark');
+    return () => {
+      if (!hadDark) root.classList.remove('dark');
+    };
+  }, []);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -31,7 +40,8 @@ export default function SignupPage() {
   };
 
   const validateForm = (): boolean => {
-    if (!isValidEmail(formData.email)) {
+    const email = (formData.email || '').trim();
+    if (!isValidEmail(email)) {
       setError('Please enter a valid email address');
       return false;
     }
@@ -44,13 +54,14 @@ export default function SignupPage() {
       setError('Passwords do not match');
       return false;
     }
-    if (!formData.username.trim()) {
+    const username = (formData.username || '').trim();
+    if (!username) {
       setError('Username is required');
       return false;
     }
     // Username rules: 3-64 chars, letters/numbers/underscore/hyphen
     const re = /^[A-Za-z0-9_-]{3,64}$/;
-    if (!re.test(formData.username)) {
+    if (!re.test(username)) {
       setError('Username must be 3-64 chars: letters, numbers, underscores, or hyphens');
       return false;
     }
@@ -63,7 +74,13 @@ export default function SignupPage() {
     setLoading(true);
     setError('');
     try {
-      const res = await signup(formData);
+      const payload: SignupCredentials = {
+        email: (formData.email || '').trim().toLowerCase(),
+        username: (formData.username || '').trim(),
+        password: formData.password,
+        password_confirm: formData.password_confirm,
+      };
+      const res = await signup(payload);
       // If trial info present, show expiry
       const trialExpires = res?.user?.trial_expires_at;
       if (trialExpires) {
@@ -83,7 +100,7 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4 page-anim light-dimmer light-dimmer--soft">
+  <div className="min-h-screen bg-background flex items-center justify-center p-4 page-anim bg-[radial-gradient(circle_at_top,_rgba(59,130,246,0.15),_rgba(15,23,42,0)_60%)]">
       <div className="w-full max-w-6xl grid lg:grid-cols-2 gap-8 items-center">
         {/* Left side - Branding & Features */}
         <div className="space-y-8 text-center lg:text-left">

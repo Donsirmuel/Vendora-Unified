@@ -42,6 +42,18 @@ Manual Actions (Django Admin > Vendors):
 - Revoke Service
 - Generate external IDs
 
+### Password Reset Oversight
+- Ensure SMTP credentials remain valid; expired credentials surface as 500 errors on `/api/v1/accounts/password-reset/`.
+- Monitor email deliverability (SPF/DKIM) so reset links land in inbox. Consider enabling DMARC reports.
+- If a user reports a missing email, confirm the token exists in Django admin under **Accounts → Password resets** and resend via `POST /api/v1/accounts/password-reset/`.
+- Tokens are single-use; if the vendor loads an expired link, advise them to restart the flow.
+
+### Push Notification Health Checks
+- Confirm VAPID keypair values are configured in each environment; rotate if leaked.
+- Monthly, run `POST /api/v1/notifications/test-push/` from an authenticated session and confirm the browser receives the alert.
+- Review **Notifications → Push subscriptions** for stale rows; the system auto-prunes invalid endpoints after WebPush errors, but manual cleanup keeps the list tidy.
+- If vendors stop receiving push alerts, inspect logs for `WebPushException` entries (often caused by missing HTTPS or misconfigured proxy headers).
+
 ---
 ## 3. Key Management Commands
 | Command | Purpose |

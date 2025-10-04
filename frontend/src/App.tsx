@@ -31,7 +31,16 @@ const Queries = lazy(() => import("./pages/Queries"));
 const Upgrade = lazy(() => import("./pages/Upgrade"));
 const AdminPayments = lazy(() => import("./pages/AdminPayments"));
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60, // cache data for 1 minute to reduce refetch churn
+      gcTime: 1000 * 60 * 5,
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
 
 // Public Route Component (redirect to dashboard if authenticated)
 function PublicRoute({ children }: { children: React.ReactNode }) {

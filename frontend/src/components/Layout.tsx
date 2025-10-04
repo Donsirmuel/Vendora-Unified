@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { 
   LayoutDashboard, 
@@ -12,11 +12,12 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useState } from "react";
 import ThemeToggle from '@/components/ThemeToggle';
 import { useAuth } from "@/contexts/AuthContext";
 // TrialBanner intentionally not displayed globally; shown only on Settings page
 import Footer from '@/components/Footer';
+import { ensurePushRegistered } from "@/main";
+import { toast } from "@/components/ui/use-toast";
 
 interface LayoutProps {
   children: ReactNode;
@@ -27,6 +28,115 @@ const Layout = ({ children, title }: LayoutProps) => {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { user, logout } = useAuth();
+
+  useEffect(() => {
+    if (!user || typeof window === 'undefined' || typeof Notification === 'undefined') {
+      return;
+    }
+
+    if (Notification.permission !== 'default') {
+      return;
+    }
+
+    const storageKey = 'vendora_push_prompted_at_v1';
+    const cooldownMs = 1000 * 60 * 60 * 24 * 3; // 3 days cooldown between automatic prompts
+    try {
+      const lastPrompt = Number(localStorage.getItem(storageKey) || '0');
+      if (!Number.isNaN(lastPrompt) && lastPrompt > 0 && Date.now() - lastPrompt < cooldownMs) {
+        return;
+      }
+    } catch {
+      // ignore storage access errors
+    }
+
+    const schedule = () => {
+      const handler = async () => {
+        let result: Awaited<ReturnType<typeof ensurePushRegistered>> | null = null;
+        try {
+          result = await ensurePushRegistered({ prompt: true });
+          switch (result) {
+            case 'subscribed':
+              toast({ title: 'Notifications enabled', description: 'You will now receive alerts for new activity.' });
+              break;
+            case 'permission-blocked':
+              toast({ title: 'Notifications blocked', description: 'Enable notifications from your browser settings to receive alerts.', variant: 'destructive' });
+              break;
+            case 'prompt-required':
+              toast({ title: 'Enable notifications later', description: 'You can turn on notifications anytime from Settings.' });
+              break;
+            case 'unsupported':
+              toast({ title: 'Notifications unavailable', description: 'This device does not support push notifications.', variant: 'destructive' });
+              break;
+            case 'error':
+            case 'unauthenticated':
+              toast({ title: 'Notifications unavailable', description: 'We could not enable notifications automatically. Try again from Settings.', variant: 'destructive' });
+              break;
+            default:
+              break;
+          }
+        } catch (error) {
+          toast({ title: 'Notifications error', description: 'We could not enable notifications. Try again from Settings.', variant: 'destructive' });
+        } finally {
+          try {
+            localStorage.setItem(storageKey, String(Date.now()));
+          } catch {
+            // ignore storage errors
+          }
+        }
+      };
+
+      if ('requestIdleCallback' in window) {
+        const id = (window as any).requestIdleCallback(handler, { timeout: 2000 });
+        return () => (window as any).cancelIdleCallback?.(id);
+      }
+      const timeoutId = (window as Window).setTimeout(handler, 1800);
+      return () => (window as Window).clearTimeout(timeoutId);
+    };
+
+    return schedule();
+  }, [user]);
+
+  useEffect(() => {
+    if (!user || typeof window === 'undefined') {
+      return;
+    }
+
+    const flag = '__vendora_prefetched__';
+    const win = window as any;
+    if (win[flag]) {
+      return;
+    }
+
+    const loaders = [
+      () => import('../pages/Dashboard'),
+      () => import('../pages/Orders'),
+      () => import('../pages/OrderDetails'),
+      () => import('../pages/Transactions'),
+      () => import('../pages/TransactionDetails'),
+      () => import('../pages/Settings'),
+      () => import('../pages/Availability'),
+      () => import('../pages/BroadcastMessages'),
+      () => import('../pages/Queries'),
+      () => import('../pages/Upgrade'),
+      () => import('../pages/AdminPayments'),
+    ];
+
+    const prefetch = () => {
+      if (win[flag]) return;
+      win[flag] = true;
+      for (const load of loaders) {
+        load().catch(() => {});
+      }
+    };
+
+    if ('requestIdleCallback' in window) {
+      const idleId = (window as any).requestIdleCallback(prefetch, { timeout: 4000 });
+      return () => (window as any).cancelIdleCallback?.(idleId);
+    }
+
+    const timeoutId = setTimeout(prefetch, 2000);
+    return () => clearTimeout(timeoutId);
+  }, [user]);
   // Theme handled by ThemeToggle component now
 
   const navigation = [

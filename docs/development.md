@@ -54,3 +54,30 @@ If `status=completed` the endpoint stamps `vendor_completed_at` (and `completed_
 
 Run backend tests: `pytest`
 Check test coverage: `pytest --cov`
+
+## Password Reset Smoke Test
+
+1. From the backend shell set a verified sender (for local dev the console backend already prints emails):
+	- Ensure `EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend` in `.env.local`.
+	- Set `DEFAULT_FROM_EMAIL="Vendora <no-reply@vendora.local>"` for clearer UX.
+2. Visit `/auth/password-reset` in the SPA, submit the vendor's login email, and confirm a `200` JSON response.
+3. Grab the reset link from the console output, open it in the browser, and choose a new password that satisfies validator rules (minimum length, no simple numeric strings).
+4. After submission verify:
+	- API returns `204` and the form routes back to the login screen with a success toast.
+	- The previous JWT refresh token is revoked (try `POST /api/v1/accounts/token/refresh/` with the old refresh token — it should fail).
+5. In the Django admin confirm `accounts.PasswordReset` entries show `used=True` to prevent token replay.
+
+## Push Notification Quickstart
+
+1. Generate a VAPID keypair (once per environment):
+	```bash
+	npx web-push generate-vapid-keys
+	```
+	Store the public and private keys as `VAPID_PUBLIC_KEY` and `VAPID_PRIVATE_KEY`; keep the private key secret.
+2. Set `VAPID_EMAIL` to an operational contact (`mailto:ops@yourdomain.com`). This value is used in the VAPID claims.
+3. Ensure the frontend is served over HTTPS (required by the Push API). For local dev, use `npm run dev -- --https` or a reverse proxy like Caddy.
+4. Log in as a vendor, open the notification prompt in the top navigation, and allow push notifications. A subscription record should appear in Django admin under **Notifications → Push subscriptions**.
+5. Trigger a real event:
+	- Create a new order or respond to a customer query; the backend calls `send_web_push_to_vendor(...)`.
+	- Alternatively, hit `POST /api/v1/notifications/test-push/` with a custom title/message.
+6. Confirm the browser shows the notification and the service worker console logs `push` reception. If it fails, tail backend logs for `WebPushException`; invalid subscriptions are auto-pruned.

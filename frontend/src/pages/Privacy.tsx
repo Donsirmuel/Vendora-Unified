@@ -1,12 +1,24 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import PublicNav, { PublicNavLink } from "@/components/PublicNav";
 
 export default function Privacy(): JSX.Element {
-  const main = { fontFamily: "Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif", maxWidth: 900, margin: "40px auto", padding: "0 20px", color: "#f1f5f9", lineHeight: 1.6 };
+  const root = { fontFamily: "Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif", background: "#0f172a", minHeight: "100vh", color: "#f1f5f9" };
+  const main = { maxWidth: 900, margin: "48px auto", padding: "0 20px", lineHeight: 1.6 };
   const muted = { color: "#94a3b8" };
+  const navLinks: PublicNavLink[] = [
+    { label: "Home", href: "/", type: "route" },
+    { label: "Features", href: "/#features", type: "route" },
+    { label: "Terms", href: "/terms", type: "route" },
+    { label: "Privacy", href: "/privacy", type: "route" },
+    { label: "Sign Up", href: "/signup", type: "route", variant: "accent" },
+    { label: "Login", href: "/login", type: "route" }
+  ];
 
   return (
-    <main style={main}>
+    <div style={root}>
+      <PublicNav variant="solid" links={navLinks} />
+      <main style={main}>
       <h1 style={{ color: "#fff" }}>Privacy Policy</h1>
       <p style={muted}>Last updated: September 19, 2025</p>
 
@@ -46,6 +58,7 @@ export default function Privacy(): JSX.Element {
       <p style={muted}>If you have questions or requests regarding this Privacy Policy, contact us at <a style={{ color: "#7dd3fc" }} href="mailto:privacy@vendora.example">privacy@vendora.example</a> or the contact address provided on the Service.</p>
 
       <p style={{ marginTop: 28 }}><Link to="/" style={{ color: "#7dd3fc" }}>Back to home</Link></p>
-    </main>
+      </main>
+    </div>
   );
 }

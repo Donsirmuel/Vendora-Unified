@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import PublicNav from "@/components/PublicNav";
 import "./home.css";
-import { promptInstall } from '@/main';
+import { promptInstall } from "@/main";
 
 // Animated number counter (simple requestAnimationFrame based)
 function AnimatedNumber({ value, duration = 1400 }: { value: number; duration?: number }) {
@@ -149,9 +150,6 @@ export default function Home(): JSX.Element {
   }, []);
 
   const root = { fontFamily: "Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif", background: "#0f172a", color: "#f1f5f9", minHeight: "100vh" };
-  const header = { maxWidth: 1100, margin: "0 auto", padding: "20px 28px", display: "flex", alignItems: "center", justifyContent: "space-between" };
-  const navLink = { color: "inherit", textDecoration: "none", fontSize: 14, marginLeft: 28, opacity: 0.85, transition: ".2s" };
-  const badge = { background: "rgba(255,255,255,.08)", padding: "4px 10px", borderRadius: 999, fontSize: 12, marginLeft: 10, fontWeight: 500 };
   const hero = { maxWidth: 1100, margin: "40px auto 70px", padding: "0 28px", display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(420px,1fr))", alignItems: "center", gap: 56 };
   const h1 = { fontSize: "clamp(2.4rem,5.2vw,3.6rem)", lineHeight: 1.05, margin: 0, background: "linear-gradient(90deg,#fff,#7dd3fc)", WebkitBackgroundClip: "text" as any, backgroundClip: "text" as any, color: "transparent" };
   const lead = { fontSize: 20, lineHeight: 1.5, maxWidth: 600, margin: "0 0 32px", color: "#94a3b8" };
@@ -164,18 +162,7 @@ export default function Home(): JSX.Element {
 
   return (
     <div style={root}>
-      <header style={header}>
-        <div style={{ fontWeight: 600, fontSize: 19, color: "#94a3b8", display: "flex", alignItems: "center" }}>
-          Vendora <span style={badge}>Beta</span>
-        </div>
-        <nav>
-          <a style={navLink} href="#features">Features</a>
-          <a style={navLink} href="/terms">Terms</a>
-          <a style={navLink} href="/privacy">Privacy</a>
-          <a style={{ ...navLink, marginLeft: 16 }} href="/signup">Sign Up</a>
-          <a style={{ ...navLink, marginLeft: 16 }} href="/login">Login</a>
-        </nav>
-      </header>
+      <PublicNav />
 
   <section style={hero} className={"home-hero" + (isDemo ? ' demo' : '')}>
         <div className="hero-zoom">

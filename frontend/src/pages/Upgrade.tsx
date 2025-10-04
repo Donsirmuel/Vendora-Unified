@@ -257,26 +257,40 @@ function PendingStateCard() {
   const [latest, setLatest] = React.useState<any | null>(null);
   const { toast } = useToast();
 
-  const load = async () => {
+  const load = React.useCallback(async () => {
     try {
       const res = await http.get('/api/v1/accounts/payment-requests/latest/');
-      if (res.status === 200) setLatest(res.data);
+      if (res.status === 200) {
+        setLatest(res.data);
+      } else {
+        setLatest(null);
+      }
     } catch (e:any) {
       setLatest(null);
     }
-  };
+  }, []);
+
+  const handleSocketMessage = React.useCallback((data: any) => {
+    if (Array.isArray(data)) {
+      setLatest(data[data.length - 1]);
+    } else if (data) {
+      setLatest(data);
+    } else {
+      setLatest(null);
+    }
+  }, []);
+
+  const { connected } = usePaymentRequestSocket(handleSocketMessage);
 
   useEffect(() => {
     load();
-    // WebSocket connection for live updates
-    const { connected } = usePaymentRequestSocket((data: any) => {
-      // data may be single event or array
-      if (Array.isArray(data)) setLatest(data[data.length - 1]);
-      else setLatest(data);
-    });
-    // cleanup handled by hook
-    return () => {};
-  }, []);
+  }, [load]);
+
+  useEffect(() => {
+    if (connected) {
+      load();
+    }
+  }, [connected, load]);
 
   if (!latest) return null;
 

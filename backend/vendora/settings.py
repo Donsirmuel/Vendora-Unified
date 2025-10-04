@@ -123,13 +123,13 @@ class ApiCsrfExemptMiddleware(MiddlewareMixin):
     )
 
     def process_view(self, request, view_func: Callable, view_args, view_kwargs):  # type: ignore[override]
-        path = request.path or ''
-        if path.startswith('/api/') and any(path.endswith(suf) for suf in self.EXEMPT_SUFFIXES):
+        path = getattr(request, 'path_info', None) or request.path or ''
+        if any(path.endswith(suf) for suf in self.EXEMPT_SUFFIXES):
             # Mark the request so CsrfViewMiddleware skips enforcement entirely
             # Django's documented bypass flag for internal/test usage:
             setattr(request, '_dont_enforce_csrf_checks', True)
             try:
-                print(f'[csrf-exempt] Bypassed CSRF for {path}')
+                print(f'[csrf-exempt] Bypassed CSRF for raw path: {path}')
             except Exception:
                 pass
         return None

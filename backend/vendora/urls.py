@@ -29,21 +29,14 @@ from django.http import HttpResponse
 from functools import partial
 from api.sse import sse_stream
 
+# Some hosting environments (DigitalOcean App Platform) may mount the service at
+# both /api/v1/... and /v1/... depending on the routing configuration. We
+# register both prefixes so requests succeed regardless of the upstream path
+# trimming.
+API_PREFIXES = ["api/v1", "v1"]
+
 urlpatterns = [
     path("admin/", admin.site.urls),
-
-    # API v1
-    path("api/v1/accounts/", include(("accounts.urls", "accounts"), namespace="accounts")),
-    path("api/v1/orders/", include(("orders.urls", "orders"), namespace="orders")),
-    path("api/v1/transactions/", include(("transactions.urls", "transactions"), namespace="transactions")),
-    path("api/v1/queries/", include(("queries.urls", "queries"), namespace="queries")),
-    path("api/v1/rates/", include(("rates.urls", "rates"), namespace="rates")),
-    path("api/v1/notifications/", include(("notifications.urls", "notifications"), namespace="notifications")),
-    # SSE stream for real-time vendor updates
-    path("api/v1/stream/", sse_stream, name="sse_stream"),
-    
-    # Telegram Bot Webhooks
-    path("api/v1/telegram/", include("api.urls")),
 
     # Health endpoints
     path("health/", health_view, name="health"),
@@ -59,6 +52,19 @@ urlpatterns = [
     path("sitemap.xml", sitemap, {"sitemaps": {"static": StaticViewSitemap}}, name="sitemap"),
     path("robots.txt", TemplateView.as_view(template_name="robots.txt", content_type="text/plain"), name="robots"),
 ]
+
+# API routing for each supported prefix
+for _prefix in API_PREFIXES:
+    urlpatterns += [
+        path(f"{_prefix}/accounts/", include(("accounts.urls", "accounts"), namespace=f"{_prefix.replace('/', '_')}_accounts")),
+        path(f"{_prefix}/orders/", include(("orders.urls", "orders"), namespace=f"{_prefix.replace('/', '_')}_orders")),
+        path(f"{_prefix}/transactions/", include(("transactions.urls", "transactions"), namespace=f"{_prefix.replace('/', '_')}_transactions")),
+        path(f"{_prefix}/queries/", include(("queries.urls", "queries"), namespace=f"{_prefix.replace('/', '_')}_queries")),
+        path(f"{_prefix}/rates/", include(("rates.urls", "rates"), namespace=f"{_prefix.replace('/', '_')}_rates")),
+        path(f"{_prefix}/notifications/", include(("notifications.urls", "notifications"), namespace=f"{_prefix.replace('/', '_')}_notifications")),
+        path(f"{_prefix}/stream/", sse_stream, name=f"{_prefix.replace('/', '_')}_sse_stream"),
+        path(f"{_prefix}/telegram/", include("api.urls")),
+    ]
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

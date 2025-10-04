@@ -33,10 +33,13 @@ class CustomTokenObtainPairView(TokenObtainPairView):
     authentication_classes: list[type[BaseAuthentication]] = []  # type: ignore[assignment]
 
 
+# IMPORTANT: csrf_exempt must wrap the final DRF-dispatched view; therefore it
+# needs to be the outermost (top) decorator in this stack. Previous ordering
+# applied it before api_view transformed the function, nullifying the exemption.
+@csrf_exempt
 @api_view(['POST'])
 @permission_classes([AllowAny])
 @authentication_classes([])  # Disable SessionAuthentication to prevent CSRF 403
-@csrf_exempt
 def signup(request):
     """Vendor registration endpoint"""
     serializer = VendorRegistrationSerializer(data=request.data)

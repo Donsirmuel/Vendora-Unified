@@ -30,19 +30,29 @@ async function registerPush({ promptPermission = false, force = false }: { promp
 	}
 	try {
 		const reg = await navigator.serviceWorker.register('/sw.js');
+		const attemptImmediateUpdate = async (message?: string) => {
+			if (message) {
+				toast({ title: 'Updating Vendora', description: message });
+			}
+			try {
+				const applied = await requestUpdate();
+				if (!applied) {
+					setUpdateAvailable(true);
+				}
+			} catch {
+				setUpdateAvailable(true);
+			}
+		};
 		// Optionally trigger skipWaiting when an update is found (without forcing a reload here)
 		if (reg.waiting) {
-			try {
-				await requestUpdate();
-				toast({ title: 'Updated', description: 'New version activated — reloading…' });
-			} catch {}
+			void attemptImmediateUpdate('New version detected — reloading now…');
 		}
 		reg.addEventListener('updatefound', () => {
 			const newWorker = reg.installing;
 			if (!newWorker) return;
 			newWorker.addEventListener('statechange', () => {
 				if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-					setUpdateAvailable(true);
+					void attemptImmediateUpdate('New version detected — reloading now…');
 				}
 			});
 		});

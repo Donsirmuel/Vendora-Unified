@@ -233,8 +233,9 @@ function PaymentDestinations() {
 
   if (!items || items.length === 0) return (
     <div className="mb-4">
-      <p><strong>Pay to:</strong> Bank: Example Bank • Acc: 0123456789 • Name: Vendora</p>
-      <p><strong>Reference:</strong> Use your vendor email or external id</p>
+      <p><strong>Pay to (Fiat/Naira):</strong> Bank: Access Bank • Acc: 1698607544 • Name: Samuel Olaonipekun</p>
+      <p><strong>Pay to (Crypto):</strong> USDT (TRC20): </p>
+      <p><strong>Note:</strong> When making Bank Transfer, do not use any crypto words as description, your username is enough as a description.</p>
     </div>
   );
 

@@ -208,12 +208,12 @@ export default function Home(): JSX.Element {
       <ul style={featuresGrid} id="features">
         {[
           ["Straightforward Rates", "Quickly publish buy & sell rates; prevent duplicates automatically."],
-          ["Order Lifecycle", "Create, accept, complete or decline - with automatic expiry handling."],
+          ["Order Lifecycle", "Accept, complete or decline - with automatic expiry handling."],
           ["Transaction Proofs", "Attach and view confirmation proofs & export PDF summaries."],
           ["Live Event Stream", "Server-Sent Events push updates instantly to every open session."],
-          ["Web Push", "Optional push notifications for critical order & transaction events."],
-          ["Telegram Bot", "Get order alerts or resolve queries directly inside Telegram."],
-          ["Customer Queries", "Track and close customer inquiries with vendor-scoped access."],
+          ["Web Push", "Push notifications for critical order & transaction events."],
+          ["Telegram Bot", "Customers transact, submit queries and get instant alerts & updates directly inside Telegram."],
+          ["Customer Queries", "Track and close customer inquiries with vendor-scoped tools for better handling."],
           ["Secure & Throttled", "JWT auth, per-user rate limits, structured logs and request IDs."]
         ].map(([title, desc]) => (
           <li key={title} style={feature} className="feature">
@@ -370,7 +370,7 @@ export default function Home(): JSX.Element {
       <section style={{ maxWidth: 950, margin: "80px auto 20px", padding: "0 28px" }} id="faq" aria-labelledby="faq-heading">
         <h2 id="faq-heading" style={{ fontSize: 32, margin: "0 0 28px" }}>Frequently Asked Questions</h2>
         {[
-          ["What is Vendora?", "Vendora is a lightweight platform for independent crypto vendors to manage rates, customer orders, transactions, proofs, and queries with optional Telegram notifications & real‑time streaming updates."],
+          ["What is Vendora?", "Vendora is a lightweight platform for independent crypto vendors to manage rates, customer orders, transactions, proofs, and queries with optional Telegram notifications & real‑time streaming updates for increased productivity and lesser lag-time."],
           ["How does the free trial work?", "You get access to all core features during the trial (no card required). Near expiry you’ll see reminders. After it ends, actions that create new orders may be gated until you activate a plan."],
           ["Do I need to install anything?", "No. Vendora runs as a progressive web app in your browser. You can optionally “Install” it from your browser menu for an app‑like experience."],
           ["How do I receive notifications?", "Enable web push in the dashboard for browser alerts or connect your Telegram username to receive bot messages for key events like new orders or completed transactions."],

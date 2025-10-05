@@ -4,7 +4,7 @@
 
 # Vendora – Crypto Vendor Platform
 
-Vendora is an opinionated open core platform for independent OTC / P2P crypto vendors. It bundles real‑time order workflow, rate management, transaction proofs, customer queries, notifications, web push, and a Telegram bot into a single DX‑friendly stack.
+Vendora is an opinionated open core platform for independent OTC / P2P crypto vendors. It bundles real‑time order workflow, rate management, transaction proofs, customer queries, notifications, web push, and a Telegram bot into a single DX‑friendly stack. It is a tool created to eliminate the issues that traditional P2P systems have, it also eliminates the issues of lagging socaial media channels used in communicating with customers by leveraging Telegram bots; Vendors sign up on Vendora, add assets that they trade in along with their rates, add their payment methods and trade instructions, Vendora issues them a unique telegram bot link which they share to their customers, their customers click the link and they are able to trade with their Vendors seamlessly. Vendora ensures that the only thing required of independent vendors is Marketing and establishing their business image as reputable vendors while Vendor ensures that they are reputable by ensuring a productive, swift and effective Transactional system.
 
 ## Why Vendora?
 | Need | Built‑in Capability |

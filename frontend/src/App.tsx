@@ -17,6 +17,7 @@ import NotFound from "./pages/NotFound";
 import Home from "./pages/Home";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
+import Pricing from "./pages/Pricing";
 
 // Lazy-loaded heavy pages (route-based code splitting)
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -64,6 +65,11 @@ const App = () => (
             <Route path="/privacy" element={
               <PublicRoute>
                 <Privacy />
+              </PublicRoute>
+            } />
+            <Route path="/pricing" element={
+              <PublicRoute>
+                <Pricing />
               </PublicRoute>
             } />
             <Route path="/" element={

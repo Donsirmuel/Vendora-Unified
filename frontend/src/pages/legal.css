@@ -1,0 +1,72 @@
+:root {
+  --legal-max-width: 900px;
+}
+
+.legal-page {
+  min-height: 100vh;
+  background: oklch(var(--background));
+  color: oklch(var(--foreground));
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+}
+
+.legal-content {
+  flex: 1;
+  width: min(100%, var(--legal-max-width));
+  margin: clamp(3rem, 8vw, 4rem) auto;
+  padding: 0 clamp(1.5rem, 4vw, 2.5rem);
+  line-height: 1.65;
+  display: grid;
+  gap: 1.5rem;
+}
+
+.legal-header {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.legal-header h1 {
+  font-size: clamp(2.25rem, 4vw, 2.9rem);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.legal-muted {
+  color: oklch(var(--muted-foreground));
+}
+
+.legal-section-title {
+  font-size: clamp(1.15rem, 2vw, 1.4rem);
+  font-weight: 600;
+  color: oklch(var(--foreground));
+  margin-top: 1.75rem;
+}
+
+.legal-content a {
+  color: oklch(var(--accent));
+  font-weight: 600;
+  text-underline-offset: 0.2em;
+}
+
+.legal-back {
+  margin-top: 2rem;
+  font-weight: 600;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .legal-content {
+    animation: legalFadeIn 0.4s ease-out;
+  }
+}
+
+@keyframes legalFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

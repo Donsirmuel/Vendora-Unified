@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import ThemeToggle from "@/components/ThemeToggle";
 import "./public-nav.css";
 
 export type PublicNavLink = {
@@ -16,11 +17,11 @@ export type PublicNavProps = {
 };
 
 const defaultLinks: PublicNavLink[] = [
-  { label: "Features", href: "#features", type: "anchor" },
-  { label: "Terms", href: "/terms", type: "route" },
-  { label: "Privacy", href: "/privacy", type: "route" },
-  { label: "Sign Up", href: "/signup", type: "route", variant: "accent" },
-  { label: "Login", href: "/login", type: "route" }
+  { label: "Product", href: "#product", type: "anchor" },
+  { label: "How it works", href: "#how-it-works", type: "anchor" },
+  { label: "Pricing", href: "/pricing", type: "route" },
+  { label: "Login", href: "/login", type: "route" },
+  { label: "Start free trial", href: "/signup", type: "route", variant: "accent" }
 ];
 
 export default function PublicNav({ links = defaultLinks, variant = "translucent" }: PublicNavProps): JSX.Element {
@@ -110,6 +111,8 @@ export default function PublicNav({ links = defaultLinks, variant = "translucent
               </a>
             );
           })}
+
+          <ThemeToggle className="public-nav__theme" />
         </nav>
       </div>
       <button

@@ -2,132 +2,131 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the Vendora Crypto PWA design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* Definition of the Vendora Crypto PWA design system. All colors, gradients, fonts, etc should be defined here.
+  All chroma values use OKLCH (l c h) triples for richer, perceptually uniform palettes. */
 
 @layer base {
   /* Default = light theme */
   :root {
-    --background: 0 0% 100%;
-    --foreground: 220 13% 10%;
+  --background: 0.99 0.005 264;
+  --foreground: 0.15 0.02 264;
 
-    --card: 0 0% 100%;
-    --card-foreground: 220 13% 10%;
+  --card: 1 0 0;
+  --card-foreground: 0.2 0.02 264;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 220 13% 10%;
+  --popover: 0.98 0.01 264;
+  --popover-foreground: 0.16 0.02 264;
 
-    --primary: 190 85% 55%;
-    --primary-foreground: 0 0% 100%;
+  --primary: 0.55 0.18 275;
+  --primary-foreground: 0.99 0.01 265;
 
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 220 13% 12%;
+  --secondary: 0.94 0.02 260;
+  --secondary-foreground: 0.22 0.02 260;
 
-    --muted: 210 40% 96%;
-    --muted-foreground: 220 9% 40%;
+  --muted: 0.92 0.015 260;
+  --muted-foreground: 0.5 0.02 264;
 
-    --accent: 190 85% 55%;
-    --accent-foreground: 0 0% 100%;
+  --accent: 0.55 0.14 192;
+  --accent-foreground: 0.14 0.03 192;
 
-    --destructive: 0 75% 60%;
-    --destructive-foreground: 0 0% 100%;
+  --destructive: 0.54 0.25 25;
+  --destructive-foreground: 0.98 0.005 264;
 
-    --success: 120 60% 50%;
-    --success-foreground: 0 0% 100%;
+  --success: 0.62 0.18 150;
+  --success-foreground: 0.12 0.02 160;
 
-    --warning: 45 100% 60%;
-    --warning-foreground: 220 13% 9%;
+  --warning: 0.68 0.17 45;
+  --warning-foreground: 0.18 0.02 38;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 190 85% 55%;
+  --border: 0.9 0.01 264;
+  --input: 0.9 0.01 264;
+  --ring: 0.55 0.18 275;
 
     --radius: 0.75rem;
 
     /* Vendora specific tokens */
-    --crypto-gold: 45 100% 60%;
-    --crypto-green: 120 60% 50%;
-    --crypto-red: 0 75% 60%;
-    --crypto-blue: 210 100% 60%;
+  --crypto-gold: 0.7 0.16 75;
+  --crypto-green: 0.62 0.18 150;
+  --crypto-red: 0.53 0.24 25;
+  --crypto-blue: 0.55 0.18 275;
 
     /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(190 85% 55%), hsl(210 100% 60%));
-    --gradient-success: linear-gradient(135deg, hsl(120 60% 50%), hsl(150 60% 45%));
-    --gradient-warning: linear-gradient(135deg, hsl(45 100% 60%), hsl(30 100% 55%));
-    --gradient-card: linear-gradient(135deg, hsl(0 0% 100%), hsl(0 0% 98%));
+  --gradient-primary: linear-gradient(135deg, oklch(var(--primary) / 1), oklch(var(--accent) / 1));
+  --gradient-success: linear-gradient(135deg, oklch(var(--success) / 1), oklch(0.58 0.17 145 / 1));
+  --gradient-warning: linear-gradient(135deg, oklch(var(--warning) / 1), oklch(0.64 0.2 55 / 1));
+  --gradient-card: linear-gradient(135deg, oklch(var(--card) / 1), oklch(0.96 0.01 264 / 1));
 
     /* Shadows */
-    --shadow-soft: 0 4px 20px -2px hsl(190 85% 55% / 0.1);
-    --shadow-glow: 0 0 30px hsl(190 85% 55% / 0.2);
-    --shadow-card: 0 8px 32px -8px hsl(220 13% 20% / 0.15);
+  --shadow-soft: 0 8px 24px -6px oklch(var(--primary) / 0.18);
+  --shadow-glow: 0 0 42px oklch(var(--accent) / 0.22);
+  --shadow-card: 0 22px 48px -18px oklch(0.72 0.04 250 / 0.18);
 
     /* Transitions */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-fast: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
 
     /* Sidebar (light) */
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 220 13% 12%;
-    --sidebar-primary: 190 85% 55%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 210 40% 96%;
-    --sidebar-accent-foreground: 220 13% 12%;
-    --sidebar-border: 214.3 31.8% 91.4%;
-    --sidebar-ring: 190 85% 55%;
+    --sidebar-background: 0.99 0.005 264;
+    --sidebar-foreground: 0.2 0.02 264;
+    --sidebar-primary: 0.55 0.18 275;
+    --sidebar-primary-foreground: 0.99 0.01 265;
+    --sidebar-accent: 0.94 0.02 260;
+    --sidebar-accent-foreground: 0.24 0.02 260;
+    --sidebar-border: 0.9 0.01 264;
+    --sidebar-ring: 0.55 0.18 275;
   }
 
   /* Dark overrides when `.dark` is on <html> */
   .dark {
-    --background: 220 13% 9%;
-    --foreground: 220 9% 95%;
+    --background: 0.1 0.02 250;
+    --foreground: 0.98 0.005 264;
 
-    --card: 220 13% 11%;
-    --card-foreground: 220 9% 95%;
+    --card: 0.15 0.02 250;
+    --card-foreground: 0.98 0.005 264;
 
-    --popover: 220 13% 11%;
-    --popover-foreground: 220 9% 95%;
+    --popover: 0.18 0.02 250;
+    --popover-foreground: 0.97 0.005 264;
 
-    --primary: 190 85% 55%;
-    --primary-foreground: 220 13% 9%;
+    --primary: 0.5 0.2 255;
+    --primary-foreground: 0.97 0.01 260;
 
-    --secondary: 220 13% 15%;
-    --secondary-foreground: 220 9% 95%;
+    --secondary: 0.22 0.02 250;
+    --secondary-foreground: 0.9 0.01 260;
 
-    --muted: 220 13% 15%;
-    --muted-foreground: 220 9% 65%;
+    --muted: 0.28 0.015 250;
+    --muted-foreground: 0.68 0.015 250;
 
-    --accent: 190 85% 55%;
-    --accent-foreground: 220 13% 9%;
+    --accent: 0.6 0.17 160;
+    --accent-foreground: 0.16 0.03 160;
 
-    --destructive: 0 75% 60%;
-    --destructive-foreground: 220 9% 95%;
+    --destructive: 0.48 0.24 20;
+    --destructive-foreground: 0.97 0.005 264;
 
-    --success: 120 60% 50%;
-    --success-foreground: 220 13% 9%;
+    --success: 0.58 0.18 150;
+    --success-foreground: 0.16 0.03 150;
 
-    --warning: 45 100% 60%;
-    --warning-foreground: 220 13% 9%;
+    --warning: 0.7 0.16 75;
+    --warning-foreground: 0.18 0.02 70;
 
-    --border: 220 13% 20%;
-    --input: 220 13% 15%;
-    --ring: 190 85% 55%;
+    --border: 0.25 0.02 250;
+    --input: 0.3 0.02 250;
+    --ring: 0.5 0.2 255;
 
     /* Gradients */
-    --gradient-card: linear-gradient(135deg, hsl(220 13% 11%), hsl(220 13% 13%));
+    --gradient-card: linear-gradient(135deg, oklch(0.18 0.02 250 / 1), oklch(0.24 0.02 250 / 1));
 
     /* Shadows */
-    --shadow-card: 0 8px 32px -8px hsl(220 13% 5% / 0.3);
+    --shadow-card: 0 24px 52px -18px oklch(0.26 0.02 250 / 0.42);
 
     /* Sidebar (dark) */
-    --sidebar-background: 220 13% 8%;
-    --sidebar-foreground: 220 9% 95%;
-    --sidebar-primary: 190 85% 55%;
-    --sidebar-primary-foreground: 220 13% 9%;
-    --sidebar-accent: 220 13% 12%;
-    --sidebar-accent-foreground: 220 9% 95%;
-    --sidebar-border: 220 13% 20%;
-    --sidebar-ring: 190 85% 55%;
+    --sidebar-background: 0.09 0.02 250;
+    --sidebar-foreground: 0.96 0.005 264;
+    --sidebar-primary: 0.5 0.2 255;
+    --sidebar-primary-foreground: 0.17 0.02 255;
+    --sidebar-accent: 0.22 0.02 250;
+    --sidebar-accent-foreground: 0.92 0.01 260;
+    --sidebar-border: 0.25 0.02 250;
+    --sidebar-ring: 0.5 0.2 255;
   }
 
   * {
@@ -146,9 +145,9 @@ All colors MUST be HSL.
     z-index: -1;
     pointer-events: none;
     /* More vivid, layered gradient for stronger visibility */
-    background: radial-gradient(1200px 600px at 10% 20%, rgba(125,211,252,0.20), transparent 18%), linear-gradient(120deg, rgba(125,211,252,0.14), rgba(14,165,183,0.12) 35%, rgba(125,211,252,0.06));
-    background-size: 400% 400%, 300% 300%;
-    filter: saturate(1.12) blur(20px) contrast(1.02);
+  background: radial-gradient(1200px 600px at 10% 20%, oklch(var(--primary) / 0.18), transparent 18%), linear-gradient(120deg, oklch(0.96 0.015 264 / 0.6), oklch(var(--accent) / 0.28) 35%, oklch(0.9 0.01 264 / 0.12));
+  background-size: 400% 400%, 320% 320%;
+  filter: saturate(1.05) blur(18px) contrast(1.01);
     transform: translateZ(0);
     transition: opacity .35s ease, filter .35s ease;
     animation: globalGradientShift 12s linear infinite;
@@ -156,8 +155,8 @@ All colors MUST be HSL.
 
   /* Dark mode variant */
   .dark body::before {
-    background: radial-gradient(900px 420px at 90% 80%, rgba(7,12,20,0.28), transparent 20%), linear-gradient(120deg, rgba(8,12,24,0.34), rgba(6,10,20,0.22) 35%, rgba(8,12,24,0.08));
-    filter: saturate(0.85) blur(26px) contrast(.9);
+  background: radial-gradient(900px 420px at 90% 80%, oklch(var(--primary) / 0.22), transparent 22%), linear-gradient(120deg, oklch(0.12 0.02 250 / 0.72), oklch(var(--accent) / 0.22) 35%, oklch(0.22 0.02 250 / 0.14));
+  filter: saturate(0.92) blur(26px) contrast(.94);
   }
 
   @keyframes globalGradientShift {

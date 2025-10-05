@@ -50,7 +50,7 @@ const ChartsPanel: React.FC<Props> = ({ insights, formatCurrency = (n) => `₦${
                 <div className="h-72 flex items-center justify-center">Loading chart…</div>
               ) : (
                 <ChartContainer
-                  config={{ count: { label: "Completed", color: "hsl(var(--primary))" } }}
+                  config={{ count: { label: "Completed", color: "oklch(var(--primary))" } }}
                   className="w-full h-72"
                 >
                   {/* Dynamically render recharts components */}
@@ -60,7 +60,7 @@ const ChartsPanel: React.FC<Props> = ({ insights, formatCurrency = (n) => `₦${
                     <Recharts.YAxis allowDecimals={false} tickLine={false} axisLine={false} tickMargin={8} />
                     <ChartTooltip content={<ChartTooltipContent />} />
                     {/* Use global theme color directly to avoid CSS var scoping issues */}
-                    <Recharts.Bar dataKey="count" radius={4} fill="hsl(var(--primary))" />
+                    <Recharts.Bar dataKey="count" radius={4} fill="oklch(var(--primary))" />
                   </Recharts.BarChart>
                 </ChartContainer>
               )}
@@ -83,14 +83,14 @@ const ChartsPanel: React.FC<Props> = ({ insights, formatCurrency = (n) => `₦${
           {!Recharts ? (
             <div className="h-72 flex items-center justify-center">Loading chart…</div>
           ) : (
-            <ChartContainer config={{ revenue: { label: "Revenue", color: "hsl(var(--primary))" } }} className="w-full h-72">
+            <ChartContainer config={{ revenue: { label: "Revenue", color: "oklch(var(--primary))" } }} className="w-full h-72">
               <Recharts.LineChart data={insights.series} margin={{ left: 12, right: 12 }}>
                 <Recharts.CartesianGrid vertical={false} />
                 <Recharts.XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} minTickGap={24} />
                 <Recharts.YAxis tickLine={false} axisLine={false} tickMargin={8} />
                 <ChartTooltip content={<ChartTooltipContent />} />
                 {/* Match line to theme primary for consistency */}
-                <Recharts.Line type="monotone" dataKey="revenue" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
+                <Recharts.Line type="monotone" dataKey="revenue" stroke="oklch(var(--primary))" strokeWidth={2} dot={false} />
               </Recharts.LineChart>
             </ChartContainer>
           )}

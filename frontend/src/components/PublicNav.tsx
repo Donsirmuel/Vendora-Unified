@@ -17,8 +17,9 @@ export type PublicNavProps = {
 };
 
 const defaultLinks: PublicNavLink[] = [
-  { label: "Product", href: "#product", type: "anchor" },
-  { label: "How it works", href: "#how-it-works", type: "anchor" },
+  { label: "Home", href: "/", type: "route" },
+  { label: "Product", href: "/#product", type: "route" },
+  { label: "How it works", href: "/#how-it-works", type: "route" },
   { label: "Pricing", href: "/pricing", type: "route" },
   { label: "Login", href: "/login", type: "route" },
   { label: "Start free trial", href: "/signup", type: "route", variant: "accent" }

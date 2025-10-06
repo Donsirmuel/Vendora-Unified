@@ -219,19 +219,19 @@ const Dashboard = () => {
       byDay[key] = { revenue: 0, count: 0 };
     }
 
-    let statusCounts = { completed: 0, pending: 0, failed: 0 };
+    const statusCounts = { completed: 0, pending: 0, failed: 0 };
 
     // We only have completedTx here; for statusCounts, estimate from stats
     statusCounts.completed = completedTx.length;
-  statusCounts.pending = 0; // not shown now
+    statusCounts.pending = 0; // not shown now
     // failed count best-effort (unknown without dedicated fetch). Leave as 0 if not present
 
     for (const tx of completedTx) {
       if (!tx.completed_at) continue;
       const dayKey = tx.completed_at.slice(0, 10);
       if (!(dayKey in byDay)) continue; // only chart last 14 days
-  const amt = (tx as any).order_total_value != null ? Number((tx as any).order_total_value) : 0;
-  byDay[dayKey].revenue += isFinite(amt) ? amt : 0;
+    const amt = (tx as any).order_total_value != null ? Number((tx as any).order_total_value) : 0;
+    byDay[dayKey].revenue += isFinite(amt) ? amt : 0;
       byDay[dayKey].count += 1;
     }
 

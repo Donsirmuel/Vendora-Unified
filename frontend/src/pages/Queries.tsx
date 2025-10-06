@@ -68,7 +68,6 @@ const Queries = () => {
     setDeletingAll(true);
     try {
       for (const q of items) {
-        // eslint-disable-next-line no-await-in-loop
         await deleteQuery(q.id);
       }
       setItems([]);

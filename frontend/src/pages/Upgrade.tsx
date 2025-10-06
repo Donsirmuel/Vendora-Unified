@@ -32,7 +32,7 @@ export default function UpgradePage() {
       const res = await http.post('/api/v1/accounts/payment-requests/', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
       toast({ title: 'Submitted', description: 'Your payment receipt was submitted and is pending review.' });
       // Poll the latest endpoint with exponential backoff (max ~60s)
-      let cancelled = false;
+      const cancelled = false;
       (async () => {
         let wait = 3000; // initial 3s
         for (let i = 0; i < 10 && !cancelled; i++) {

@@ -58,6 +58,7 @@ export interface VendorProfile {
   daily_orders_count?: number;
   daily_order_limit?: number;
   daily_orders_date?: string;
+  unavailable_message?: string | null;
   // Provided by backend serializer for licensing/trial UI
   subscription_status?: SubscriptionStatus;
 }

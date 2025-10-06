@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import {
   ArrowRight,
   BarChart3,
@@ -15,6 +15,7 @@ import {
   Zap
 } from "lucide-react";
 import PublicNav from "@/components/PublicNav";
+import BackToTopButton from "@/components/BackToTopButton";
 import { Button } from "@/components/ui/button";
 import "./home.css";
 
@@ -32,7 +33,7 @@ const heroSlides: HeroSlide[] = [
   {
     id: 0,
     label: "Setup",
-    title: "Register your desk and go live",
+    title: "Register your Business-desk and go live",
     description:
       "Sign up on Vendora, set the assets you sell, and choose the rails you accept with simple forms.",
     highlight: "Vendora replaces disconnected chats with one web app vendors open every morning.",
@@ -87,7 +88,7 @@ const howItWorks = [
   {
     icon: <Sparkles className="h-6 w-6 text-accent" aria-hidden />,
     title: "Register and set up",
-    body: "Create your Vendora account, add the assets you trade, and pick the payment rails you support.",
+    body: "Create your Vendora account, add the assets you trade, configure your buy and sell rates and pick the payment rails you support.",
     meta: "Step 1"
   },
   {
@@ -270,6 +271,30 @@ const FAQItem = ({ question, answer }: { question: string; answer: string }) => 
 );
 
 const Home: React.FC = () => {
+  const location = useLocation();
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    if (!location.hash) {
+      return;
+    }
+
+    const targetId = location.hash.replace("#", "");
+    if (!targetId) {
+      return;
+    }
+
+    const targetElement = document.getElementById(targetId);
+    if (targetElement) {
+      window.requestAnimationFrame(() => {
+        targetElement.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    }
+  }, [location.hash]);
+
   return (
     <div className="home-page bg-background text-foreground">
       <PublicNav variant="translucent" />
@@ -293,7 +318,7 @@ const Home: React.FC = () => {
                     <ArrowRight className="ml-2 h-4 w-4" aria-hidden />
                   </Link>
                 </Button>
-                <Link to="#product" className="home-hero__link">
+                <Link to="/#product" className="home-hero__link">
                   See how Vendora works
                   <ArrowRight className="h-4 w-4" aria-hidden />
                 </Link>
@@ -355,6 +380,7 @@ const Home: React.FC = () => {
                   <li>Vendora web app keeps every order and query organised</li>
                   <li>Telegram bot gives customers instant answers and order status</li>
                   <li>Proof-backed settlements build trust with every trade</li>
+                  <li>Increased productivity and boosted customer's trust</li>
                 </ul>
               </div>
             </div>
@@ -420,7 +446,7 @@ const Home: React.FC = () => {
               </article>
               <article>
                 <h3>Finance sync</h3>
-                <p>Every payout references stored proofs so finance and customers can confirm transactions fast.</p>
+                <p>Every payout references, proofs are stored so finance is properly managed and customers can confirm transactions faster and resolve transaction issues more efficiently.</p>
               </article>
             </div>
           </div>
@@ -430,7 +456,7 @@ const Home: React.FC = () => {
           <div className="section__head">
             <span className="section__eyebrow">CAPABILITIES</span>
             <h2>Everything vendors need in one platform</h2>
-            <p>Built for crypto vendors from day one so you can focus on trading, not stitching tools together.</p>
+            <p>Built for crypto vendors from day one so you can focus on trading, not stitching tools together or constantly trying to keep your business existent.</p>
           </div>
           <div className="section__grid">
             {featureHighlights.map((feature) => (
@@ -478,7 +504,7 @@ const Home: React.FC = () => {
         <section className="section section--cta">
           <div className="section__head section__head--center">
             <span className="section__eyebrow">READY WHEN YOU ARE</span>
-            <h2>Ready to trade the Vendora way?</h2>
+            <h2>Ready to trade the <strong>Vendora</strong> way?</h2>
             <p>Register your vendor account, share your Vendora bot link, and handle every order from one tab.</p>
           </div>
           <div className="section__actions">
@@ -497,14 +523,15 @@ const Home: React.FC = () => {
 
       <footer className="footer">
         <div>
-          <span>© {new Date().getFullYear()} Vendora. All rights reserved.</span>
+          <span>© {new Date().getFullYear()} Vendora. All rights reserved.</span><br></br>
           <nav>
             <Link to="/terms">Terms</Link>
             <Link to="/privacy">Privacy</Link>
           </nav>
         </div>
-        <span>Vendora is built for operators and vendors who demand clarity.</span>
+        <span>Vendora is built for operators and vendors who demand clarity and productivity.</span>
       </footer>
+      <BackToTopButton />
     </div>
   );
 };

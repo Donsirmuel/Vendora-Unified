@@ -10,6 +10,11 @@ interface ErrorBoundaryProps {
   fallback?: React.ReactNode | ((error: Error, reset: () => void) => React.ReactNode);
 }
 
+const isFallbackRenderer = (
+  fallback: ErrorBoundaryProps["fallback"]
+): fallback is (error: Error, reset: () => void) => React.ReactNode =>
+  typeof fallback === "function";
+
 /**
  * Global React error boundary to catch render/runtime errors in subtree.
  * Provides a reset mechanism and minimal telemetry hook (console log now; extend to Sentry later).
@@ -25,7 +30,6 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
     this.setState({ info });
     // Replace with real telemetry (Sentry) if DSN configured
     if (import.meta.env.DEV) {
-      // eslint-disable-next-line no-console
       console.error('[ErrorBoundary]', error, info.componentStack);
     }
   }
@@ -39,7 +43,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
     if (error) {
       const fallback = this.props.fallback;
       if (fallback) {
-        if (typeof fallback === 'function') return (fallback as any)(error, this.reset);
+        if (isFallbackRenderer(fallback)) return fallback(error, this.reset);
         return fallback;
       }
       return (

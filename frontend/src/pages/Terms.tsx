@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import PublicNav, { PublicNavLink } from "@/components/PublicNav";
+import BackToTopButton from "@/components/BackToTopButton";
 import "./legal.css";
 
 export default function Terms(): JSX.Element {
@@ -8,6 +9,7 @@ export default function Terms(): JSX.Element {
     { label: "Home", href: "/", type: "route" },
     { label: "Product", href: "/#product", type: "route" },
     { label: "How it works", href: "/#how-it-works", type: "route" },
+    { label: "Pricing", href: "/pricing", type: "route" },
     { label: "Terms", href: "/terms", type: "route" },
     { label: "Privacy", href: "/privacy", type: "route" },
     { label: "Sign Up", href: "/signup", type: "route", variant: "accent" },
@@ -124,6 +126,7 @@ export default function Terms(): JSX.Element {
           <Link to="/">Back to home</Link>
         </p>
       </main>
+      <BackToTopButton />
     </div>
   );
 }

@@ -22,8 +22,7 @@ const Availability = () => {
       try {
         const profile = await getVendorProfile();
         setIsAvailable(!!profile.is_available);
-        // @ts-ignore
-        setUnavailableMessage((profile as any).unavailable_message || "");
+        setUnavailableMessage(profile.unavailable_message || "");
       } catch {}
     })();
   }, []);
@@ -39,8 +38,7 @@ const Availability = () => {
       try {
         const profile = await getVendorProfile();
         setIsAvailable(!!profile.is_available);
-        // @ts-ignore
-        setUnavailableMessage((profile as any).unavailable_message || "");
+        setUnavailableMessage(profile.unavailable_message || "");
       } catch {}
       toast({
         title: "Availability Updated",
@@ -49,7 +47,7 @@ const Availability = () => {
           : "You are now unavailable. Customers will see your custom message.",
         className: "bg-success text-success-foreground"
       });
-    } catch (e: any) {
+    } catch (e: unknown) {
       toast({ title: "Update failed", description: getErrorMessage(e, "Could not update availability"), variant: "destructive" });
     } finally {
       setIsSaving(false);

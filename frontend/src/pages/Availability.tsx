@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { ArrowLeft, Clock, MessageSquare } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { ArrowLeft, Clock, MessageSquare, Megaphone, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { getVendorProfile, updateVendorProfile } from "@/lib/auth";
 import { http } from "@/lib/http";
@@ -58,17 +59,51 @@ const Availability = () => {
     <Layout>
       <div className="max-w-2xl mx-auto space-y-6">
         
-        {/* Header */}
-        <div className="flex items-center space-x-4">
-          <Link to="/settings">
-            <Button variant="outline" size="sm" className="border-border">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Settings
-            </Button>
-          </Link>
-          <div>
-            <h1 className="text-2xl font-bold">Set Availability</h1>
-            <p className="text-muted-foreground">Manage your vendor availability status</p>
+        <div className="rounded-3xl border border-white/10 bg-gradient-to-br from-slate-950 via-slate-900 to-primary/25 px-6 py-8 text-white shadow-xl shadow-primary/20">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <Badge variant="outline" className="border-white/20 bg-white/10 text-xs uppercase tracking-[0.3em] text-primary/80">
+              Availability Signal
+            </Badge>
+            <div className="flex flex-wrap gap-2">
+              <Button asChild size="sm" variant="secondary" className="bg-white/10 text-white hover:bg-white/20">
+                <Link to="/settings">
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Back to Settings
+                </Link>
+              </Button>
+              <Button asChild size="sm" variant="outline" className="border-white/30 bg-transparent text-white hover:bg-white/10">
+                <Link to="/broadcast-messages">
+                  <Megaphone className="mr-2 h-4 w-4" />
+                  Open Broadcast Studio
+                </Link>
+              </Button>
+            </div>
+          </div>
+          <div className="mt-6 space-y-3">
+            <h1 className="text-3xl font-semibold md:text-4xl">Set your trading rhythm</h1>
+            <p className="max-w-2xl text-sm text-slate-200 md:text-base">
+              Let loyal buyers and the Vendora Telegram bot know exactly when you're taking orders, pausing, or coming back online.
+            </p>
+          </div>
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-slate-100 shadow-inner">
+              <div className="flex items-center gap-2 text-primary">
+                <Sparkles className="h-4 w-4" />
+                <span className="text-xs font-semibold uppercase tracking-[0.3em]">Why it matters</span>
+              </div>
+              <p className="mt-3 leading-relaxed">
+                Availability flips the Telegram bot state so orders, broadcasts, and automations stay aligned with your desk's real-world schedule.
+              </p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-slate-100 shadow-inner">
+              <div className="flex items-center gap-2 text-primary">
+                <Megaphone className="h-4 w-4" />
+                <span className="text-xs font-semibold uppercase tracking-[0.3em]">Pro tip</span>
+              </div>
+              <p className="mt-3 leading-relaxed">
+                Pair status changes with a quick broadcast so active buyers always know when you're live—and when to expect a response.
+              </p>
+            </div>
           </div>
         </div>
 
@@ -80,7 +115,7 @@ const Availability = () => {
               <span>Vendor Availability</span>
             </CardTitle>
             <CardDescription>
-              Control whether you're available to receive new orders
+              Flip the Telegram bot between live and paused states with a single toggle.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -93,8 +128,8 @@ const Availability = () => {
                 </Label>
                 <p className="text-sm text-muted-foreground">
                   {isAvailable 
-                    ? "You will receive new orders and customers can contact you"
-                    : "New orders will be paused and customers will see your unavailable message"
+                    ? "You’re accepting new trades and the Telegram bot will continue routing buyers to you."
+                    : "New trades pause here and buyers will see your downtime message instead."
                   }
                 </p>
               </div>
@@ -115,8 +150,8 @@ const Availability = () => {
                 </p>
                 <p className="text-sm text-muted-foreground">
                   {isAvailable 
-                    ? "Ready to accept new orders"
-                    : "Not accepting new orders"
+                    ? "Open for trades — broadcasts and automations stay live."
+                    : "Paused for now — broadcasts will note your downtime."
                   }
                 </p>
               </div>
@@ -132,7 +167,7 @@ const Availability = () => {
               <span>Unavailable Message</span>
             </CardTitle>
             <CardDescription>
-              Optional message to display when you're unavailable
+              Set the note buyers see when you’re offline so expectations stay clear.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -151,8 +186,8 @@ const Availability = () => {
               />
               <p className="text-xs text-muted-foreground">
                 {isAvailable 
-                  ? "This message will only be shown when you're unavailable"
-                  : "This message is currently being shown to customers"
+                  ? "This message only appears when you flip to unavailable."
+                  : "Buyers are currently seeing this downtime note."
                 }
               </p>
             </div>
@@ -181,15 +216,15 @@ const Availability = () => {
         </div>
 
         {/* Help Text */}
-        <Card className="bg-secondary/20 border-border">
+        <Card className="bg-secondary/30 border-border">
           <CardContent className="p-4">
             <div className="space-y-2">
-              <h4 className="font-medium text-sm">How Availability Works:</h4>
+              <h4 className="font-medium text-sm">How the Telegram bot reacts:</h4>
               <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• When <strong>Available</strong>: Customers can place orders and contact you normally</li>
-                <li>• When <strong>Unavailable</strong>: New orders are paused and customers see your message</li>
-                <li>• Existing transactions continue to work regardless of availability status</li>
-                <li>• You can change your status anytime from Settings</li>
+                <li>• <strong>Available</strong>: New orders, broadcasts, and notifications ship as normal.</li>
+                <li>• <strong>Unavailable</strong>: Buyers see your downtime message before opening a ticket.</li>
+                <li>• Existing transactions continue regardless of status toggles.</li>
+                <li>• Update availability anytime from Settings or this page.</li>
               </ul>
             </div>
           </CardContent>

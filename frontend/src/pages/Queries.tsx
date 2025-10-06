@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -22,6 +23,7 @@ import {
   AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
 import { deleteQuery } from "@/lib/queries";
+import BrandedEmptyState from "@/components/BrandedEmptyState";
 
 const Queries = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -136,8 +138,8 @@ const Queries = () => {
       {/* Header */}
       <div className="flex items-start gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Customer Queries</h1>
-          <p className="text-muted-foreground">Manage and respond to customer inquiries</p>
+          <h1 className="text-2xl font-bold text-white">Buyer support queue</h1>
+          <p className="text-muted-foreground">Reply to buyers, log resolutions, and keep your Vendora bot conversations tidy.</p>
         </div>
         <div className="ml-auto">
           <AlertDialog open={confirmDeleteAllOpen} onOpenChange={setConfirmDeleteAllOpen}>
@@ -161,10 +163,10 @@ const Queries = () => {
       </div>
 
       {/* Filters */}
-      <Card className="bg-gradient-card border-border">
+      <Card className="border-border/70">
         <CardHeader>
-          <CardTitle>Filters</CardTitle>
-          <CardDescription>Filter queries by search term and status</CardDescription>
+          <CardTitle className="text-lg font-semibold text-white">Filter buyer conversations</CardTitle>
+          <CardDescription>Search by keyword, status, or triage level.</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -196,7 +198,7 @@ const Queries = () => {
       {/* Queries List */}
       <div className="space-y-4">
         {loading ? (
-          <Card className="bg-gradient-card border-border">
+          <Card className="border-border/70">
             <CardContent className="text-center py-12 text-muted-foreground">Loading queries…</CardContent>
           </Card>
         ) : filteredQueries.length > 0 ? (
@@ -267,13 +269,37 @@ const Queries = () => {
             </Card>
           ))
         ) : (
-          <Card className="bg-gradient-card border-border">
-            <CardContent className="text-center py-12">
-              <MessageCircle className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-              <h3 className="text-lg font-semibold mb-2">No queries found</h3>
-              <p className="text-muted-foreground">{searchTerm || statusFilter !== "all" ? "Try adjusting your filters." : "No customer queries available."}</p>
-            </CardContent>
-          </Card>
+          <BrandedEmptyState
+            icon={MessageCircle}
+            title={searchTerm || statusFilter !== "all" ? "No buyer conversations match" : "Support queue is quiet"}
+            description={
+              searchTerm || statusFilter !== "all"
+                ? "Reset your filters to see every buyer conversation awaiting a follow-up."
+                : "Buyers can reach you via your Vendora bot. Share the link to invite new conversations."
+            }
+            badge={searchTerm || statusFilter !== "all" ? "Filters applied" : "All clear"}
+            actions={
+              <>
+                {(searchTerm || statusFilter !== "all") && (
+                  <Button
+                    variant="secondary"
+                    className="bg-white/10 text-white hover:bg-white/20"
+                    onClick={() => {
+                      setSearchTerm("");
+                      setStatusFilter("all");
+                    }}
+                  >
+                    Clear filters
+                  </Button>
+                )}
+                <Link to="/broadcast-messages">
+                  <Button className="bg-gradient-primary text-primary-foreground">
+                    Send availability update
+                  </Button>
+                </Link>
+              </>
+            }
+          />
         )}
       </div>
 

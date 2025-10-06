@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Smartphone, Laptop, Tablet, Monitor } from "lucide-react";
+import { Smartphone, Laptop, Tablet, Monitor, CheckCircle2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { getErrorMessage } from "@/lib/errors";
@@ -41,15 +41,15 @@ const Login = () => {
   const normalizedEmail = email.trim().toLowerCase();
   await login(normalizedEmail, password);
       toast({
-        title: "Login Successful",
-        description: "Welcome back to Vendora!",
+        title: "Vendor console unlocked",
+        description: "Welcome back to your Vendora desk.",
         className: "bg-success text-success-foreground"
       });
       navigate(from, { replace: true });
   } catch (error: any) {
       toast({
-        title: "Login Failed",
-    description: getErrorMessage(error, "Invalid credentials. Please try again."),
+    title: "Access denied",
+  description: getErrorMessage(error, "We couldn't verify those vendor credentials."),
         className: "bg-destructive text-destructive-foreground"
       });
     } finally {
@@ -63,13 +63,21 @@ const Login = () => {
         
         {/* Left side - Branding & Features */}
         <div className="space-y-8 text-center lg:text-left">
-          <div>
-            <h1 className="text-4xl lg:text-6xl font-bold bg-gradient-primary bg-clip-text text-transparent mb-4">
-              Vendora
-            </h1>
-            <p className="text-xl text-muted-foreground">
-              Professional crypto vendor platform
-            </p>
+          <div className="space-y-4">
+            <div className="inline-flex items-center justify-center rounded-2xl bg-white/5 px-6 py-4 shadow-lg shadow-primary/20 ring-1 ring-white/10 backdrop-blur">
+              <img
+                src="/brand/logo-light.svg"
+                alt="Vendora logo"
+                className="h-10 w-auto"
+                loading="lazy"
+              />
+            </div>
+            <div className="space-y-3">
+              <h1 className="text-4xl lg:text-5xl font-semibold text-white">Run your OTC desk like a pro</h1>
+              <p className="text-lg text-muted-foreground max-w-xl lg:max-w-none mx-auto lg:mx-0">
+                Vendora keeps pricing, settlements, and compliance workflows in one vendor-first console so your team can close deals faster.
+              </p>
+            </div>
           </div>
 
           {/* Device compatibility showcase */}
@@ -101,12 +109,24 @@ const Login = () => {
           </div>
 
           <div className="space-y-4">
-            <h2 className="text-2xl font-semibold">Manage your crypto business</h2>
-            <ul className="space-y-2 text-muted-foreground">
-              <li>• Track orders and transactions in real-time</li>
-              <li>• Manage multiple cryptocurrencies</li>
-              <li>• Professional vendor dashboard</li>
-              <li>• Works across all your devices</li>
+            <h2 className="text-2xl font-semibold text-white">Built for high-volume vendors</h2>
+            <ul className="space-y-3 text-left text-base text-muted-foreground">
+              <li className="flex items-start gap-3">
+                <CheckCircle2 className="mt-1 h-5 w-5 text-primary" aria-hidden="true" />
+                <span>Realtime visibility across cash collections, crypto releases, and dispute queues.</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <CheckCircle2 className="mt-1 h-5 w-5 text-primary" aria-hidden="true" />
+                <span>Push fresh buy/sell bands to buyers, agents, and Telegram audiences instantly.</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <CheckCircle2 className="mt-1 h-5 w-5 text-primary" aria-hidden="true" />
+                <span>Automate compliance prompts, identity verifications, and payout approvals in one flow.</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <CheckCircle2 className="mt-1 h-5 w-5 text-primary" aria-hidden="true" />
+                <span>Access the desk from phone, tablet, desktop, or install the Vendora PWA for offline resilience.</span>
+              </li>
             </ul>
           </div>
         </div>
@@ -115,9 +135,9 @@ const Login = () => {
         <div className="w-full max-w-md mx-auto lg:mx-0">
           <Card className="bg-gradient-card border-border shadow-card card-anim pulse-card">
             <CardHeader className="space-y-1">
-              <CardTitle className="text-2xl font-bold">Sign in</CardTitle>
+              <CardTitle className="text-2xl font-bold">Vendor sign-in</CardTitle>
               <CardDescription>
-                Enter your credentials to access your vendor dashboard
+                Authenticate to reopen your Vendora command center, sync new leads, and clear pending payouts.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -131,11 +151,11 @@ const Login = () => {
                   </Alert>
                 )}
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">Work email</Label>
                   <Input
                     id="email"
                     type="email"
-                    placeholder="vendor@example.com"
+                    placeholder="ops@vendordesk.io"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
@@ -144,7 +164,7 @@ const Login = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
+                  <Label htmlFor="password">Vendor password</Label>
                   <Input
                     id="password"
                     type="password"
@@ -158,7 +178,7 @@ const Login = () => {
                 </div>
                 <div className="flex items-center justify-end -mt-2">
                   <Link to="/password-reset" className="text-sm text-primary hover:underline">
-                    Forgot password?
+                    Reset vendor access
                   </Link>
                 </div>
                 <Button
@@ -166,15 +186,15 @@ const Login = () => {
                   className="w-full bg-gradient-primary hover:opacity-90 text-primary-foreground font-medium"
                   disabled={isLoading}
                 >
-                  {isLoading ? "Signing in..." : "Sign in"}
+                  {isLoading ? "Verifying credentials..." : "Enter vendor console"}
                 </Button>
               </form>
               
               <div className="mt-6 text-center">
                 <p className="text-sm text-gray-600">
-                  Don't have an account?{' '}
+                  Need an operator seat?{' '}
                   <Link to="/signup" className="font-medium text-primary hover:underline">
-                    Sign up here
+                    Request vendor access
                   </Link>
                 </p>
               </div>

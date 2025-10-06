@@ -21,6 +21,7 @@ import { useToast } from "@/hooks/use-toast";
 import { getErrorMessage } from "@/lib/errors";
 import { connectSSE } from "@/lib/sse";
 import { FreePlanLimitAlert, FreePlanUsageWidget } from "@/components/FreePlanComponents";
+import BrandedEmptyState from "@/components/BrandedEmptyState";
 
 const Orders = () => {
   const { toast } = useToast();
@@ -189,19 +190,19 @@ const Orders = () => {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Orders</h1>
+            <h1 className="text-3xl font-bold text-white">Orders desk</h1>
             <p className="text-muted-foreground">
-              Manage customer orders and track their status
+              Approve buyers, trigger settlements, and keep OTC deals flowing in real time.
             </p>
           </div>
-          <Button onClick={handleRefresh} variant="outline">
+          <Button onClick={handleRefresh} variant="outline" className="border-primary/40 text-primary hover:bg-primary/10">
             <Plus className="h-4 w-4 mr-2" />
-            Refresh
+            Resync pending orders
           </Button>
         </div>
 
         {/* Filters */}
-        <Card>
+        <Card className="border-border/70">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <Filter className="h-5 w-5" />
@@ -320,23 +321,34 @@ const Orders = () => {
               </Card>
             ))
           ) : (
-            <Card>
-              <CardContent className="p-12 text-center">
-                <ShoppingCart className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-50" />
-                <h3 className="text-lg font-semibold mb-2">No orders found</h3>
-                <p className="text-muted-foreground mb-4">
-                  {searchTerm || statusFilter !== "all" 
-                    ? "Try adjusting your filters or search terms"
-                    : "Orders will appear here when customers place them"
-                  }
-                </p>
-                {(searchTerm || statusFilter !== "all") && (
-                  <Button onClick={handleRefresh} variant="outline">
-                    Clear Filters
-                  </Button>
-                )}
-              </CardContent>
-            </Card>
+            <BrandedEmptyState
+              icon={ShoppingCart}
+              title={searchTerm || statusFilter !== "all" ? "No orders match your filters" : "No orders waiting on you"}
+              description={
+                searchTerm || statusFilter !== "all"
+                  ? "Reset your filters to view the latest buyer requests waiting in Vendora."
+                  : "Share your Vendora bot link or broadcast fresh rates to bring in new OTC orders."
+              }
+              badge={searchTerm || statusFilter !== "all" ? "Filters applied" : "Inbox clear"}
+              actions={
+                <>
+                  {(searchTerm || statusFilter !== "all") && (
+                    <Button
+                      onClick={handleRefresh}
+                      variant="secondary"
+                      className="bg-white/10 text-white hover:bg-white/20"
+                    >
+                      Clear filters
+                    </Button>
+                  )}
+                  <Link to="/broadcast-messages">
+                    <Button className="bg-gradient-primary text-primary-foreground">
+                      Broadcast updated rates
+                    </Button>
+                  </Link>
+                </>
+              }
+            />
           )}
         </div>
 

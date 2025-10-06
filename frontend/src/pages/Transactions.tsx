@@ -9,6 +9,7 @@ import { http } from "@/lib/http";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { connectSSE } from "@/lib/sse";
+import BrandedEmptyState from "@/components/BrandedEmptyState";
 
 type ApiTransaction = {
   id: number;
@@ -97,22 +98,31 @@ const Transactions = () => {
       <div className="space-y-6">
         {/* Quick stats */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Card>
+          <Card className="border-border/70">
             <CardHeader>
-              <CardTitle className="text-sm">Completed Today</CardTitle>
+              <CardTitle className="text-sm">Transactions released today</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{completedToday}</div>
-              <div className="text-xs text-muted-foreground">Count from current view</div>
+              <div className="text-xs text-muted-foreground">Desk settlements finalized in the current view.</div>
             </CardContent>
           </Card>
         </div>
-        <Card>
+        <Card className="border-border/70">
           <CardHeader className="flex items-center justify-between">
-            <CardTitle>Transactions</CardTitle>
-            <Button variant="outline" size="sm" onClick={load} disabled={loading}>
+            <div>
+              <CardTitle className="text-lg font-semibold text-white">Settlement queue</CardTitle>
+              <p className="text-sm text-muted-foreground">Track every payout and release across your OTC desk.</p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={load}
+              disabled={loading}
+              className="border-primary/40 text-primary hover:bg-primary/10"
+            >
               <RefreshCw className="h-4 w-4 mr-2" />
-              {loading ? "Refreshing..." : "Refresh"}
+              {loading ? "Syncing..." : "Sync settlements"}
             </Button>
           </CardHeader>
           <CardContent>
@@ -143,7 +153,39 @@ const Transactions = () => {
             {loading ? (
               <div className="py-12 text-center text-muted-foreground">Loading transactions…</div>
             ) : filtered.length === 0 ? (
-              <div className="py-12 text-center text-muted-foreground">No transactions found</div>
+              <BrandedEmptyState
+                icon={RefreshCw}
+                title={status || search ? "No transactions match this view" : "No settlements pending"}
+                description={
+                  status || search
+                    ? "Adjust your filters or run a broader search to review historical settlements."
+                    : "Once buyers submit proofs or cash hits your accounts, settlements will appear here."
+                }
+                badge={status || search ? "Filters applied" : "Queue clear"}
+                actions={
+                  <>
+                    {(status || search) && (
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        className="bg-white/10 text-white hover:bg-white/20"
+                        onClick={() => {
+                          setStatus("");
+                          setSearch("");
+                          load();
+                        }}
+                      >
+                        Reset filters
+                      </Button>
+                    )}
+                    <Link to="/orders">
+                      <Button size="sm" className="bg-gradient-primary text-primary-foreground">
+                        Review pending orders
+                      </Button>
+                    </Link>
+                  </>
+                }
+              />
             ) : (
               <div className="overflow-x-auto">
                 <Table>

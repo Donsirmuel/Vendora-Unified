@@ -26,6 +26,7 @@ import { connectSSE } from "@/lib/sse";
 const ChartsPanel = React.lazy(() => import("@/components/ChartsPanel"));
 import http from "@/lib/http";
 import OnboardingChecklist from "@/components/OnboardingChecklist";
+import BrandedEmptyState from "@/components/BrandedEmptyState";
 
 interface DashboardStats {
   totalOrdersReceived: number; // accepted + declined
@@ -263,13 +264,19 @@ const Dashboard = () => {
       <div className="space-y-6 page-anim">
         {/* Header */}
         <div className="flex items-center justify-between gap-4 flex-wrap">
-          <h1 className="text-3xl font-bold">Dashboard</h1>
+          <h1 className="text-3xl font-bold text-white">Vendora command center</h1>
           <div className="flex items-center gap-2 ml-auto">
-            <Button variant="outline" onClick={loadDashboardData}>Refresh</Button>
+            <Button
+              variant="outline"
+              className="border-primary/40 text-primary hover:bg-primary/10"
+              onClick={loadDashboardData}
+            >
+              Sync desk data
+            </Button>
           </div>
         </div>
         <p className="text-muted-foreground">
-          Welcome back, {user?.name || 'Vendor'}! Here's your business overview.
+          Welcome back, {user?.name || 'vendor'}. Keep buyers updated, release settlements on time, and stay audit-ready from one console.
         </p>
 
   {/* Onboarding Checklist (derived from backend) */}
@@ -316,52 +323,52 @@ const Dashboard = () => {
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
     <Card className="card-anim">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">Total Orders Received</CardTitle>
+        <CardTitle className="text-sm font-medium">Orders received</CardTitle>
               <ShoppingCart className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
         <div className="text-2xl font-bold">{stats.totalOrdersReceived}</div>
               <p className="text-xs text-muted-foreground">
-                {stats.pendingOrders} pending
+                {stats.pendingOrders} waiting on vendor approval
               </p>
             </CardContent>
           </Card>
 
   <Card className="card-anim">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Revenue (₦)</CardTitle>
+              <CardTitle className="text-sm font-medium">Settled revenue (₦)</CardTitle>
         <span className="sr-only">NGN</span>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{formatCurrency(stats.totalRevenue)}</div>
               <p className="text-xs text-muted-foreground">
-                From {stats.completedOrders} completed orders
+                Driven by {stats.completedOrders} completed orders
               </p>
             </CardContent>
           </Card>
 
           <Card className="card-anim">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Completed Transactions</CardTitle>
+              <CardTitle className="text-sm font-medium">Transactions released</CardTitle>
               <ArrowLeftRight className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.completedTransactions}</div>
               <p className="text-xs text-muted-foreground">
-                {completedTx.length} in last fetch
+                {completedTx.length} released in the latest sync
               </p>
             </CardContent>
           </Card>
 
           <Card className="card-anim">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Pending Queries</CardTitle>
+              <CardTitle className="text-sm font-medium">Buyer queries open</CardTitle>
               <MessageCircle className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.pendingQueries}</div>
               <p className="text-xs text-muted-foreground">
-                Require your attention
+                Require vendor response
               </p>
             </CardContent>
           </Card>
@@ -370,14 +377,14 @@ const Dashboard = () => {
   {/* Recent Activity */}
   <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Pending Orders */}
-          <Card>
+          <Card className="border-border/70">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <Clock className="h-5 w-5" />
                 <span>Recent Pending Orders</span>
               </CardTitle>
               <CardDescription>
-                Orders awaiting your response
+                Orders awaiting vendor decisioning
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -404,23 +411,42 @@ const Dashboard = () => {
                   </Link>
                 </div>
               ) : (
-                <div className="text-center py-6 text-muted-foreground">
-                  <ShoppingCart className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                  <p>No pending orders</p>
-                </div>
+                <BrandedEmptyState
+                  icon={ShoppingCart}
+                  title="No pending orders"
+                  description="All active orders are cleared. Publish a fresh rate card to stay ahead of demand."
+                  badge="All clear"
+                  actions={
+                    <>
+                      <Link to="/orders">
+                        <Button
+                          variant="secondary"
+                          className="bg-white/10 text-white hover:bg-white/20"
+                        >
+                          Review order history
+                        </Button>
+                      </Link>
+                      <Link to="/broadcast-messages">
+                        <Button className="bg-gradient-primary text-primary-foreground">
+                          Broadcast new rate
+                        </Button>
+                      </Link>
+                    </>
+                  }
+                />
               )}
             </CardContent>
           </Card>
 
           {/* Latest Uncompleted Transactions */}
-          <Card>
+          <Card className="border-border/70">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <ArrowLeftRight className="h-5 w-5" />
                 <span>Latest Uncompleted Transactions</span>
               </CardTitle>
               <CardDescription>
-                Waiting on your completion
+                Transactions awaiting release
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -445,23 +471,42 @@ const Dashboard = () => {
                   </Link>
                 </div>
               ) : (
-                <div className="text-center py-6 text-muted-foreground">
-                  <Clock className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                  <p>No uncompleted transactions</p>
-                </div>
+                <BrandedEmptyState
+                  icon={ArrowLeftRight}
+                  title="No transactions pending release"
+                  description="Every buyer has been settled. Queue new deals or follow up on pipeline leads."
+                  badge="Settlement complete"
+                  actions={
+                    <>
+                      <Link to="/transactions">
+                        <Button
+                          variant="secondary"
+                          className="bg-white/10 text-white hover:bg-white/20"
+                        >
+                          Review transaction log
+                        </Button>
+                      </Link>
+                      <Link to="/queries">
+                        <Button className="bg-gradient-primary text-primary-foreground">
+                          Check buyer queries
+                        </Button>
+                      </Link>
+                    </>
+                  }
+                />
               )}
             </CardContent>
           </Card>
 
           {/* Recent Queries */}
-          <Card>
+          <Card className="border-border/70">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <MessageCircle className="h-5 w-5" />
                 <span>Recent Queries</span>
               </CardTitle>
               <CardDescription>
-                Customer questions and support requests
+                Buyer questions and support requests
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -483,10 +528,39 @@ const Dashboard = () => {
                   </Link>
                 </div>
               ) : (
-                <div className="text-center py-6 text-muted-foreground">
-                  <MessageCircle className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                  <p>No pending queries</p>
-                </div>
+                <BrandedEmptyState
+                  icon={MessageCircle}
+                  title="No open buyer queries"
+                  description="Your support queue is quiet. Share your Vendora bot link to let buyers reach you 24/7."
+                  badge="Inbox clear"
+                  actions={
+                    <>
+                      <Link to="/broadcast-messages">
+                        <Button
+                          variant="secondary"
+                          className="bg-white/10 text-white hover:bg-white/20"
+                        >
+                          Share availability update
+                        </Button>
+                      </Link>
+                      {botLink && (
+                        <Button
+                          onClick={async () => {
+                            try {
+                              await navigator.clipboard.writeText(botLink);
+                              toast({ title: 'Copied', description: 'Bot link copied to clipboard' });
+                            } catch {
+                              toast({ title: 'Copy failed', description: 'Select and copy manually', variant: 'destructive' });
+                            }
+                          }}
+                          className="bg-gradient-primary text-primary-foreground"
+                        >
+                          Copy Vendora bot link
+                        </Button>
+                      )}
+                    </>
+                  }
+                />
               )}
             </CardContent>
           </Card>

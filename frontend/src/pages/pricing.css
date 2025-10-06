@@ -66,6 +66,48 @@ main {
   padding: clamp(3rem, 10vw, 6rem) clamp(1.5rem, 6vw, 3.5rem);
 }
 
+.pricing-summary {
+  padding: clamp(2.5rem, 8vw, 4.5rem) clamp(1.5rem, 6vw, 3.5rem) 0;
+}
+
+.pricing-summary__grid {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  gap: clamp(1.5rem, 4vw, 2.5rem);
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.pricing-summary__grid article {
+  display: grid;
+  gap: 0.75rem;
+  padding: clamp(1.5rem, 4vw, 2rem);
+  border-radius: 1.5rem;
+  border: 1px solid oklch(var(--border));
+  background: linear-gradient(180deg, oklch(var(--card) / 0.95), oklch(var(--card)));
+  box-shadow: 0 25px 50px -40px oklch(var(--primary) / 0.6);
+}
+
+.pricing-summary__icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.9rem;
+  background: oklch(var(--primary) / 0.12);
+  color: oklch(var(--primary));
+  display: grid;
+  place-items: center;
+}
+
+.pricing-summary__grid h2 {
+  font-size: clamp(1.1rem, 2vw, 1.35rem);
+  font-weight: 600;
+}
+
+.pricing-summary__grid p {
+  color: oklch(var(--foreground) / 0.75);
+  line-height: 1.6;
+}
+
 .pricing-grid__inner {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));

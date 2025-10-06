@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { login as loginApi, logout as logoutApi, isAuthenticated, getVendorProfile, VendorProfile } from '@/lib/auth';
+import SplashScreen from '@/components/SplashScreen';
 
 interface AuthContextType {
   user: VendorProfile | null;
@@ -72,7 +73,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   return (
     <AuthContext.Provider value={value}>
-      {children}
+      {isLoading ? <SplashScreen message="Preparing your workspace" subMessage="Checking your Vendora session" /> : children}
     </AuthContext.Provider>
   );
 };

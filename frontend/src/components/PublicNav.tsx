@@ -72,8 +72,14 @@ export default function PublicNav({ links = defaultLinks, variant = "translucent
     <header className={`public-nav ${variant === "solid" ? "public-nav--solid" : "public-nav--translucent"}`}>
       <div className="public-nav__inner">
         <Link to="/" className="public-nav__brand" onClick={() => setOpen(false)}>
-          <span>Vendora</span>
-          <span className="public-nav__badge">Beta</span>
+          <span className="public-nav__logo">
+            <img src="/brand/logo-light.svg" className="public-nav__logo-image dark:hidden" alt="Vendora" />
+            <img src="/brand/logo-dark.svg" className="public-nav__logo-image hidden dark:block" alt="Vendora" />
+          </span>
+          <span className="public-nav__brand-title">
+            Vendora
+            <span className="public-nav__badge">Beta</span>
+          </span>
         </Link>
         <button
           className="public-nav__toggle"

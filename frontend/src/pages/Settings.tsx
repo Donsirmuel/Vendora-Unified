@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { User, DollarSign, Moon, Sun, Settings as SettingsIcon, Plus, Trash2, Pencil, Copy, CreditCard, TrendingUp } from "lucide-react";
+import { User, DollarSign, Moon, Sun, Settings as SettingsIcon, Plus, Trash2, Pencil, Copy, CreditCard, TrendingUp, Sparkles, Megaphone, ArrowRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { getVendorProfile, updateVendorProfile, VendorProfile } from "@/lib/auth";
 import { listBankDetails, createBankDetail, updateBankDetail, deleteBankDetail, BankDetail } from "@/lib/bankDetails";
@@ -20,6 +20,7 @@ import { FreePlanUsageWidget, FreePlanLimitAlert } from '@/components/FreePlanCo
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { cn } from "@/lib/utils";
+import BrandedEmptyState from "@/components/BrandedEmptyState";
 
 type SectionTone = 'solid' | 'muted' | 'gradient';
 
@@ -362,16 +363,66 @@ const Settings = () => {
   return (
     <Layout title="Settings">
       <div className="space-y-10">
+        <div className="rounded-3xl border border-white/10 bg-gradient-to-br from-slate-950 via-slate-900 to-primary/25 px-8 py-10 text-white shadow-xl shadow-primary/20">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+            <div className="space-y-4">
+              <Badge variant="outline" className="w-fit border-white/20 bg-white/10 uppercase tracking-[0.3em] text-xs text-primary/80">
+                Control Center
+              </Badge>
+              <div>
+                <h1 className="text-3xl font-semibold md:text-4xl">Settings &amp; Automations</h1>
+                <p className="mt-3 max-w-2xl text-sm text-slate-200 md:text-base">
+                  Tune every touchpoint, automate hand-offs, and keep your Vendora desk synced across channels.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                <Button asChild size="sm" variant="secondary" className="bg-white/10 text-white hover:bg-white/20">
+                  <Link to="/availability">
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    Update availability
+                  </Link>
+                </Button>
+                <Button asChild size="sm" variant="outline" className="border-white/30 bg-transparent text-white hover:bg-white/10">
+                  <Link to="/broadcast-messages">
+                    <Megaphone className="mr-2 h-4 w-4" />
+                    Broadcast studio
+                  </Link>
+                </Button>
+              </div>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-5 text-sm text-slate-100 shadow-inner">
+              <div className="flex items-center gap-2 text-primary">
+                <Sparkles className="h-4 w-4" />
+                <span className="text-xs font-semibold uppercase tracking-[0.3em]">Daily workflow</span>
+              </div>
+              <ul className="mt-4 space-y-2 text-sm text-slate-200/90">
+                <li className="flex items-start gap-2">
+                  <ArrowRight className="mt-1 h-3.5 w-3.5 text-primary/80" />
+                  <span>Refresh trading rails, rates, and payout details before market open.</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <ArrowRight className="mt-1 h-3.5 w-3.5 text-primary/80" />
+                  <span>Lock in your availability window so the bot knows when to hand off orders.</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <ArrowRight className="mt-1 h-3.5 w-3.5 text-primary/80" />
+                  <span>Queue a broadcast for promos or downtime so buyers stay informed.</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
         {subscriptionStatus && (
           <SectionGroup
-            title="Account Overview"
-            description="Review your plan, trial status, and daily usage at a glance."
+            title="Plan &amp; Usage"
+            description="Review plan status, monitor daily usage, and know when to level up."
           >
             <SettingsSection
               key="account"
               id="account-summary"
               title="Account"
-              description="Your subscription summary"
+              description="Subscription snapshot, renewal cadence, and trial status."
               icon={CreditCard}
               bodyClassName="space-y-2 text-sm"
             >
@@ -393,7 +444,7 @@ const Settings = () => {
               key="plan-usage"
               id="plan-usage"
               title="Plan & Usage"
-              description="Track current limits and upgrade paths."
+              description="Monitor limits, unlock upgrades, and keep an eye on volume."
               icon={TrendingUp}
             >
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -449,14 +500,14 @@ const Settings = () => {
         )}
 
         <SectionGroup
-          title="Platform Setup"
-          description="Control how Vendora runs on the web, as a PWA, and through notifications."
+          title="Presence &amp; Install"
+          description="Control how Vendora behaves as a PWA, on desktop, and through proactive notifications."
         >
           <SettingsSection
             key="bot-link"
             id="bot-link"
             title="Telegram Bot Link"
-            description="Share this link so customers can start orders in Telegram."
+            description="Drop your Telegram bot entry point anywhere customers hang out."
             icon={SettingsIcon}
           >
             {botLink ? (
@@ -480,7 +531,7 @@ const Settings = () => {
             key="application"
             id="application"
             title="Application"
-            description="Manage updates, install status, and browser notifications."
+            description="Ship instant updates, install the PWA, and stay alert with push notifications."
             icon={SettingsIcon}
           >
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -545,7 +596,7 @@ const Settings = () => {
             key="theme"
             id="theme"
             title="Theme Settings"
-            description="Switch between light and dark modes."
+            description="Match your desk's lighting in a single tap."
             icon={theme === "dark" ? Moon : Sun}
             tone="muted"
           >
@@ -571,14 +622,14 @@ const Settings = () => {
         </SectionGroup>
 
         <SectionGroup
-          title="Profile & Trading"
-          description="Keep your vendor profile, assets, and settlement details organised."
+          title="Vendor Profile &amp; Trading Rails"
+          description="Keep your public profile, payout instructions, and asset catalog ready for the next order."
         >
           <SettingsSection
             key="profile"
             id="profile"
             title="Profile Settings"
-            description="Manage your personal information and profile"
+            description="Refresh the vendor story buyers see in the bot."
             icon={User}
             tone="gradient"
             bodyClassName="space-y-6"
@@ -647,30 +698,30 @@ const Settings = () => {
             key="rates"
             id="rates"
             title="Assets & Rates"
-            description="Add assets with buy/sell rates and contract addresses"
+            description="Keep trading pairs, spreads, and settlement notes current."
             icon={DollarSign}
             tone="gradient"
           >
             <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
               <div>
-                <Label>Asset</Label>
-                <Input value={String(rateForm.asset || '')} onChange={e=>setRateForm({ ...rateForm, asset: e.target.value })} />
+                <Label htmlFor="settings-asset-name">Asset</Label>
+                <Input id="settings-asset-name" value={String(rateForm.asset || '')} onChange={e=>setRateForm({ ...rateForm, asset: e.target.value })} />
               </div>
               <div>
-                <Label>Buy Rate</Label>
-                <Input type="number" value={String(rateForm.buy_rate || '')} onChange={e=>setRateForm({ ...rateForm, buy_rate: e.target.value })} />
+                <Label htmlFor="settings-asset-buy-rate">Buy Rate</Label>
+                <Input id="settings-asset-buy-rate" type="number" value={String(rateForm.buy_rate || '')} onChange={e=>setRateForm({ ...rateForm, buy_rate: e.target.value })} />
               </div>
               <div>
-                <Label>Sell Rate</Label>
-                <Input type="number" value={String(rateForm.sell_rate || '')} onChange={e=>setRateForm({ ...rateForm, sell_rate: e.target.value })} />
+                <Label htmlFor="settings-asset-sell-rate">Sell Rate</Label>
+                <Input id="settings-asset-sell-rate" type="number" value={String(rateForm.sell_rate || '')} onChange={e=>setRateForm({ ...rateForm, sell_rate: e.target.value })} />
               </div>
               <div>
-                <Label>Contract Address (optional)</Label>
-                <Input value={String(rateForm.contract_address || '')} onChange={e=>setRateForm({ ...rateForm, contract_address: e.target.value })} />
+                <Label htmlFor="settings-asset-contract">Contract Address (optional)</Label>
+                <Input id="settings-asset-contract" value={String(rateForm.contract_address || '')} onChange={e=>setRateForm({ ...rateForm, contract_address: e.target.value })} />
               </div>
               <div className="md:col-span-4">
-                <Label>Bank Details (optional)</Label>
-                <Textarea value={String(rateForm.bank_details || '')} onChange={e=>setRateForm({ ...rateForm, bank_details: e.target.value })} />
+                <Label htmlFor="settings-asset-bank-details">Bank Details (optional)</Label>
+                <Textarea id="settings-asset-bank-details" value={String(rateForm.bank_details || '')} onChange={e=>setRateForm({ ...rateForm, bank_details: e.target.value })} />
               </div>
             </div>
             <div className="flex gap-2">
@@ -691,7 +742,24 @@ const Settings = () => {
                   </div>
                 </div>
               ))}
-              {rates.length === 0 && <p className="text-sm text-muted-foreground">No assets yet.</p>}
+              {rates.length === 0 && (
+                <BrandedEmptyState
+                  icon={TrendingUp}
+                  badge="Publish rails"
+                  title="Add your first trading pair"
+                  description="Buyers rely on this list to know what they can move with you. Set a spread, optional instructions, and the Telegram bot will handle the rest."
+                  actions={
+                    <Button
+                      variant="secondary"
+                      onClick={() => document.getElementById('settings-asset-name')?.focus()}
+                    >
+                      <Plus className="mr-2 h-4 w-4" />
+                      Add asset
+                    </Button>
+                  }
+                  className="bg-slate-950 text-left md:text-center"
+                />
+              )}
             </div>
           </SettingsSection>
 
@@ -699,7 +767,7 @@ const Settings = () => {
             key="auto-expire"
             id="auto-expire"
             title="Orders Auto-Expiry"
-            description="How many minutes before a pending order auto-expires"
+            description="Decide when pending orders self-clean your pipeline."
             icon={SettingsIcon}
             tone="gradient"
             bodyClassName="max-w-xs space-y-2"
@@ -726,34 +794,37 @@ const Settings = () => {
             key="banks"
             id="banks"
             title="Bank Details / Payment Instructions"
-            description="Saved bank details for quick selection when accepting BUY orders"
+            description="Store payout profiles so payment instructions are one click away."
             icon={DollarSign}
             tone="gradient"
           >
             <div className="space-y-2">
-              <Label htmlFor="bank-details">Default Instructions (optional)</Label>
-              <Textarea id="bank-details" value={bankDetails} onChange={(e) => setBankDetails(e.target.value)} className="bg-background border-border min-h-[80px]" placeholder={`Generic instructions...`} disabled={loading} />
+              <Label htmlFor="settings-bank-default-instructions">Default Instructions (optional)</Label>
+              <Textarea id="settings-bank-default-instructions" value={bankDetails} onChange={(e) => setBankDetails(e.target.value)} className="bg-background border-border min-h-[80px]" placeholder={`Generic instructions...`} disabled={loading} />
             </div>
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label>Bank Name</Label>
-                <Input value={String(bankForm.bank_name || '')} onChange={e=>setBankForm({ ...bankForm, bank_name: e.target.value })} />
+                <Label htmlFor="settings-bank-name">Bank Name</Label>
+                <Input id="settings-bank-name" value={String(bankForm.bank_name || '')} onChange={e=>setBankForm({ ...bankForm, bank_name: e.target.value })} />
               </div>
               <div className="space-y-2">
-                <Label>Account Number</Label>
-                <Input value={String(bankForm.account_number || '')} onChange={e=>setBankForm({ ...bankForm, account_number: e.target.value })} />
+                <Label htmlFor="settings-bank-number">Account Number</Label>
+                <Input id="settings-bank-number" value={String(bankForm.account_number || '')} onChange={e=>setBankForm({ ...bankForm, account_number: e.target.value })} />
               </div>
               <div className="space-y-2">
-                <Label>Account Name</Label>
-                <Input value={String(bankForm.account_name || '')} onChange={e=>setBankForm({ ...bankForm, account_name: e.target.value })} />
+                <Label htmlFor="settings-bank-account-name">Account Name</Label>
+                <Input id="settings-bank-account-name" value={String(bankForm.account_name || '')} onChange={e=>setBankForm({ ...bankForm, account_name: e.target.value })} />
               </div>
               <div className="space-y-2">
-                <Label>Instructions (optional)</Label>
-                <Input value={String(bankForm.instructions || '')} onChange={e=>setBankForm({ ...bankForm, instructions: e.target.value })} />
+                <Label htmlFor="settings-bank-instructions">Instructions (optional)</Label>
+                <Input id="settings-bank-instructions" value={String(bankForm.instructions || '')} onChange={e=>setBankForm({ ...bankForm, instructions: e.target.value })} />
               </div>
               <div className="col-span-1">
-                <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={!!bankForm.is_default} onChange={e=>setBankForm({ ...bankForm, is_default: e.target.checked })} /> Set as default</label>
+                <label className="flex items-center gap-2 text-sm" htmlFor="settings-bank-default">
+                  <input id="settings-bank-default" type="checkbox" checked={!!bankForm.is_default} onChange={e=>setBankForm({ ...bankForm, is_default: e.target.checked })} />
+                  Set as default
+                </label>
               </div>
             </div>
             <div className="mt-3 flex gap-2">
@@ -775,47 +846,64 @@ const Settings = () => {
                   </div>
                 </div>
               ))}
-              {bankList.length === 0 && <p className="text-sm text-muted-foreground">No bank details yet.</p>}
+              {bankList.length === 0 && (
+                <BrandedEmptyState
+                  icon={DollarSign}
+                  badge="Payout ready"
+                  title="Save a payout profile"
+                  description="Make approvals instant by attaching verified banking instructions. Buyers get the details as soon as you accept."
+                  actions={
+                    <Button
+                      variant="secondary"
+                      onClick={() => document.getElementById('settings-bank-name')?.focus()}
+                    >
+                      <Plus className="mr-2 h-4 w-4" />
+                      Add bank profile
+                    </Button>
+                  }
+                  className="bg-slate-950 text-left md:text-center"
+                />
+              )}
             </div>
           </SettingsSection>
         </SectionGroup>
 
         <SectionGroup
-          title="Operations"
-          description="Keep automations and communications aligned with your desk."
+          title="Signals &amp; Automations"
+          description="Guide the bot, nudge customers, and keep frontline communications in sync."
         >
           <SettingsSection
             key="vendor-management"
             id="vendor-management"
             title="Vendor Management"
-            description="Manage your availability and customer communications"
+            description="Guide availability, broadcasts, and automated customer responses."
             icon={SettingsIcon}
             tone="gradient"
           >
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label>Auto-accept via Bot</Label>
-                <p className="text-sm text-muted-foreground">When enabled, customers who initiate trades with your bot will receive vendor payment details automatically and a transaction will be created on your behalf.</p>
+                <Label>Auto-accept via Telegram Bot</Label>
+                <p className="text-sm text-muted-foreground">Let Vendora hand customers your payment rails instantly and spin up transactions on autopilot whenever the Telegram bot captures a new order.</p>
                 <div className="mt-2">
                   <label className="flex items-center gap-3">
                     <input type="checkbox" checked={autoAccept} onChange={e => setAutoAccept(e.target.checked)} />
-                    <span className="text-sm">Auto-accept trades (create transactions automatically)</span>
+                    <span className="text-sm">Auto-accept incoming trades and create transactions automatically</span>
                   </label>
                 </div>
               </div>
-              <Button asChild variant="ghost" className="h-auto justify-start p-4">
+              <Button asChild variant="ghost" className="h-auto justify-start rounded-xl border border-border/60 bg-primary/5 p-4 text-left hover:bg-primary/10">
                 <Link to="/availability">
-                  <div>
-                    <p className="font-medium">Set Availability</p>
-                    <p className="text-sm text-muted-foreground">Manage when you're available for orders</p>
+                  <div className="space-y-1">
+                    <p className="font-medium">Availability Windows</p>
+                    <p className="text-sm text-muted-foreground">Broadcast when you're live so the Telegram bot knows when to pause hand-offs.</p>
                   </div>
                 </Link>
               </Button>
-              <Button asChild variant="ghost" className="h-auto justify-start p-4">
+              <Button asChild variant="ghost" className="h-auto justify-start rounded-xl border border-border/60 bg-primary/5 p-4 text-left hover:bg-primary/10">
                 <Link to="/broadcast-messages">
-                  <div>
-                    <p className="font-medium">Broadcast Messages</p>
-                    <p className="text-sm text-muted-foreground">Send messages to all your customers</p>
+                  <div className="space-y-1">
+                    <p className="font-medium">Broadcast Studio</p>
+                    <p className="text-sm text-muted-foreground">Send polished promos, downtime alerts, and rate drops to every buyer instantly.</p>
                   </div>
                 </Link>
               </Button>

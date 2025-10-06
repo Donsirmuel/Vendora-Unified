@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,14 +8,13 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Send, MessageSquare, Calendar, Eye, Trash2 } from "lucide-react";
+import { ArrowLeft, Send, MessageSquare, Calendar, Trash2, Megaphone, Sparkles, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { createBroadcast, listBroadcasts, sendBroadcast, deleteBroadcast, BroadcastMessage } from "@/lib/broadcast";
-import { useAuth } from "@/contexts/AuthContext";
+import BrandedEmptyState from "@/components/BrandedEmptyState";
 
 const BroadcastMessages = () => {
   const { toast } = useToast();
-  const { user } = useAuth();
   const [title, setTitle] = useState("");
   const [content, setMessage] = useState("");
   const [messageType, setMessageType] = useState<'asset_added' | 'rate_updated' | 'order_status' | 'general'>('general');
@@ -25,15 +24,11 @@ const BroadcastMessages = () => {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
 
-  useEffect(() => {
-    loadBroadcasts();
-  }, [page]);
-
-  const loadBroadcasts = async () => {
+  const loadBroadcasts = useCallback(async (targetPage: number) => {
     try {
       setIsLoading(true);
-      const response = await listBroadcasts(page);
-      if (page === 1) {
+      const response = await listBroadcasts(targetPage);
+      if (targetPage === 1) {
         setBroadcasts(response.results);
       } else {
         setBroadcasts(prev => [...prev, ...response.results]);
@@ -48,7 +43,11 @@ const BroadcastMessages = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    loadBroadcasts(page).catch(() => {});
+  }, [page, loadBroadcasts]);
 
   const handleSendBroadcast = async () => {
     if (!title.trim() || !content.trim()) {
@@ -86,7 +85,7 @@ const BroadcastMessages = () => {
         
         // Reload broadcasts
         setPage(1);
-        await loadBroadcasts();
+  await loadBroadcasts(1);
       } else {
         toast({
           title: "Send Failed",
@@ -114,7 +113,7 @@ const BroadcastMessages = () => {
         className: "bg-success text-success-foreground"
       });
       setPage(1);
-      await loadBroadcasts();
+  await loadBroadcasts(1);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -138,31 +137,53 @@ const BroadcastMessages = () => {
 
   return (
     <Layout>
-      <div className="space-y-6">
-        
-        {/* Header */}
-        <div className="flex items-center space-x-4">
-          <Link to="/settings">
-            <Button variant="outline" size="sm" className="border-border">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Settings
-            </Button>
-          </Link>
-          <div>
-            <h1 className="text-2xl font-bold">Broadcast Messages</h1>
-            <p className="text-muted-foreground">Send messages to all your customers</p>
+      <div className="space-y-8">
+        <div className="rounded-3xl border border-white/10 bg-gradient-to-br from-slate-950 via-slate-900 to-primary/20 px-8 py-10 text-white shadow-xl shadow-primary/20">
+          <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
+            <div className="space-y-4">
+              <Badge variant="outline" className="w-fit border-white/20 bg-white/10 uppercase tracking-[0.3em] text-xs text-primary/80">
+                Customer Broadcasts
+              </Badge>
+              <div>
+                <h1 className="text-3xl font-semibold md:text-4xl">Vendora Broadcast Studio</h1>
+                <p className="mt-3 max-w-2xl text-sm text-slate-200 md:text-base">
+                  Ship real-time alerts, price updates, and availability news to every buyer in one polished, vendor-branded feed.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                <Button asChild size="sm" variant="secondary" className="bg-white/10 text-white hover:bg-white/20">
+                  <Link to="/settings">
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Back to Settings
+                  </Link>
+                </Button>
+                <Button asChild size="sm" variant="outline" className="border-white/30 bg-transparent text-white hover:bg-white/10">
+                  <Link to="/availability">
+                    <Clock className="mr-2 h-4 w-4" />
+                    Update Availability
+                  </Link>
+                </Button>
+              </div>
+            </div>
+            <div className="relative flex flex-col items-start gap-3 rounded-2xl border border-white/10 bg-white/5 px-5 py-4 text-sm text-slate-100 md:max-w-xs">
+              <Sparkles className="h-5 w-5 text-primary" />
+              <p className="text-base font-semibold text-white">Stay top-of-mind</p>
+              <p className="text-xs text-slate-200/80">
+                Every broadcast drops straight into your Telegram bot so buyers see your latest promo, rates, or downtime instantly.
+              </p>
+            </div>
           </div>
         </div>
 
         {/* Send Broadcast */}
-        <Card className="bg-gradient-card border-border">
+  <Card className="bg-gradient-card border-border">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <Send className="h-5 w-5" />
               <span>Send Broadcast Message</span>
             </CardTitle>
             <CardDescription>
-              Send a message to all your customers. This will be visible to them when they interact with your services.
+              Deliver polished announcements the moment buyers open your Vendora Telegram bot. Draft, tag, and send in one motion.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -231,7 +252,7 @@ const BroadcastMessages = () => {
               <span>Broadcast History</span>
             </CardTitle>
             <CardDescription>
-              View your previously sent broadcast messages
+              Track campaign reach, resend favourites, and celebrate the messages that move your desk forward.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -280,11 +301,23 @@ const BroadcastMessages = () => {
                 )}
               </div>
             ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                <MessageSquare className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                <p>No broadcast messages sent yet</p>
-                <p className="text-sm">Send your first broadcast message above</p>
-              </div>
+              <BrandedEmptyState
+                icon={Megaphone}
+                badge="Let them know"
+                title="Announce your next move"
+                description="Keep buyers excited with an availability drop, promo, or rate change. Your first broadcast primes the bot for every future update."
+                actions={
+                  <Button
+                    onClick={handleSendBroadcast}
+                    disabled={isSending || !title.trim() || !content.trim()}
+                    className="bg-gradient-primary hover:opacity-90"
+                  >
+                    <Send className="mr-2 h-4 w-4" />
+                    {isSending ? "Sending..." : "Send your first broadcast"}
+                  </Button>
+                }
+                className="bg-slate-950"
+              />
             )}
           </CardContent>
         </Card>

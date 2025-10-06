@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { signup, isValidEmail, validatePassword, passwordsMatch, type SignupCredentials } from '@/lib/auth';
 
-import { Smartphone, Laptop, Tablet, Monitor } from "lucide-react";
+import { Smartphone, Laptop, Tablet, Monitor, CheckCircle2 } from "lucide-react";
 
 export default function SignupPage() {
   const navigate = useNavigate();
@@ -85,9 +85,9 @@ export default function SignupPage() {
       const trialExpires = res?.user?.trial_expires_at;
       if (trialExpires) {
         const d = new Date(trialExpires);
-        setSuccess(`Account created! Trial active until ${d.toLocaleString()}. You will be redirected to login...`);
+        setSuccess(`Vendor desk created! Trial coverage runs until ${d.toLocaleString()}. Redirecting you to sign-in...`);
       } else {
-        setSuccess('Account created successfully! You can now log in.');
+        setSuccess('Vendor access confirmed. Redirecting you to sign-in...');
       }
       setTimeout(() => {
         navigate('/login');
@@ -104,13 +104,21 @@ export default function SignupPage() {
       <div className="w-full max-w-6xl grid lg:grid-cols-2 gap-8 items-center">
         {/* Left side - Branding & Features */}
         <div className="space-y-8 text-center lg:text-left">
-          <div>
-            <h1 className="text-4xl lg:text-6xl font-bold bg-gradient-primary bg-clip-text text-transparent mb-4">
-              Vendora
-            </h1>
-            <p className="text-xl text-muted-foreground">
-              Professional crypto vendor platform
-            </p>
+          <div className="space-y-4">
+            <div className="inline-flex items-center justify-center rounded-2xl bg-white/5 px-6 py-4 shadow-lg shadow-primary/25 ring-1 ring-white/10 backdrop-blur">
+              <img
+                src="/brand/logo-light.svg"
+                alt="Vendora logo"
+                className="h-10 w-auto"
+                loading="lazy"
+              />
+            </div>
+            <div className="space-y-3">
+              <h1 className="text-4xl lg:text-5xl font-semibold text-white">Launch your Vendora trading desk</h1>
+              <p className="text-lg text-muted-foreground max-w-xl lg:max-w-none mx-auto lg:mx-0">
+                Onboard your vendor ops, pipe in Telegram leads, and issue compliant payouts from a single command center purpose-built for OTC teams.
+              </p>
+            </div>
           </div>
           {/* Device compatibility showcase */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
@@ -140,12 +148,24 @@ export default function SignupPage() {
             </div>
           </div>
           <div className="space-y-4">
-            <h2 className="text-2xl font-semibold">Join the best crypto vendor platform</h2>
-            <ul className="space-y-2 text-muted-foreground">
-              <li>• Track orders and transactions in real-time</li>
-              <li>• Manage multiple cryptocurrencies</li>
-              <li>• Professional vendor dashboard</li>
-              <li>• Works across all your devices</li>
+            <h2 className="text-2xl font-semibold text-white">Everything revenue teams need</h2>
+            <ul className="space-y-3 text-left text-base text-muted-foreground">
+              <li className="flex items-start gap-3">
+                <CheckCircle2 className="mt-1 h-5 w-5 text-primary" aria-hidden="true" />
+                <span>Unified ledger for fiat collections, crypto escrow releases, and pending settlements.</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <CheckCircle2 className="mt-1 h-5 w-5 text-primary" aria-hidden="true" />
+                <span>Auto-sync with Vendora Telegram bot to pre-qualify leads and auto-reply to prospects.</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <CheckCircle2 className="mt-1 h-5 w-5 text-primary" aria-hidden="true" />
+                <span>Broadcast fresh buy/sell quotes to VIP buyers, field teams, and private channels in seconds.</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <CheckCircle2 className="mt-1 h-5 w-5 text-primary" aria-hidden="true" />
+                <span>Install as a PWA and keep settlements moving even when your connection cuts out.</span>
+              </li>
             </ul>
           </div>
         </div>
@@ -153,9 +173,9 @@ export default function SignupPage() {
         <div className="w-full max-w-md mx-auto lg:mx-0">
           <Card className="bg-gradient-card border-border shadow-card card-anim pulse-card">
             <CardHeader className="space-y-1">
-              <CardTitle className="text-2xl font-bold">Create Account</CardTitle>
+              <CardTitle className="text-2xl font-bold">Create your vendor account</CardTitle>
               <CardDescription>
-                Join Vendora to start managing your crypto transactions
+                Secure a Vendora seat for your desk. We’ll help you migrate buyers, bots, and payout rules.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -171,39 +191,39 @@ export default function SignupPage() {
                   </Alert>
                 )}
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email Address</Label>
+                  <Label htmlFor="email">Work email</Label>
                   <Input
                     id="email"
                     name="email"
                     type="email"
                     value={formData.email}
                     onChange={handleInputChange}
-                    placeholder="Enter your email"
+                    placeholder="ops-team@yourvendor.com"
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="username">Username</Label>
+                  <Label htmlFor="username">Desk handle</Label>
                   <Input
                     id="username"
                     name="username"
                     type="text"
                     value={formData.username}
                     onChange={handleInputChange}
-                    placeholder="Choose a username (for display & bot link)"
+                    placeholder="Choose a vendor handle (appears in buyer portals)"
                     required
                   />
-                  <p className="text-xs text-gray-500">Letters, numbers, underscores, or hyphens. Example: crypto_king</p>
+                  <p className="text-xs text-gray-500">Letters, numbers, underscores, or hyphens. Example: vendora_west_desk</p>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
+                  <Label htmlFor="password">Set vendor password</Label>
                   <Input
                     id="password"
                     name="password"
                     type="password"
                     value={formData.password}
                     onChange={handleInputChange}
-                    placeholder="Enter your password"
+                    placeholder="Create a secure passphrase"
                     required
                   />
                   <p className="text-xs text-gray-500">
@@ -224,14 +244,14 @@ export default function SignupPage() {
                 </div>
                 {/* Bank details removed from signup. Set in settings after login. */}
                 <Button type="submit" className="w-full bg-gradient-primary hover:opacity-90 text-primary-foreground font-medium" disabled={loading}>
-                  {loading ? 'Creating Account...' : 'Create Account'}
+                  {loading ? 'Creating vendor seat...' : 'Launch vendor account'}
                 </Button>
               </form>
               <div className="mt-6 text-center">
                 <p className="text-sm text-muted-foreground">
-                  Already have an account?{' '}
+                  Already operating with Vendora?{' '}
                   <Link to="/login" className="font-medium text-primary hover:underline">
-                    Sign in here
+                    Head to vendor sign-in
                   </Link>
                 </p>
               </div>

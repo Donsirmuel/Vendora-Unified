@@ -1,5 +1,5 @@
 // Bump this version when deploying to force old caches to be purged
-const CACHE_NAME = 'vendora-cache-v10';
+const CACHE_NAME = 'vendora-cache-v13';
 const API_CACHE = 'vendora-api-v1';
 const APP_SHELL = [
   '/',
@@ -10,6 +10,8 @@ const APP_SHELL = [
   '/icons/icon-192.png',
   '/icons/icon-512.png',
   '/icons/apple-touch-icon-180.png',
+  '/brand/logo-light.svg',
+  '/brand/logo-dark.svg',
 ];
 
 self.addEventListener('install', (event) => {

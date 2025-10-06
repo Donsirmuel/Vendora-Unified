@@ -6,6 +6,24 @@ import BackToTopButton from "@/components/BackToTopButton";
 import { Button } from "@/components/ui/button";
 import "./pricing.css";
 
+const pricingSummary = [
+  {
+    title: "Keep orders organised",
+    body: "Your Vendora desk tracks quotes, payments, and receipts so the whole team sees what happens next.",
+    icon: <Zap className="h-5 w-5" aria-hidden />
+  },
+  {
+    title: "Telegram responds for you",
+    body: "Every plan includes the Vendora bot that sends updates, asks for proofs, and confirms deliveries instantly.",
+    icon: <Sparkles className="h-5 w-5" aria-hidden />
+  },
+  {
+    title: "Upgrade when volume grows",
+    body: "Start free, fulfil 10 orders a day, and move to paid tiers only when you need unlimited volume and automations.",
+    icon: <Users className="h-5 w-5" aria-hidden />
+  }
+];
+
 interface Plan {
   name: string;
   price: string;
@@ -23,16 +41,16 @@ const plans: Plan[] = [
     name: "Free",
     price: "$0",
     billing: "forever",
-    highlight: "For new crypto vendor desks shipping first orders",
-    description: "Run Vendora with up to 10 customer orders per day while you learn the workflow.",
+    highlight: "For vendors starting with a few trades a day",
+    description: "Fulfil up to 10 customer orders each day while you learn how Vendora keeps work tidy.",
     ctaLabel: "Start free",
     ctaLink: "/signup?plan=free",
     features: [
-      "Up to 10 customer orders per day included",
-      "Vendora web app to track every order from request to proof",
-      "Customer-facing Telegram bot included",
-      "Real-time alerts for vendor tasks",
-      "Exportable order history",
+      "10 customer orders per day",
+      "Dashboard that tracks quote → proof → payout",
+      "Vendora Telegram bot included",
+      "Alerts when it is your turn to respond",
+      "Order history export (PDF)",
       "Email support"
     ]
   },
@@ -40,90 +58,90 @@ const plans: Plan[] = [
     name: "Monthly",
     price: "$22.99",
     billing: "per month",
-    highlight: "For active desks that need unlimited orders and automation",
-    description: "Remove the order limit, unlock automation, and keep finance synced every day.",
+    highlight: "For busy desks that need unlimited orders and reminders",
+    description: "Unlock automations, faster payouts, and live support once daily volume takes off.",
     ctaLabel: "Upgrade monthly",
     ctaLink: "/upgrade?plan=monthly",
     mostPopular: true,
     features: [
-      "Unlimited customer orders per day",
-      "Auto-expiry, reminders, and proof collection",
-      "Advanced exports for finance and compliance",
-      "Priority vendor and customer notifications",
-      "In-app and chat support"
+      "Unlimited customer orders",
+      "Automatic expiries, reminders, and proof chase",
+      "Finance-ready exports and statements",
+      "Priority alerts for vendors and buyers",
+      "Chat and in-app support"
     ]
   },
   {
     name: "Quarterly",
     price: "$68.97",
     billing: "every 3 months",
-    highlight: "For desks that prefer quarterly savings and predictable billing",
-    description: "Get the monthly plan benefits with a quarterly commitment and bundled savings.",
+    highlight: "Quarterly savings for growing desks",
+    description: "Everything in Monthly plus a quarterly health check and bundled savings.",
     ctaLabel: "Upgrade quarterly",
     ctaLink: "/upgrade?plan=quarterly",
     features: [
       "Everything in Monthly",
-      "Quarterly performance summary",
+      "Quarterly desk performance summary",
       "Priority review of feature requests",
-      "Savings compared to paying monthly",
-      "Shared inbox for vendor teammates"
+      "Built-in savings versus monthly",
+      "Shared inbox for teammates"
     ]
   },
   {
     name: "Semi-Annual",
     price: "$137.94",
     billing: "every 6 months",
-    highlight: "For desks that want long-term value and deeper analytics",
-    description: "Lock in six months of unlimited orders with runway for growth and advanced insights.",
+    highlight: "Six-month runway with extra insight",
+    description: "Lock in six months of unlimited orders with more analytics and regular check-ins.",
     ctaLabel: "Upgrade semi-annual",
     ctaLink: "/upgrade?plan=semi-annual",
     features: [
       "Everything in Quarterly",
       "Advanced revenue and payout analytics",
-      "Dedicated success check-ins",
-      "Custom labels for order tracking",
-      "Invite-only beta features"
+      "Bi-monthly success check-ins",
+      "Custom labels for orders and payouts",
+      "Early access to beta features"
     ]
   },
   {
     name: "Annual",
     price: "$275.88",
     billing: "per year",
-    highlight: "Best value for desks that run Vendora every day",
-    description: "Secure a full year of Vendora with the lowest rate, premium support, and roadmap input.",
+    highlight: "Best value for vendors who live in Vendora",
+    description: "Secure a full year with our lowest rate, premium support, and direct roadmap input.",
     ctaLabel: "Upgrade annual",
     ctaLink: "/upgrade?plan=annual",
     features: [
       "Everything in Semi-Annual",
       "Priority queue for support and onboarding",
       "Quarterly roadmap sessions with Vendora team",
-      "White-label customer notifications",
-      "Guaranteed pricing for renewal"
+      "Optional white-label customer messages",
+      "Guaranteed renewal pricing"
     ]
   }
 ];
 const valueStats = [
   {
     label: "Manage every order",
-    value: "One workspace",
-    description: "Approve, fulfill, and reconcile vendor orders without hopping between chats and sheets."
+    value: "One desk",
+    description: "Stay on top of quotes, payments, and receipts without switching apps."
   },
   {
-    label: "Keep customers updated",
-    value: "Telegram included",
-    description: "Send automatic status updates, proof requests, and finished order notifications from one bot."
+    label: "Keep buyers updated",
+    value: "Telegram built-in",
+    description: "Send automatic status updates, proof requests, and delivery notes from your bot."
   },
   {
     label: "Stay audit ready",
     value: "Automatic records",
-    description: "Track payments, proofs, and payouts with exports your finance team can trust."
+    description: "Track payments, proofs, and payouts with exports your finance partner can trust."
   }
 ];
 
 const addOns = [
   {
-    title: "Vendor operations workspace",
-    body: "Track quotes, approvals, proofs, and payouts in one interface built for desk operators.",
+    title: "Vendor desk workspace",
+    body: "Track quotes, approvals, proofs, and payouts in one simple interface.",
     icon: <Zap className="h-6 w-6" aria-hidden />
   },
   {
@@ -133,7 +151,7 @@ const addOns = [
   },
   {
     title: "Rate and receipt controls",
-    body: "Update buy/sell rates instantly and collect receipts so finance is never chasing screenshots.",
+    body: "Update buy and sell rates instantly and collect receipts so no one chases screenshots.",
     icon: <ShieldCheck className="h-6 w-6" aria-hidden />
   }
 ];
@@ -152,7 +170,7 @@ const faqs = [
   {
     question: "Do I pay for extra teammates or vendors?",
     answer:
-      "No seat pricing here. Invite as many operators, finance teammates, and vendors as you need on every plan."
+      "No seat pricing here. Invite as many helpers, finance teammates, and vendors as you need on every plan."
   },
   {
     question: "How do quarterly, semi-annual, and annual upgrades work?",
@@ -187,9 +205,19 @@ const Pricing: React.FC = () => {
                 <a href="#plans">Compare plans</a>
               </Button>
             </div>
-            <p className="pricing-hero__note">
-              All paid plans come out to just $0.75 per day, so scaling Vendora never costs more than loose change.
-            </p>
+            <p className="pricing-hero__note">Every paid plan averages about $0.75 per day—easy to cover with a single trade.</p>
+          </div>
+        </section>
+
+        <section className="pricing-summary" aria-label="What every plan includes">
+          <div className="pricing-summary__grid">
+            {pricingSummary.map((item) => (
+              <article key={item.title}>
+                <span className="pricing-summary__icon">{item.icon}</span>
+                <h2>{item.title}</h2>
+                <p>{item.body}</p>
+              </article>
+            ))}
           </div>
         </section>
 
@@ -228,7 +256,7 @@ const Pricing: React.FC = () => {
             <div className="pricing-value__copy">
               <span className="pricing-flag">What Vendora handles</span>
               <h2>All the moving parts of your vendor desk, covered</h2>
-              <p>Open one workspace, invite your teammates, and give customers a Telegram bot that keeps them updated automatically. Vendora keeps operations tidy so you can focus on volume.</p>
+              <p>Open one workspace, invite your teammates, and give customers a Telegram bot that keeps them updated automatically. Vendora keeps your desk tidy so you can focus on volume.</p>
             </div>
             <div className="pricing-stats">
               {valueStats.map((stat) => (
@@ -246,7 +274,7 @@ const Pricing: React.FC = () => {
           <div className="pricing-addons__head">
             <span className="pricing-flag">Included with every plan</span>
             <h2>Replace spreadsheets, chats, and manual reminders</h2>
-            <p>Vendora bundles the tools a desk uses daily—no extra licenses or add-ons required. Start free and keep everything when you upgrade.</p>
+            <p>Vendora bundles the tools a vendor desk uses every day—no extra licenses or add-ons required. Start free and keep everything when you upgrade.</p>
           </div>
           <div className="pricing-addons__grid">
             {addOns.map((addon) => (
@@ -263,15 +291,15 @@ const Pricing: React.FC = () => {
           <div className="pricing-guarantee__body">
             <div>
               <span className="pricing-flag">Launch support</span>
-              <h2>Onboard in days with our rollout checklist</h2>
+              <h2>Go live fast with help from our team</h2>
               <p>
-                We help you import vendors, configure rates, and ship your Telegram bot. Most desks go live the same week and scale volume without disrupting customers.
+                We help you import data, configure rates, and launch your Telegram bot. Most desks go live the same week and grow volume without disrupting customers.
               </p>
             </div>
             <div className="pricing-guarantee__points">
               <div>
                 <ShieldCheck className="h-5 w-5" aria-hidden />
-                <span>Security-first architecture with encrypted vendor and customer data</span>
+                <span>Security-first setup with encrypted vendor and customer data</span>
               </div>
               <div>
                 <Zap className="h-5 w-5" aria-hidden />
@@ -288,7 +316,7 @@ const Pricing: React.FC = () => {
         <section className="pricing-faq" id="pricing-faq">
           <div className="pricing-faq__head">
             <span className="pricing-flag">FAQ</span>
-            <h2>Answers for busy vendor operators</h2>
+            <h2>Answers for busy vendor desks</h2>
             <p>Have something else in mind? Ping us from the app once you create your workspace.</p>
           </div>
           <div className="pricing-faq__grid">
@@ -327,7 +355,7 @@ const Pricing: React.FC = () => {
       </main>
 
       <footer className="pricing-footer">
-        <span>© {new Date().getFullYear()} Vendora. Pricing that scales with operators and vendors alike.</span>
+        <span>© {new Date().getFullYear()} Vendora. Pricing that scales with vendor desks of every size.</span>
         <nav>
           <Link to="/terms">Terms</Link>
           <Link to="/privacy">Privacy</Link>

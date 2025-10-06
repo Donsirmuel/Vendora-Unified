@@ -1,7 +1,7 @@
 {
   "name": "Vendora",
   "short_name": "Vendora",
-  "description": "Crypto vendor platform for managing orders and transactions.",
+  "description": "Vendora helps OTC crypto vendors manage orders, rates, transactions, and compliance from one polished PWA dashboard.",
   "start_url": "/",
   "scope": "/",
   "id": "/",
@@ -12,27 +12,27 @@
   "orientation": "portrait",
   "screenshots": [
     {
-      "src": "https://dummyimage.com/1280x720/0ea5b7/ffffff.png&text=Vendora+Dashboard",
-      "sizes": "1280x720",
+      "src": "/screenshots/vendora-dashboard.png",
+      "sizes": "1920x967",
       "type": "image/png",
       "form_factor": "wide",
-      "label": "Vendora Dashboard"
+      "label": "Vendora dashboard overview"
     },
     {
-      "src": "https://dummyimage.com/750x1334/0ea5b7/ffffff.png&text=Vendora+Mobile",
-      "sizes": "750x1334",
+      "src": "/screenshots/Vendora-signup.png",
+      "sizes": "1920x1024",
       "type": "image/png",
-      "label": "Vendora Mobile"
+      "label": "Signup flow for new vendors"
     }
   ],
   "splash_pages": ["/splash/splash.png"],
   "icons": [
-    { "src": "/icons/icon-96.png?v=3", "sizes": "96x96", "type": "image/png" },
-    { "src": "/icons/icon-192.png?v=3", "sizes": "192x192", "type": "image/png" },
-    { "src": "/icons/icon-256.png?v=3", "sizes": "256x256", "type": "image/png" },
-    { "src": "/icons/icon-384.png?v=3", "sizes": "384x384", "type": "image/png" },
-    { "src": "/icons/icon-512.png?v=3", "sizes": "512x512", "type": "image/png" },
-    { "src": "/icons/icon-maskable.png?v=3", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    { "src": "/icons/icon-96.png?v=4", "sizes": "96x96", "type": "image/png" },
+    { "src": "/icons/icon-192.png?v=4", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/icon-256.png?v=4", "sizes": "256x256", "type": "image/png" },
+    { "src": "/icons/icon-384.png?v=4", "sizes": "384x384", "type": "image/png" },
+    { "src": "/icons/icon-512.png?v=4", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icons/icon-maskable.png?v=4", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ],
   "shortcuts": [
     {

@@ -100,6 +100,7 @@ INSTALLED_APPS = [
 ]
 
 # Middleware helpers (kept in settings module for compact deployment; could be split out)
+from django.urls import path
 from django.utils.deprecation import MiddlewareMixin  # type: ignore
 from typing import Callable
 
@@ -415,7 +416,16 @@ class AccountStatusMiddleware(MiddlewareMixin):  # type: ignore
     def process_view(self, request, view_func, view_args, view_kwargs):  # type: ignore[override]
         self._maybe_authenticate_jwt(request)
         user = getattr(request, 'user', None)
+        path = request.path or ''
+
+        # Allow Django admin access regardless of subscription gating
+        if path.startswith('/admin'):
+            return None
+
         if not user or not getattr(user, 'is_authenticated', False):
+            return None
+
+        if getattr(user, 'is_staff', False) or getattr(user, 'is_superuser', False):
             return None
         from django.utils import timezone
         now = timezone.now()
@@ -424,7 +434,6 @@ class AccountStatusMiddleware(MiddlewareMixin):  # type: ignore
         suspended = not bool(getattr(user, 'is_service_active', True))
         if not (trial_expired or plan_expired or suspended):
             return None
-        path = request.path or ''
         if any(path.endswith(suf) for suf in self.ALLOW_PATH_SUFFIXES):
             return None
         from django.http import JsonResponse

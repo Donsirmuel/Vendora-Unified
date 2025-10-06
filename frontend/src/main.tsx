@@ -112,14 +112,14 @@ export async function ensurePushRegistered(options: { force?: boolean; prompt?: 
 		if (!('serviceWorker' in navigator) || !('PushManager' in window) || typeof Notification === 'undefined') {
 			return 'unsupported';
 		}
-		const reg = await navigator.serviceWorker.ready;
-		if (!force) {
-			const existing = await reg.pushManager.getSubscription();
+		const existingReg = await navigator.serviceWorker.getRegistration('/sw.js');
+		if (existingReg && !force) {
+			const existing = await existingReg.pushManager.getSubscription();
 			if (existing && Notification.permission === 'granted') {
 				return 'subscribed';
 			}
 		}
-		return await registerPush({ promptPermission: prompt, force });
+		return await registerPush({ promptPermission: prompt || Notification.permission === 'default', force });
 	} catch {
 		return 'error';
 	}

@@ -371,6 +371,20 @@ def telegram_webhook(request):
                             if txn:
                                 txn.customer_receiving_details = text.strip()
                                 txn.save(update_fields=["customer_receiving_details"])
+                                # If this transaction was created by auto_accept flow, notify vendor now
+                                try:
+                                    vendor = getattr(txn.order, 'vendor', None)
+                                    if vendor and getattr(vendor, 'auto_accept', False) and txn.status == 'uncompleted':
+                                        from notifications.views import send_web_push_to_vendor
+                                        try:
+                                            if not getattr(txn, 'vendor_notified', False):
+                                                send_web_push_to_vendor(vendor, "Uncompleted transaction", f"Order {txn.order.order_code or txn.order.pk} has an uncompleted transaction", url="/transactions")
+                                                txn.vendor_notified = True
+                                                txn.save(update_fields=['vendor_notified'])
+                                        except Exception:
+                                            pass
+                                except Exception:
+                                    pass
                             bu.state = "awaiting_note"
                             bu.save(update_fields=["state"])
                             response_text = "Got it. If you have any other information to share with the vendor (optional), type it now. If not, send 'skip'."

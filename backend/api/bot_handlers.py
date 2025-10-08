@@ -590,8 +590,10 @@ def handle_order_creation(callback_data: str, chat_id: Optional[str] = None) -> 
 
             # Push notify vendor about new pending order (bot-created)
             try:
-                from notifications.views import send_web_push_to_vendor as _send_push
-                _send_push(vendor, "New pending order", f"Order {order.order_code or order.pk} created", url="/orders")
+                # If vendor has auto_accept enabled, suppress the initial pending-order push
+                if not getattr(vendor, "auto_accept", False):
+                    from notifications.views import send_web_push_to_vendor as _send_push
+                    _send_push(vendor, "New pending order", f"Order {order.order_code or order.pk} created", url="/orders")
             except Exception:
                 pass
             # If vendor has auto_accept enabled, mark order accepted, create a Transaction,
@@ -699,7 +701,15 @@ def handle_order_creation(callback_data: str, chat_id: Optional[str] = None) -> 
                         ]]
                     }
                     try:
-                        _send_push(vendor, "Transaction created", f"Transaction for Order {order.order_code or order.pk} created", url="/transactions")
+                        # For auto-accept flows, notify vendor that a Transaction exists (uncompleted)
+                        from notifications.views import send_web_push_to_vendor as _send_push_local
+                        try:
+                            if txn and not getattr(txn, 'vendor_notified', False):
+                                _send_push_local(vendor, "Transaction created", f"Transaction for Order {order.order_code or order.pk} created", url="/transactions")
+                                txn.vendor_notified = True
+                                txn.save(update_fields=['vendor_notified'])
+                        except Exception:
+                            pass
                     except Exception:
                         pass
                     return text, reply_markup

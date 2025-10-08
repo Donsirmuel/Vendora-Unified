@@ -63,7 +63,7 @@ for _prefix in API_PREFIXES:
         path(f"{_prefix}/rates/", include(("rates.urls", "rates"), namespace=f"{_prefix.replace('/', '_')}_rates")),
         path(f"{_prefix}/notifications/", include(("notifications.urls", "notifications"), namespace=f"{_prefix.replace('/', '_')}_notifications")),
         path(f"{_prefix}/stream/", sse_stream, name=f"{_prefix.replace('/', '_')}_sse_stream"),
-        path(f"{_prefix}/telegram/", include("api.urls")),
+    path(f"{_prefix}/telegram/", include(("api.urls", "telegram"), namespace=f"{_prefix.replace('/', '_')}_telegram")),
     ]
 
 if settings.DEBUG:

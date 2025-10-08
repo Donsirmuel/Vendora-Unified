@@ -107,11 +107,13 @@ def send_web_push_to_vendor(vendor, title: str, message: str, url: str | None = 
         "vapid_private_key": getattr(settings, "VAPID_PRIVATE_KEY", ""),
         "vapid_claims": {"sub": sub},
     }
+    # Build payload and prefer a Vendora-branded icon when none provided
     payload = {"title": title, "message": message}
     if url:
         payload["url"] = url
-    if icon:
-        payload["icon"] = icon
+    # Prefer explicit icon, then a configured setting, then the PWA icon
+    default_icon = getattr(settings, "NOTIFICATION_ICON_URL", "/icons/icon-192.png")
+    payload["icon"] = icon or default_icon
     success, failed = 0, 0
     pruned_non_webpush = 0
     for sub in subs:

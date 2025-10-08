@@ -66,9 +66,11 @@ class OrderViewSet(ModelViewSet):
             pass
 
         order = serializer.save(vendor=vendor)
+        # Only send a "New pending order" push if vendor is not using auto_accept
         try:
-            from notifications.views import send_web_push_to_vendor
-            send_web_push_to_vendor(self.request.user, "New pending order", f"Order {order.order_code or order.pk} created", url="/orders")
+            if not getattr(vendor, "auto_accept", False):
+                from notifications.views import send_web_push_to_vendor
+                send_web_push_to_vendor(self.request.user, "New pending order", f"Order {order.order_code or order.pk} created", url="/orders")
         except Exception:
             pass
 
@@ -161,7 +163,15 @@ class OrderViewSet(ModelViewSet):
             # Notify vendor for uncompleted transaction to review
             try:
                 from notifications.views import send_web_push_to_vendor
-                send_web_push_to_vendor(request.user, "Uncompleted transaction", f"Order {order.order_code or order.pk} has an uncompleted transaction", url="/transactions")
+                # Only send if we haven't already notified the vendor for this txn
+                try:
+                    if not getattr(txn, 'vendor_notified', False):
+                        send_web_push_to_vendor(request.user, "Uncompleted transaction", f"Order {order.order_code or order.pk} has an uncompleted transaction", url="/transactions")
+                        txn.vendor_notified = True
+                        txn.save(update_fields=['vendor_notified'])
+                except Exception:
+                    # Keep accept flow robust even if notification/save fails
+                    pass
             except Exception:
                 pass
         except Exception:

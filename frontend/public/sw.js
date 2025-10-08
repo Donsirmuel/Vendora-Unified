@@ -1,5 +1,5 @@
 // Bump this version when deploying to force old caches to be purged
-const CACHE_NAME = 'vendora-cache-v13';
+const CACHE_NAME = 'vendora-cache-v14';
 const API_CACHE = 'vendora-api-v1';
 const APP_SHELL = [
   '/',
@@ -117,8 +117,8 @@ self.addEventListener('push', function(event) {
   const body = data.message || 'You have a new notification';
   const options = {
     body,
-    icon: data.icon || '/favicon.ico',
-    badge: '/favicon.ico',
+    icon: data.icon || '/icons/icon-192.png',
+    badge: '/icons/icon-192.png',
     data: { url: data.url || '/dashboard' }
   };
   event.waitUntil(self.registration.showNotification(title, options));

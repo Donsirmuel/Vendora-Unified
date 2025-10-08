@@ -29,6 +29,8 @@ class Transaction(models.Model):
     # Vendor completion artifacts
     vendor_proof = models.FileField(upload_to="vendor_proofs/", null=True, blank=True)
     vendor_completed_at = models.DateTimeField(null=True, blank=True)
+    # Whether the vendor has been notified about this transaction (prevents duplicate push sends)
+    vendor_notified = models.BooleanField(default=False)
 
     class Meta:
         constraints = [

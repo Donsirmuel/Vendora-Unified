@@ -1,0 +1,15 @@
+Place your PWA icons here. Recommended sizes: 96x96, 192x192, 256x256, 384x384, 512x512. Example filenames used by manifest:
+- icon-96.png
+- icon-192.png
+- icon-256.png
+- icon-384.png
+- icon-512.png
+- icon-maskable.png
+
+Copy your designer files into this folder and resize/convert as needed. For example (PowerShell):
+
+# copy the designer splash and icon into the project
+cp "C:\Users\user\Downloads\Preview.png" "..\frontend\public\icons\icon-512.png"
+cp "C:\Users\user\Downloads\1759003474211-sample.jpeg" "..\frontend\public\icons\icon-192.png"
+
+Use an image tool (ImageMagick or an online service) to generate other sizes or make a maskable icon.

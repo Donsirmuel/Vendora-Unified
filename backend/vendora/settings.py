@@ -78,6 +78,7 @@ VAPID_EMAIL = str(config('VAPID_EMAIL', default='admin@example.com')).strip()
 # Application definition
 
 INSTALLED_APPS = [
+    'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -98,6 +99,30 @@ INSTALLED_APPS = [
     'rates',
     'transactions',
 ]
+
+# Jazzmin admin theme configuration
+# Docs: https://github.com/farridav/django-jazzmin
+JAZZMIN_SETTINGS = {
+    "site_title": "Vendora Admin",
+    "site_header": "Vendora",
+    "site_brand": "Vendora",
+    "welcome_sign": "Welcome to Vendora Admin",
+    "show_ui_builder": False,
+    # Place useful links in the top menu
+    "topmenu_links": [
+        {"name": "Dashboard", "url": "/admin/", "permissions": ["auth.view_user"]},
+        {"name": "App", "url": "https://app.vendora.page", "new_window": True},
+        {"name": "API Health", "url": "/health/"},
+    ],
+}
+
+JAZZMIN_UI_TWEAKS = {
+    "theme": "sandstone",  # subtle, readable theme
+    "dark_mode_theme": "darkly",
+    "navbar": "navbar-dark navbar-primary",
+    "footer_fixed": True,
+    "sidebar_fixed": True,
+}
 
 # Middleware helpers (kept in settings module for compact deployment; could be split out)
 from django.urls import path

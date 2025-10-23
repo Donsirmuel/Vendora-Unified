@@ -65,10 +65,23 @@ spec:
     - key: VITE_API_HOST
       value: "api.vendora.page"
 
+  http:
+    routes:
+    - path: /
+      source:
+        type: SERVICE
+        name: backend
+    - path: /
+      source:
+        type: STATIC_SITE
+        name: frontend
+
   domains:
   - name: api.vendora.page
     type: PRIMARY
     zone: vendora.page
+    service_name: backend
   - name: app.vendora.page
     type: ALIAS
     zone: vendora.page
+    service_name: frontend

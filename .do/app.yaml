@@ -73,6 +73,47 @@ spec:
     type: ALIAS
     zone: vendora.page
 
+  # App-level ingress rules to direct domains and paths to the right component
+  ingress:
+    rules:
+    # Send ALL traffic on api.vendora.page to the backend service
+    - match:
+        domain:
+          name: api.vendora.page
+        path:
+          prefix: /
+      component:
+        name: backend
+    # Send ALL traffic on app.vendora.page to the frontend static site
+    - match:
+        domain:
+          name: app.vendora.page
+        path:
+          prefix: /
+      component:
+        name: frontend
+    # Also catch common backend paths regardless of domain, as a safety net
+    - match:
+        path:
+          prefix: /api
+      component:
+        name: backend
+    - match:
+        path:
+          prefix: /admin
+      component:
+        name: backend
+    - match:
+        path:
+          prefix: /health
+      component:
+        name: backend
+    - match:
+        path:
+          prefix: /metrics
+      component:
+        name: backend
+
   http:
     routes:
     - path: /api

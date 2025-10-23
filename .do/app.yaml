@@ -72,3 +72,30 @@ spec:
   - name: app.vendora.page
     type: ALIAS
     zone: vendora.page
+
+  http:
+    routes:
+    - path: /api
+      source:
+        type: SERVICE
+        name: backend
+    - path: /admin
+      source:
+        type: SERVICE
+        name: backend
+    - path: /health
+      source:
+        type: SERVICE
+        name: backend
+    - path: /healthz
+      source:
+        type: SERVICE
+        name: backend
+    - path: /metrics
+      source:
+        type: SERVICE
+        name: backend
+    - path: /
+      source:
+        type: STATIC_SITE
+        name: frontend

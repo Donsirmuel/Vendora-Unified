@@ -77,8 +77,8 @@ urlpatterns += [
     # Vite build assets (JS/CSS) - these are hashed filenames so safe to cache long-term
     re_path(r'^assets/(?P<path>.*)$', lambda r, path: _static_with_headers(r, path=path, document_root=str(settings.FRONTEND_DIST / 'assets'), cache='assets')),
     # SPA fallback: serve index.html (no-store/no-cache) for any other non-handled route so clients revalidate HTML
-    # Exclude admin (with or without trailing slash), api/, and media/ so Django can handle admin redirects
-    re_path(r'^(?!(?:admin(?:/|$)|api/|media/)).*$', lambda r: _static_with_headers(r, path='index.html', document_root=str(settings.FRONTEND_DIST), cache='short')),
+    # Exclude admin, api/, media/, health checks, metrics, and other backend paths so Django can handle them
+    re_path(r'^(?!(?:admin(?:/|$)|api/|media/|health|healthz|metrics|sitemap|robots)).*$', lambda r: _static_with_headers(r, path='index.html', document_root=str(settings.FRONTEND_DIST), cache='short')),
 ]
 
 

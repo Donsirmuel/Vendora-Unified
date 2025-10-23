@@ -46,7 +46,7 @@ class VendorAdmin(admin.ModelAdmin):
 			"fields": ("bank_details", "wallet_address", "wallet_chain", "auto_expire_minutes")
 		}),
 		("System", {
-			"fields": ("is_staff", "is_superuser", "is_active", "last_login", "date_joined"),
+			"fields": ("is_staff", "is_superuser", "is_active", "last_login"),
 			"classes": ("collapse",)
 		})
 	)

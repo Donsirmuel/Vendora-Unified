@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Vendora Mark">
+  <defs>
+    <linearGradient id="vgradMark" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6D28D9"/>
+      <stop offset="100%" stop-color="#9333EA"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="url(#vgradMark)"/>
+  <path d="M12 18 L20 18 L32 44 L24 44 Z" fill="#FFFFFF"/>
+  <path d="M44 18 L36 18 L24 44 L32 44 Z" fill="#EDE9FE" opacity="0.9"/>
+</svg>

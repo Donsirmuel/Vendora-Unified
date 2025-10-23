@@ -24,7 +24,7 @@ from django.http import JsonResponse
 from api.health import health_view
 from api.metrics import metrics_view
 from api.sse import sse_stream
-from django.views.generic import TemplateView
+from django.views.generic import TemplateView, RedirectView
 
 # Some hosting environments (DigitalOcean App Platform) may mount the service at
 # both /api/v1/... and /v1/... depending on the routing configuration. We
@@ -39,6 +39,9 @@ urlpatterns = [
     path("health/", health_view, name="health"),
     path("healthz/", lambda request: JsonResponse({"status": "ok"})),  # legacy simple
     path("metrics/", metrics_view, name="metrics"),
+
+    # Favicon for backend domain (helps avoid third-party default icons)
+    path("favicon.ico", RedirectView.as_view(url=settings.STATIC_URL + 'vendora/mark.svg', permanent=True)),
 
     # SEO
     path("sitemap.xml", sitemap, {"sitemaps": {"static": StaticViewSitemap}}, name="sitemap"),

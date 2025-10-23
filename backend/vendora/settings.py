@@ -107,8 +107,12 @@ JAZZMIN_SETTINGS = {
     "site_header": "Vendora",
     "site_brand": "Vendora",
     "welcome_sign": "Welcome to Vendora Admin",
+    # Logos & icon (paths within Django staticfiles)
+    "site_logo": "vendora/logo.svg",
+    "site_logo_small": "vendora/mark.svg",
+    "site_icon": "vendora/mark.svg",
+    # UI/menus
     "show_ui_builder": False,
-    # Place useful links in the top menu
     "topmenu_links": [
         {"name": "Dashboard", "url": "/admin/", "permissions": ["auth.view_user"]},
         {"name": "App", "url": "https://app.vendora.page", "new_window": True},

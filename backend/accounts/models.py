@@ -93,6 +93,23 @@ class Vendor(AbstractBaseUser, PermissionsMixin):
     last_payment_tx_hash = models.CharField(max_length=120, null=True, blank=True)
     last_payment_confirmed_at = models.DateTimeField(null=True, blank=True)
 
+    # Currency preference for displaying on PWA and Telegram bot
+    CURRENCY_CHOICES = [
+        ("USD", "US Dollar (USD)"),
+        ("EUR", "Euro (EUR)"),
+        ("GBP", "British Pound (GBP)"),
+        ("JPY", "Japanese Yen (JPY)"),
+        ("AUD", "Australian Dollar (AUD)"),
+        ("CAD", "Canadian Dollar (CAD)"),
+        ("CHF", "Swiss Franc (CHF)"),
+        ("CNY", "Chinese Yuan (CNY)"),
+        ("INR", "Indian Rupee (INR)"),
+        ("NGN", "Nigerian Naira (NGN)"),
+        ("ZAR", "South African Rand (ZAR)"),
+        ("KES", "Kenyan Shilling (KES)"),
+    ]
+    currency = models.CharField(max_length=10, choices=CURRENCY_CHOICES, default="USD")
+
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["name"]
 
@@ -100,6 +117,24 @@ class Vendor(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.email
+
+    def get_currency_symbol(self) -> str:
+        """Get the currency symbol for the vendor's selected currency."""
+        currency_symbols = {
+            "USD": "$",
+            "EUR": "€",
+            "GBP": "£",
+            "JPY": "¥",
+            "AUD": "A$",
+            "CAD": "C$",
+            "CHF": "₣",
+            "CNY": "¥",
+            "INR": "₹",
+            "NGN": "₦",
+            "ZAR": "R",
+            "KES": "Sh",
+        }
+        return currency_symbols.get(self.currency, self.currency)
 
     # Plan utility
     def set_plan(self, plan: str, duration_days: int | None = None):

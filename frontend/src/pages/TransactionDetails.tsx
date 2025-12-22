@@ -10,10 +10,14 @@ import { ArrowLeft, Check, Upload, Download, Clock, CheckCircle2, XCircle, Image
 import { useToast } from "@/hooks/use-toast";
 import { http, tokenStore } from "@/lib/http";
 import { getErrorMessage } from "@/lib/errors";
+import { formatCurrency } from "@/lib/currency";
+import { useAuth } from "@/contexts/AuthContext";
 
 const TransactionDetails = () => {
   const { id } = useParams();
   const { toast } = useToast();
+  const { user } = useAuth();
+  const userCurrency = user?.currency || 'USD';
   const [isUploading, setIsUploading] = useState(false);
   const [isMarkingComplete, setIsMarkingComplete] = useState(false);
   const [txn, setTxn] = useState<any | null>(null);
@@ -207,7 +211,7 @@ const TransactionDetails = () => {
                   (() => {
                     const v = (order?.total_value ?? txn.order_total_value);
                     const n = v != null ? Number(v) : NaN;
-                    return isFinite(n) ? `₦${n.toLocaleString()}` : "-";
+                    return isFinite(n) ? formatCurrency(n, userCurrency) : "-";
                   })()
                 }</p>
               </div>

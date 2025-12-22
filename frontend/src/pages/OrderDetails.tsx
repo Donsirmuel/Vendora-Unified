@@ -13,12 +13,16 @@ import { getOrder, acceptOrder, declineOrder, Order } from "@/lib/orders";
 import { getErrorMessage } from "@/lib/errors";
 import { listBankDetails, type BankDetail } from "@/lib/bankDetails";
 import { listRates, type Rate } from "@/lib/rates";
+import { formatCurrency } from "@/lib/currency";
+import { useAuth } from "@/contexts/AuthContext";
 import { tokenStore } from "@/lib/http";
 
 const OrderDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
+  const userCurrency = user?.currency || 'USD';
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [declineReason, setDeclineReason] = useState("");
@@ -144,7 +148,7 @@ const OrderDetails = () => {
   }
 
   const code = order.order_code || String(order.id);
-  const value = order.total_value != null ? `₦${Number(order.total_value).toLocaleString()}` : "-";
+  const value = order.total_value != null ? formatCurrency(Number(order.total_value), userCurrency) : "-";
   return (
     <Layout>
       <div className="space-y-6">

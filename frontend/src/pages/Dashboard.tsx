@@ -20,6 +20,7 @@ import { listTransactions, type Transaction } from "@/lib/transactions";
 import { listQueries } from "@/lib/queries";
 import { listBroadcasts } from "@/lib/broadcast";
 import { useToast } from "@/hooks/use-toast";
+import { formatCurrency } from "@/lib/currency";
 // Removed direct bank/rate imports previously used for legacy inline checklist
 import React from "react";
 import { connectSSE } from "@/lib/sse";
@@ -66,6 +67,7 @@ const Dashboard = () => {
   const [botLink, setBotLink] = useState<string | null>(null);
   const [telegramUser, setTelegramUser] = useState<string | null>(null);
   const [showCharts, setShowCharts] = useState(false);
+  const [userCurrency, setUserCurrency] = useState<string>('USD');
 
   useEffect(() => {
     loadDashboardData();
@@ -98,15 +100,17 @@ const Dashboard = () => {
   }, []);
 
   useEffect(() => {
-    // Load vendor bot link for easy sharing (vendors only)
+    // Load vendor bot link and currency preference for easy sharing
     (async () => {
       try {
         const res = await http.get('/api/v1/accounts/vendors/me/');
         const data = res.data || {};
         setBotLink(data.bot_link || null);
         setTelegramUser(data.telegram_username || null);
+        setUserCurrency(data.currency || 'USD');
       } catch {
-        // ignore
+        // ignore, use default currency
+        setUserCurrency('USD');
       }
     })();
   }, []);
@@ -187,7 +191,7 @@ const Dashboard = () => {
 
   // Expire overdue control removed per request
 
-  const formatCurrency = (amount: number) => `₦${Number(amount || 0).toLocaleString()}`;
+  const formatCurrencyDisplay = (amount: number) => formatCurrency(amount, userCurrency);
 
   const getStatusBadge = (status: string) => {
     const statusConfig: { [key: string]: { color: string; icon: any } } = {
@@ -334,13 +338,13 @@ const Dashboard = () => {
             </CardContent>
           </Card>
 
-  <Card className="card-anim">
+          <Card className="card-anim">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Settled revenue (₦)</CardTitle>
-        <span className="sr-only">NGN</span>
+              <CardTitle className="text-sm font-medium">Settled revenue ({userCurrency})</CardTitle>
+        <span className="sr-only">{userCurrency}</span>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(stats.totalRevenue)}</div>
+              <div className="text-2xl font-bold">{formatCurrencyDisplay(stats.totalRevenue)}</div>
               <p className="text-xs text-muted-foreground">
                 Driven by {stats.completedOrders} completed orders
               </p>
@@ -456,7 +460,7 @@ const Dashboard = () => {
                     <div key={tx.id} className="flex items-center justify-between p-3 border rounded-lg">
                       <div>
                         <p className="font-medium">{tx.order_asset} • {tx.order_type?.toUpperCase()}</p>
-                        <p className="text-sm text-muted-foreground">₦{Number(tx.order_total_value || 0).toLocaleString()}</p>
+                        <p className="text-sm text-muted-foreground">{formatCurrencyDisplay(Number(tx.order_total_value || 0))}</p>
                       </div>
                       <div className="flex items-center space-x-2">
                         <Badge className="bg-yellow-100 text-yellow-800">Uncompleted</Badge>

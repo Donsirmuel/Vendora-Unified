@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { getVendorProfile, updateVendorProfile, VendorProfile } from "@/lib/auth";
 import { listBankDetails, createBankDetail, updateBankDetail, deleteBankDetail, BankDetail } from "@/lib/bankDetails";
 import { listRates, createRate, updateRate, deleteRate, Rate } from "@/lib/rates";
+import { getCurrencyOptions } from "@/lib/currency";
 import http from "@/lib/http";
 import { getErrorMessage } from "@/lib/errors";
 import { isUpdateAvailable, subscribeToSWUpdate, requestUpdate } from "@/lib/sw-updates";
@@ -101,6 +102,7 @@ const Settings = () => {
   const [bankDetails, setBankDetails] = useState("");
   const [autoExpireMinutes, setAutoExpireMinutes] = useState<number | "">("");
   const [theme, setTheme] = useState<string>(() => localStorage.getItem("vendora_theme") || "dark");
+  const [currency, setCurrency] = useState<string>("USD");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [bankList, setBankList] = useState<BankDetail[]>([]);
@@ -147,8 +149,7 @@ const Settings = () => {
   setAutoAccept(!!(profile as any).auto_accept);
   setBankDetails(profile.bank_details || "");
   setTelegramUsername((profile as any).telegram_username || "");
-  setBio((profile as any).bio || "");
-        if ((profile as any).avatar_url) setProfileImage((profile as any).avatar_url);
+  setBio((profile as any).bio || "");  setCurrency((profile as any).currency || "USD");        if ((profile as any).avatar_url) setProfileImage((profile as any).avatar_url);
         if ((profile as any).bot_link) setBotLink((profile as any).bot_link);
         setAutoExpireMinutes(
           typeof profile.auto_expire_minutes === "number" ? profile.auto_expire_minutes : ""
@@ -245,6 +246,7 @@ const Settings = () => {
       setSaving(true);
       const payload: any = { name: userName, bank_details: bankDetails };
       payload.auto_accept = autoAccept;
+      payload.currency = currency;
       if (telegramUsername != null) payload.telegram_username = telegramUsername;
       if (bio != null) payload.bio = bio;
       if (autoExpireMinutes === "") {
@@ -256,6 +258,7 @@ const Settings = () => {
       setUserName(updated.name || "");
       setBankDetails(updated.bank_details || "");
       setAutoAccept(!!(updated as any).auto_accept);
+      setCurrency((updated as any).currency || "USD");
       setAutoExpireMinutes(
         typeof updated.auto_expire_minutes === "number" ? updated.auto_expire_minutes : ""
       );
@@ -691,6 +694,40 @@ const Settings = () => {
                   </div>
                 </div>
               </div>
+            </div>
+          </SettingsSection>
+
+          <SettingsSection
+            key="currency"
+            id="currency"
+            title="Currency Preferences"
+            description="Choose the currency to display on your dashboard and Telegram bot."
+            icon={DollarSign}
+            tone="muted"
+          >
+            <div className="space-y-3">
+              <div>
+                <Label htmlFor="currency-select">Display Currency</Label>
+                <p className="mb-2 text-xs text-muted-foreground">
+                  This currency will be used on your vendor dashboard and Telegram bot. Default is USD.
+                </p>
+                <select
+                  id="currency-select"
+                  value={currency}
+                  onChange={(e) => setCurrency(e.target.value)}
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground"
+                  disabled={loading}
+                >
+                  {getCurrencyOptions().map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                ⚠️ Changing this only affects the display format. Ensure your rates and prices reflect this currency choice.
+              </p>
             </div>
           </SettingsSection>
 

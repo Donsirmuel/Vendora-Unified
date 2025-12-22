@@ -9,6 +9,8 @@ import { http } from "@/lib/http";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { connectSSE } from "@/lib/sse";
+import { formatCurrency } from "@/lib/currency";
+import { useAuth } from "@/contexts/AuthContext";
 import BrandedEmptyState from "@/components/BrandedEmptyState";
 
 type ApiTransaction = {
@@ -32,6 +34,8 @@ type ListResponse = {
 };
 
 const Transactions = () => {
+  const { user } = useAuth();
+  const userCurrency = user?.currency || 'USD';
   const [items, setItems] = useState<ApiTransaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -196,7 +200,7 @@ const Transactions = () => {
                       <TableHead>Order Code</TableHead>
                       <TableHead>Asset</TableHead>
                       <TableHead>Amount</TableHead>
-            <TableHead>Value (₦)</TableHead>
+            <TableHead>Value ({userCurrency})</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Completed At</TableHead>
                       <TableHead>Proof</TableHead>
@@ -215,7 +219,7 @@ const Transactions = () => {
                         <TableCell>{t.order_asset || "-"}</TableCell>
                         <TableCell>{t.order_amount ?? "-"}</TableCell>
                         <TableCell>
-                          {t.order_total_value != null ? `₦${Number(t.order_total_value).toLocaleString()}` : "-"}
+                          {t.order_total_value != null ? formatCurrency(Number(t.order_total_value), userCurrency) : "-"}
                         </TableCell>
                         <TableCell>{statusBadge(t.status)}</TableCell>
                         <TableCell className="text-muted-foreground">

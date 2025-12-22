@@ -20,11 +20,15 @@ import { listOrders, acceptOrder, declineOrder, Order } from "@/lib/orders";
 import { useToast } from "@/hooks/use-toast";
 import { getErrorMessage } from "@/lib/errors";
 import { connectSSE } from "@/lib/sse";
+import { formatCurrency } from "@/lib/currency";
+import { useAuth } from "@/contexts/AuthContext";
 import { FreePlanLimitAlert, FreePlanUsageWidget } from "@/components/FreePlanComponents";
 import BrandedEmptyState from "@/components/BrandedEmptyState";
 
 const Orders = () => {
   const { toast } = useToast();
+  const { user } = useAuth();
+  const userCurrency = user?.currency || 'USD';
   const [orders, setOrders] = useState<Order[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -276,11 +280,11 @@ const Orders = () => {
                           </div>
                           <div>
                             <span className="text-muted-foreground">Rate:</span>
-            <p className="font-medium">₦{Number(order.rate || 0).toLocaleString()}</p>
+            <p className="font-medium">{formatCurrency(Number(order.rate || 0), userCurrency)}</p>
                           </div>
                           <div>
                             <span className="text-muted-foreground">Total Value:</span>
-            <p className="font-medium">{order.total_value != null ? `₦${Number(order.total_value || 0).toLocaleString()}` : '-'}</p>
+            <p className="font-medium">{order.total_value != null ? formatCurrency(Number(order.total_value || 0), userCurrency) : '-'}</p>
                           </div>
                           <div>
                             <span className="text-muted-foreground">Created:</span>

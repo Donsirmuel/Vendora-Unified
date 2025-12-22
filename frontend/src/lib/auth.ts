@@ -59,6 +59,8 @@ export interface VendorProfile {
   daily_order_limit?: number;
   daily_orders_date?: string;
   unavailable_message?: string | null;
+  // Currency preference for displaying on PWA and bot
+  currency?: string;
   // Provided by backend serializer for licensing/trial UI
   subscription_status?: SubscriptionStatus;
 }

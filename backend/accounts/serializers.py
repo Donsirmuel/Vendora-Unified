@@ -146,6 +146,7 @@ class VendorSerializer(serializers.ModelSerializer):
             "is_trial",
             "daily_orders_count",
             "daily_orders_date",
+            "currency",
         ]
         read_only_fields = ["id", "is_staff", "is_superuser"]
 
@@ -167,6 +168,13 @@ class VendorSerializer(serializers.ModelSerializer):
             # Hard cap to 24h to avoid very long pending orders
             raise serializers.ValidationError("Cannot exceed 1440 minutes (24 hours).")
         return ivalue
+
+    def validate_currency(self, value):
+        """Validate that currency is one of the allowed choices."""
+        valid_currencies = [choice[0] for choice in Vendor.CURRENCY_CHOICES]
+        if value not in valid_currencies:
+            raise serializers.ValidationError(f"Invalid currency. Choose from: {', '.join(valid_currencies)}")
+        return value
 
     def get_avatar_url(self, obj):
         try:

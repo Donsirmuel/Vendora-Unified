@@ -408,20 +408,29 @@ def handle_query_command() -> Tuple[str, dict]:
 def handle_asset_selection(asset: str, order_type: str = "buy", vendor_id: Optional[int] = None) -> Tuple[str, dict]:
     """Handle asset selection with rate display and amount input."""
     from rates.models import Rate
+    from accounts.models import Vendor
     from typing import Any, cast
     
     # Get rate information for this asset
     rate_info = "Rate not available"
     extra_info = ""
+    currency_symbol = "$"
     if vendor_id:
         try:
             rate = cast(Any, Rate).objects.only('buy_rate','sell_rate','bank_details','contract_address').get(vendor_id=vendor_id, asset=asset)
+            # Get vendor's currency preference
+            try:
+                vendor = cast(Any, Vendor).objects.only('currency').get(id=vendor_id)
+                currency_symbol = vendor.get_currency_symbol()
+            except:
+                currency_symbol = "$"
+            
             if order_type == "buy":
-                rate_info = f"Buy Rate: ₦{rate.buy_rate:,.2f} per {asset}"
+                rate_info = f"Buy Rate: {currency_symbol}{rate.buy_rate:,.2f} per {asset}"
                 if rate.bank_details:
                     extra_info = f"\n\nBank Details:\n{rate.bank_details}"
             else:  # sell
-                rate_info = f"Sell Rate: ₦{rate.sell_rate:,.2f} per {asset}"
+                rate_info = f"Sell Rate: {currency_symbol}{rate.sell_rate:,.2f} per {asset}"
                 if hasattr(rate, "contract_address") and rate.contract_address:
                     extra_info = f"\n\nContract Address:\n{rate.contract_address}"
         except cast(Any, Rate).DoesNotExist:
@@ -481,7 +490,11 @@ def handle_amount_confirmation(asset: str, order_type: str, amount: str, vendor_
             rate = Decimal(rate_obj.buy_rate)
         else:
             rate = Decimal(rate_obj.sell_rate)
-        total_naira = amount_decimal * rate
+        total_in_currency = amount_decimal * rate
+        
+        # Get vendor's currency preference
+        vendor_currency = getattr(v, "currency", "USD")
+        currency_symbol = v.get_currency_symbol()
     except cast(Any, Rate).DoesNotExist:
         return "❌ Rate not found for this asset. Please try again.", {}
 
@@ -491,8 +504,8 @@ def handle_amount_confirmation(asset: str, order_type: str, amount: str, vendor_
 {'🛒' if order_type == 'buy' else '💰'} Type: {order_type.upper()}
 💎 Asset: {asset}
 📊 Amount: {amount_decimal:,.2f} {asset}
-💱 Rate: ₦{rate:,.2f}
-💰 Total: ₦{total_naira:,.2f}
+💱 Rate: {currency_symbol}{rate:,.2f}
+💰 Total: {currency_symbol}{total_in_currency:,.2f} ({vendor_currency})
 
 ⚠️ Please confirm this order to proceed.
 """

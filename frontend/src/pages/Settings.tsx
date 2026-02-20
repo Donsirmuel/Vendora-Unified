@@ -370,12 +370,12 @@ const Settings = () => {
           <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
             <div className="space-y-4">
               <Badge variant="outline" className="w-fit border-white/20 bg-white/10 uppercase tracking-[0.3em] text-xs text-primary/80">
-                Control Center
+                Settings
               </Badge>
               <div>
-                <h1 className="text-3xl font-semibold md:text-4xl">Settings &amp; Automations</h1>
+                <h1 className="text-3xl font-semibold md:text-4xl">Settings</h1>
                 <p className="mt-3 max-w-2xl text-sm text-slate-200 md:text-base">
-                  Tune every touchpoint, automate hand-offs, and keep your Vendora desk synced across channels.
+                  Manage your profile, rates, and bot settings in one place.
                 </p>
               </div>
               <div className="flex flex-wrap gap-3">
@@ -599,7 +599,7 @@ const Settings = () => {
             key="theme"
             id="theme"
             title="Theme Settings"
-            description="Match your desk's lighting in a single tap."
+            description="Switch between dark and light mode in one tap."
             icon={theme === "dark" ? Moon : Sun}
             tone="muted"
           >
@@ -735,7 +735,7 @@ const Settings = () => {
             key="rates"
             id="rates"
             title="Assets & Rates"
-            description="Keep trading pairs, spreads, and settlement notes current."
+            description="Keep your assets, rates, and payout notes up to date."
             icon={DollarSign}
             tone="gradient"
           >

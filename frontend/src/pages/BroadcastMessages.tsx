@@ -252,7 +252,7 @@ const BroadcastMessages = () => {
               <span>Broadcast History</span>
             </CardTitle>
             <CardDescription>
-              Track campaign reach, resend favourites, and celebrate the messages that move your desk forward.
+              Track campaign reach, resend favourites, and repeat messages that work best.
             </CardDescription>
           </CardHeader>
           <CardContent>

@@ -18,6 +18,10 @@ const Login = () => {
   const location = useLocation();
   const params = new URLSearchParams(location.search);
   const reason = params.get('reason');
+  const [showUpgradeAlert, setShowUpgradeAlert] = useState(reason === 'account_inactive');
+  const [upgradeAlertMessage, setUpgradeAlertMessage] = useState(
+    "Your account access is currently restricted. Please upgrade your plan to regain service."
+  );
   const { login } = useAuth();
   const { toast } = useToast();
 
@@ -33,6 +37,20 @@ const Login = () => {
   // Get the intended destination from navigation state
   const from = (location.state as any)?.from?.pathname || "/dashboard";
 
+  const getLoginErrorMessage = (error: any): string => {
+    const data = error?.data || error?.response?.data;
+    if (data?.code === 'ACCOUNT_INACTIVE' && data?.trial_expired) {
+      return "Your free trial has ended. Upgrade your plan to continue using Vendora.";
+    }
+    if (data?.code === 'ACCOUNT_INACTIVE' && data?.plan_expired) {
+      return "Your plan has expired. Please renew your plan to sign in.";
+    }
+    if (data?.code === 'ACCOUNT_INACTIVE') {
+      return "Your account is inactive. Please contact support or upgrade your plan.";
+    }
+    return getErrorMessage(error, "We couldn't verify those vendor credentials.");
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -41,15 +59,26 @@ const Login = () => {
   const normalizedEmail = email.trim().toLowerCase();
   await login(normalizedEmail, password);
       toast({
-        title: "Vendor console unlocked",
-        description: "Welcome back to your Vendora desk.",
+        title: "Signed in",
+        description: "Welcome back to your Vendora dashboard.",
         className: "bg-success text-success-foreground"
       });
       navigate(from, { replace: true });
   } catch (error: any) {
+      const data = error?.data || error?.response?.data;
+      if (data?.code === 'ACCOUNT_INACTIVE') {
+        setShowUpgradeAlert(true);
+        if (data?.trial_expired) {
+          setUpgradeAlertMessage("Your free trial has ended. Upgrade your plan to continue using Vendora.");
+        } else if (data?.plan_expired) {
+          setUpgradeAlertMessage("Your plan has expired. Renew your plan to continue using Vendora.");
+        } else {
+          setUpgradeAlertMessage("Your account is inactive. Upgrade your plan to regain access.");
+        }
+      }
       toast({
     title: "Access denied",
-  description: getErrorMessage(error, "We couldn't verify those vendor credentials."),
+  description: getLoginErrorMessage(error),
         className: "bg-destructive text-destructive-foreground"
       });
     } finally {
@@ -73,9 +102,9 @@ const Login = () => {
               />
             </div>
             <div className="space-y-3">
-              <h1 className="text-4xl lg:text-5xl font-semibold text-white">Run your OTC desk like a pro</h1>
+              <h1 className="text-4xl lg:text-5xl font-semibold text-white">Manage your crypto trades in one place</h1>
               <p className="text-lg text-muted-foreground max-w-xl lg:max-w-none mx-auto lg:mx-0">
-                Vendora keeps pricing, settlements, and compliance workflows in one vendor-first console so your team can close deals faster.
+                Vendora keeps rates, payments, and records in one simple dashboard so your team can close deals faster.
               </p>
             </div>
           </div>
@@ -109,23 +138,23 @@ const Login = () => {
           </div>
 
           <div className="space-y-4">
-            <h2 className="text-2xl font-semibold text-white">Built for high-volume vendors</h2>
+            <h2 className="text-2xl font-semibold text-white">Built for busy vendors</h2>
             <ul className="space-y-3 text-left text-base text-muted-foreground">
               <li className="flex items-start gap-3">
                 <CheckCircle2 className="mt-1 h-5 w-5 text-primary" aria-hidden="true" />
-                <span>Realtime visibility across cash collections, crypto releases, and dispute queues.</span>
+                <span>See cash payments, crypto releases, and issues in real time.</span>
               </li>
               <li className="flex items-start gap-3">
                 <CheckCircle2 className="mt-1 h-5 w-5 text-primary" aria-hidden="true" />
-                <span>Push fresh buy/sell bands to buyers, agents, and Telegram audiences instantly.</span>
+                <span>Update buy/sell rates and share them instantly on Telegram.</span>
               </li>
               <li className="flex items-start gap-3">
                 <CheckCircle2 className="mt-1 h-5 w-5 text-primary" aria-hidden="true" />
-                <span>Automate compliance prompts, identity verifications, and payout approvals in one flow.</span>
+                <span>Request needed details and approve payouts in one flow.</span>
               </li>
               <li className="flex items-start gap-3">
                 <CheckCircle2 className="mt-1 h-5 w-5 text-primary" aria-hidden="true" />
-                <span>Access the desk from phone, tablet, desktop, or install the Vendora PWA for offline resilience.</span>
+                <span>Use Vendora on phone, tablet, desktop, or as a PWA when offline.</span>
               </li>
             </ul>
           </div>
@@ -137,16 +166,23 @@ const Login = () => {
             <CardHeader className="space-y-1">
               <CardTitle className="text-2xl font-bold">Vendor sign-in</CardTitle>
               <CardDescription>
-                Authenticate to reopen your Vendora command center, sync new leads, and clear pending payouts.
+                Sign in to open your Vendora dashboard, sync new leads, and clear pending payouts.
               </CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleLogin} className="space-y-4">
-                {reason === 'account_inactive' && (
+                {showUpgradeAlert && (
                   <Alert className="mb-2">
                     <div>
                       <AlertTitle>Account inactive</AlertTitle>
-                      <AlertDescription>Your account access is currently restricted. Please contact support or upgrade your plan to regain service.</AlertDescription>
+                      <AlertDescription>
+                        <div className="space-y-2">
+                          <p>{upgradeAlertMessage}</p>
+                          <Button asChild size="sm" className="w-fit">
+                            <Link to="/upgrade">Upgrade now</Link>
+                          </Button>
+                        </div>
+                      </AlertDescription>
                     </div>
                   </Alert>
                 )}
@@ -186,13 +222,13 @@ const Login = () => {
                   className="w-full bg-gradient-primary hover:opacity-90 text-primary-foreground font-medium"
                   disabled={isLoading}
                 >
-                  {isLoading ? "Verifying credentials..." : "Enter vendor console"}
+                  {isLoading ? "Verifying credentials..." : "Open vendor dashboard"}
                 </Button>
               </form>
               
               <div className="mt-6 text-center">
                 <p className="text-sm text-gray-600">
-                  Need an operator seat?{' '}
+                  Need an account?{' '}
                   <Link to="/signup" className="font-medium text-primary hover:underline">
                     Request vendor access
                   </Link>

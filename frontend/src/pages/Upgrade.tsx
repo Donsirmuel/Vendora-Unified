@@ -153,8 +153,8 @@ export default function UpgradePage() {
               </div>
               <ul className="mt-4 space-y-2 text-sm text-slate-200/90">
                 <li className="flex items-start gap-2"><ArrowRight className="mt-1 h-3.5 w-3.5 text-primary/80" /><span>Unlimited Telegram bot orders beyond the free plan’s 10-per-day cap.</span></li>
-                <li className="flex items-start gap-2"><ArrowRight className="mt-1 h-3.5 w-3.5 text-primary/80" /><span>Priority support plus roadmap input tailored to active desks.</span></li>
-                <li className="flex items-start gap-2"><ArrowRight className="mt-1 h-3.5 w-3.5 text-primary/80" /><span>Deeper analytics to spot rate spreads, buyer trends, and settlement speed.</span></li>
+                <li className="flex items-start gap-2"><ArrowRight className="mt-1 h-3.5 w-3.5 text-primary/80" /><span>Priority support plus roadmap input tailored to active teams.</span></li>
+                <li className="flex items-start gap-2"><ArrowRight className="mt-1 h-3.5 w-3.5 text-primary/80" /><span>Deeper analytics to spot rate spreads, buyer trends, and payment speed.</span></li>
               </ul>
             </div>
           </div>
@@ -169,7 +169,7 @@ export default function UpgradePage() {
               </Badge>
             </div>
             <CardDescription>
-              Pick the commitment window that matches your desk’s cadence. Every paid plan unlocks Telegram bot automations, unlimited orders, and premium support.
+              Pick the commitment window that fits your schedule. Every paid plan unlocks Telegram bot automations, unlimited orders, and premium support.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-8">

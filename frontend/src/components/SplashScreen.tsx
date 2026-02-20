@@ -9,7 +9,7 @@ interface SplashScreenProps {
 
 const SplashScreen: React.FC<SplashScreenProps> = ({
   message = "Loading Vendora…",
-  subMessage = "Setting up your vendor desk"
+  subMessage = "Setting up your account"
 }) => {
   return (
     <div className="splash" role="alert" aria-live="assertive">

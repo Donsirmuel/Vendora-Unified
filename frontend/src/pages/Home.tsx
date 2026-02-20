@@ -21,7 +21,7 @@ interface HeroSlide {
 const heroSlides: HeroSlide[] = [
   {
     id: 0,
-    label: "Control center",
+    label: "Dashboard",
     title: "Track every customer order from one live board",
     description: "See new requests, confirm payments, and share delivery status without juggling chats.",
     highlight: "You always know what to do next and customers see clear updates right away.",
@@ -87,7 +87,7 @@ interface HowItWorksStep {
 const howItWorksSteps: HowItWorksStep[] = [
   {
     id: 0,
-  title: "Open your Vendora desk",
+  title: "Open your Vendora account",
   body: "Register, pick the coins you sell, and connect your Telegram bot in a few clicks.",
     icon: <Sparkles className="h-5 w-5" aria-hidden />,
     screenshot: "/screenshots/Vendora-signup.png",
@@ -99,7 +99,7 @@ const howItWorksSteps: HowItWorksStep[] = [
   body: "Invite helpers, share roles, and let Vendora follow up on proofs and payments.",
     icon: <Users className="h-5 w-5" aria-hidden />,
     screenshot: "/screenshots/Vendora-login.png",
-    alt: "Vendora login and workspace access"
+    alt: "Vendora login access"
   },
   {
     id: 2,
@@ -166,7 +166,7 @@ const valueProofPoints = [
   {
     title: "One simple tool",
     subtitle: "Fair price for daily work",
-    body: "Replace spreadsheets and scattered chats with one workspace made for vendors."
+    body: "Replace spreadsheets and scattered chats with one simple app made for vendors."
   }
 ];
 
@@ -304,7 +304,7 @@ function HowItWorksSection(): JSX.Element {
       <div className="section__head">
         <span className="section__eyebrow">HOW VENDORA WORKS</span>
         <h2>See how vendors use Vendora day to day</h2>
-        <p>Set up your desk, answer buyers, and close orders without fighting spreadsheets or side chats.</p>
+        <p>Set up your account, answer customers, and close orders without complex spreadsheets or side chats.</p>
       </div>
       <div className="how-it-works__body">
         <div className="how-it-works__steps" role="tablist" aria-label="How Vendora works">
@@ -378,11 +378,11 @@ const Home: React.FC = () => {
             <div className="home-hero__copy">
               <span className="home-eyebrow">
                 <Sparkles className="h-4 w-4" aria-hidden />
-                Purpose-built for OTC vendor desks
+                Built for crypto vendors
               </span>
-              <h1>One workspace to run high-volume crypto vendor desks</h1>
+              <h1>One simple app for high-volume crypto vendors</h1>
               <p>
-                Vendora is the simple desk vendors use to manage orders, proofs, and payouts in one place. It keeps Telegram updates flowing so you can close deals faster.
+                Vendora is the simple app vendors use to manage orders, proofs, and payouts in one place. It keeps Telegram updates flowing so you can close deals faster.
               </p>
               <div className="home-hero__actions">
                 <Button asChild size="lg" className="home-cta">
@@ -416,7 +416,7 @@ const Home: React.FC = () => {
         <section id="product" className="section section--split">
           <div className="section__head">
             <span className="section__eyebrow">WHY VENDORA</span>
-            <h2>The control centre vendors keep open all day</h2>
+            <h2>The page vendors keep open all day</h2>
             <p>
               Vendora keeps every part of your vendor work in one tab and sends clear Telegram updates so buyers trust each step.
             </p>
@@ -436,7 +436,7 @@ const Home: React.FC = () => {
                 <ul>
                   <li>Vendora web app keeps every order and query organised</li>
                   <li>Telegram bot gives customers instant answers and order status</li>
-                  <li>Proof-backed settlements build trust with every trade</li>
+                  <li>Proof-backed payments build trust with every trade</li>
                   <li>Every payout matches a receipt buyers can see</li>
                 </ul>
               </div>
@@ -463,7 +463,7 @@ const Home: React.FC = () => {
             <figure className="demo-panel__visual">
               <span className="demo-panel__status">
                 <span className="demo-dot" aria-hidden />
-                Live Vendora desk
+                Live Vendora dashboard
               </span>
               <div className="demo-panel__screen">
                 <img src="/screenshots/vendora-dashboard.png" alt="Vendora dashboard with live vendor orders" />
@@ -478,7 +478,7 @@ const Home: React.FC = () => {
             </figure>
             <div className="demo-panel__notes">
               <article>
-                <h3>Vendor desk</h3>
+                <h3>Vendor dashboard</h3>
                 <p>See each order stage, customer question, and proof attachment in one live timeline.</p>
               </article>
               <article>
@@ -513,7 +513,7 @@ const Home: React.FC = () => {
         <section className="section section--split">
           <div className="section__head">
             <span className="section__eyebrow">RESULTS</span>
-            <h2>Stories from desks scaling with Vendora</h2>
+            <h2>Stories from teams scaling with Vendora</h2>
             <p>Real vendors replacing messy chats and manual trackers with faster transactions and happier customers.</p>
           </div>
           <div className="testimonials">

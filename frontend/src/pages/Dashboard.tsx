@@ -268,19 +268,19 @@ const Dashboard = () => {
       <div className="space-y-6 page-anim">
         {/* Header */}
         <div className="flex items-center justify-between gap-4 flex-wrap">
-          <h1 className="text-3xl font-bold text-white">Vendora command center</h1>
+          <h1 className="text-3xl font-bold text-white">Vendora dashboard</h1>
           <div className="flex items-center gap-2 ml-auto">
             <Button
               variant="outline"
               className="border-primary/40 text-primary hover:bg-primary/10"
               onClick={loadDashboardData}
             >
-              Sync desk data
+              Sync dashboard
             </Button>
           </div>
         </div>
         <p className="text-muted-foreground">
-          Welcome back, {user?.name || 'vendor'}. Keep buyers updated, release settlements on time, and stay audit-ready from one console.
+          Welcome back, {user?.name || 'vendor'}. Keep buyers updated, complete payments on time, and keep records in one place.
         </p>
 
   {/* Onboarding Checklist (derived from backend) */}

@@ -73,7 +73,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   return (
     <AuthContext.Provider value={value}>
-      {isLoading ? <SplashScreen message="Preparing your workspace" subMessage="Checking your Vendora session" /> : children}
+      {isLoading ? <SplashScreen message="Preparing your account" subMessage="Checking your Vendora session" /> : children}
     </AuthContext.Provider>
   );
 };

@@ -12,7 +12,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const location = useLocation();
 
   if (isLoading) {
-    return <SplashScreen message="Loading your desk" subMessage="Making sure you still have access" />;
+    return <SplashScreen message="Loading your account" subMessage="Making sure you still have access" />;
   }
 
   if (!isAuthenticated) {

@@ -9,7 +9,7 @@ import "./pricing.css";
 const pricingSummary = [
   {
     title: "Keep orders organised",
-    body: "Your Vendora desk tracks quotes, payments, and receipts so the whole team sees what happens next.",
+    body: "Vendora tracks quotes, payments, and receipts so your team sees what happens next.",
     icon: <Zap className="h-5 w-5" aria-hidden />
   },
   {
@@ -58,7 +58,7 @@ const plans: Plan[] = [
     name: "Monthly",
     price: "$22.99",
     billing: "per month",
-    highlight: "For busy desks that need unlimited orders and reminders",
+    highlight: "For busy teams that need unlimited orders and reminders",
     description: "Unlock automations, faster payouts, and live support once daily volume takes off.",
     ctaLabel: "Upgrade monthly",
     ctaLink: "/upgrade?plan=monthly",
@@ -75,13 +75,13 @@ const plans: Plan[] = [
     name: "Quarterly",
     price: "$68.97",
     billing: "every 3 months",
-    highlight: "Quarterly savings for growing desks",
+    highlight: "Quarterly savings for growing teams",
     description: "Everything in Monthly plus a quarterly health check and bundled savings.",
     ctaLabel: "Upgrade quarterly",
     ctaLink: "/upgrade?plan=quarterly",
     features: [
       "Everything in Monthly",
-      "Quarterly desk performance summary",
+      "Quarterly performance summary",
       "Priority review of feature requests",
       "Built-in savings versus monthly",
       "Shared inbox for teammates"
@@ -123,7 +123,7 @@ const plans: Plan[] = [
 const valueStats = [
   {
     label: "Manage every order",
-    value: "One desk",
+    value: "One place",
     description: "Stay on top of quotes, payments, and receipts without switching apps."
   },
   {
@@ -132,15 +132,15 @@ const valueStats = [
     description: "Send automatic status updates, proof requests, and delivery notes from your bot."
   },
   {
-    label: "Stay audit ready",
+    label: "Keep records organized",
     value: "Automatic records",
-    description: "Track payments, proofs, and payouts with exports your finance partner can trust."
+    description: "Track payments, proofs, and payouts with clear exports you can share easily."
   }
 ];
 
 const addOns = [
   {
-    title: "Vendor desk workspace",
+    title: "Vendor dashboard",
     body: "Track quotes, approvals, proofs, and payouts in one simple interface.",
     icon: <Zap className="h-6 w-6" aria-hidden />
   },
@@ -188,11 +188,11 @@ const Pricing: React.FC = () => {
           <div className="pricing-hero__inner">
             <span className="pricing-badge">
               <Sparkles className="h-4 w-4" aria-hidden />
-              Built for crypto vendor desks
+              Built for crypto vendors
             </span>
-            <h1>Start free. Upgrade when your desk needs more volume.</h1>
+            <h1>Start free. Upgrade when you need more volume.</h1>
             <p>
-              Vendora is the workspace vendors use to manage buy & sell rates, fulfill customer orders, and send Telegram updates without spreadsheets or manual follow-ups.
+              Vendora helps vendors manage buy/sell rates, fulfill customer orders, and send Telegram updates without spreadsheets.
             </p>
             <div className="pricing-hero__cta">
               <Button asChild size="lg" className="pricing-cta">
@@ -255,8 +255,8 @@ const Pricing: React.FC = () => {
           <div className="pricing-value__inner">
             <div className="pricing-value__copy">
               <span className="pricing-flag">What Vendora handles</span>
-              <h2>All the moving parts of your vendor desk, covered</h2>
-              <p>Open one workspace, invite your teammates, and give customers a Telegram bot that keeps them updated automatically. Vendora keeps your desk tidy so you can focus on volume.</p>
+              <h2>All the moving parts of your vendor work, covered</h2>
+              <p>Open one account, invite teammates, and give customers a Telegram bot that keeps them updated automatically. Vendora keeps everything tidy so you can focus on volume.</p>
             </div>
             <div className="pricing-stats">
               {valueStats.map((stat) => (
@@ -274,7 +274,7 @@ const Pricing: React.FC = () => {
           <div className="pricing-addons__head">
             <span className="pricing-flag">Included with every plan</span>
             <h2>Replace spreadsheets, chats, and manual reminders</h2>
-            <p>Vendora bundles the tools a vendor desk uses every day—no extra licenses or add-ons required. Start free and keep everything when you upgrade.</p>
+            <p>Vendora bundles the tools vendors use every day—no extra licenses or add-ons required. Start free and keep everything when you upgrade.</p>
           </div>
           <div className="pricing-addons__grid">
             {addOns.map((addon) => (
@@ -293,7 +293,7 @@ const Pricing: React.FC = () => {
               <span className="pricing-flag">Launch support</span>
               <h2>Go live fast with help from our team</h2>
               <p>
-                We help you import data, configure rates, and launch your Telegram bot. Most desks go live the same week and grow volume without disrupting customers.
+                We help you import data, configure rates, and launch your Telegram bot. Most teams go live the same week and grow volume without disrupting customers.
               </p>
             </div>
             <div className="pricing-guarantee__points">
@@ -316,8 +316,8 @@ const Pricing: React.FC = () => {
         <section className="pricing-faq" id="pricing-faq">
           <div className="pricing-faq__head">
             <span className="pricing-flag">FAQ</span>
-            <h2>Answers for busy vendor desks</h2>
-            <p>Have something else in mind? Ping us from the app once you create your workspace.</p>
+            <h2>Answers for busy vendors</h2>
+            <p>Have something else in mind? Ping us from the app once you create your account.</p>
           </div>
           <div className="pricing-faq__grid">
             {faqs.map((faq) => (
@@ -336,7 +336,7 @@ const Pricing: React.FC = () => {
           <div className="pricing-cta__inner">
             <div>
               <span className="pricing-flag">Next step</span>
-              <h2>Create your free Vendora workspace</h2>
+              <h2>Create your free Vendora account</h2>
               <p>Launch the free plan in minutes, process up to 10 customer orders per day, and upgrade the moment you need more volume.</p>
             </div>
             <div className="pricing-cta__actions">
@@ -355,7 +355,7 @@ const Pricing: React.FC = () => {
       </main>
 
       <footer className="pricing-footer">
-        <span>© {new Date().getFullYear()} Vendora. Pricing that scales with vendor desks of every size.</span>
+        <span>© {new Date().getFullYear()} Vendora. Pricing that scales with vendors of every size.</span>
         <nav>
           <Link to="/terms">Terms</Link>
           <Link to="/privacy">Privacy</Link>

@@ -85,7 +85,7 @@ export default function SignupPage() {
       const trialExpires = res?.user?.trial_expires_at;
       if (trialExpires) {
         const d = new Date(trialExpires);
-        setSuccess(`Vendor desk created! Trial coverage runs until ${d.toLocaleString()}. Redirecting you to sign-in...`);
+        setSuccess(`Vendor account created! Trial runs until ${d.toLocaleString()}. Redirecting you to sign-in...`);
       } else {
         setSuccess('Vendor access confirmed. Redirecting you to sign-in...');
       }
@@ -114,9 +114,9 @@ export default function SignupPage() {
               />
             </div>
             <div className="space-y-3">
-              <h1 className="text-4xl lg:text-5xl font-semibold text-white">Launch your Vendora trading desk</h1>
+              <h1 className="text-4xl lg:text-5xl font-semibold text-white">Start using Vendora today</h1>
               <p className="text-lg text-muted-foreground max-w-xl lg:max-w-none mx-auto lg:mx-0">
-                Onboard your vendor ops, pipe in Telegram leads, and issue compliant payouts from a single command center purpose-built for OTC teams.
+                Set up your vendor account, connect Telegram leads, and manage payouts in one simple dashboard.
               </p>
             </div>
           </div>
@@ -148,23 +148,23 @@ export default function SignupPage() {
             </div>
           </div>
           <div className="space-y-4">
-            <h2 className="text-2xl font-semibold text-white">Everything revenue teams need</h2>
+            <h2 className="text-2xl font-semibold text-white">Everything vendors need</h2>
             <ul className="space-y-3 text-left text-base text-muted-foreground">
               <li className="flex items-start gap-3">
                 <CheckCircle2 className="mt-1 h-5 w-5 text-primary" aria-hidden="true" />
-                <span>Unified ledger for fiat collections, crypto escrow releases, and pending settlements.</span>
+                <span>Keep fiat payments, crypto releases, and pending payouts in one place.</span>
               </li>
               <li className="flex items-start gap-3">
                 <CheckCircle2 className="mt-1 h-5 w-5 text-primary" aria-hidden="true" />
-                <span>Auto-sync with Vendora Telegram bot to pre-qualify leads and auto-reply to prospects.</span>
+                <span>Connect your Telegram bot to receive leads and send quick replies.</span>
               </li>
               <li className="flex items-start gap-3">
                 <CheckCircle2 className="mt-1 h-5 w-5 text-primary" aria-hidden="true" />
-                <span>Broadcast fresh buy/sell quotes to VIP buyers, field teams, and private channels in seconds.</span>
+                <span>Share updated buy/sell rates with buyers in seconds.</span>
               </li>
               <li className="flex items-start gap-3">
                 <CheckCircle2 className="mt-1 h-5 w-5 text-primary" aria-hidden="true" />
-                <span>Install as a PWA and keep settlements moving even when your connection cuts out.</span>
+                <span>Install as a PWA and keep payments moving even with a weak connection.</span>
               </li>
             </ul>
           </div>
@@ -175,7 +175,7 @@ export default function SignupPage() {
             <CardHeader className="space-y-1">
               <CardTitle className="text-2xl font-bold">Create your vendor account</CardTitle>
               <CardDescription>
-                Secure a Vendora seat for your desk. We’ll help you migrate buyers, bots, and payout rules.
+                Create your Vendora account. We’ll help you move buyers, bot settings, and payout rules.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -203,7 +203,7 @@ export default function SignupPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="username">Desk handle</Label>
+                  <Label htmlFor="username">Username</Label>
                   <Input
                     id="username"
                     name="username"

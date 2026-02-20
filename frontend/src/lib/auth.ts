@@ -97,7 +97,10 @@ export async function login(credentials: LoginCredentials): Promise<LoginRespons
                    (data?.detail && typeof data.detail !== 'string' ? JSON.stringify(data.detail) : '') ||
                    (data ? Object.values(data).flat().join(', ') : '') ||
                    'Login failed';
-    throw new Error(message);
+    const enrichedError = new Error(message) as Error & { data?: any; status?: number };
+    enrichedError.data = data;
+    enrichedError.status = error?.response?.status;
+    throw enrichedError;
   }
 }
 

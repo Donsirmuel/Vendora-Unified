@@ -194,9 +194,9 @@ const Orders = () => {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-white">Orders desk</h1>
+            <h1 className="text-3xl font-bold text-white">Orders dashboard</h1>
             <p className="text-muted-foreground">
-              Approve buyers, trigger settlements, and keep OTC deals flowing in real time.
+              Approve buyers, complete payments, and keep your deals moving in real time.
             </p>
           </div>
           <Button onClick={handleRefresh} variant="outline" className="border-primary/40 text-primary hover:bg-primary/10">
@@ -331,7 +331,7 @@ const Orders = () => {
               description={
                 searchTerm || statusFilter !== "all"
                   ? "Reset your filters to view the latest buyer requests waiting in Vendora."
-                  : "Share your Vendora bot link or broadcast fresh rates to bring in new OTC orders."
+                  : "Share your Vendora bot link or broadcast fresh rates to bring in new orders."
               }
               badge={searchTerm || statusFilter !== "all" ? "Filters applied" : "Inbox clear"}
               actions={

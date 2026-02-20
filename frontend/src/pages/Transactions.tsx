@@ -108,15 +108,15 @@ const Transactions = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{completedToday}</div>
-              <div className="text-xs text-muted-foreground">Desk settlements finalized in the current view.</div>
+              <div className="text-xs text-muted-foreground">Payments completed in the current view.</div>
             </CardContent>
           </Card>
         </div>
         <Card className="border-border/70">
           <CardHeader className="flex items-center justify-between">
             <div>
-              <CardTitle className="text-lg font-semibold text-white">Settlement queue</CardTitle>
-              <p className="text-sm text-muted-foreground">Track every payout and release across your OTC desk.</p>
+              <CardTitle className="text-lg font-semibold text-white">Payments queue</CardTitle>
+              <p className="text-sm text-muted-foreground">Track every payout across your orders.</p>
             </div>
             <Button
               variant="outline"
@@ -126,7 +126,7 @@ const Transactions = () => {
               className="border-primary/40 text-primary hover:bg-primary/10"
             >
               <RefreshCw className="h-4 w-4 mr-2" />
-              {loading ? "Syncing..." : "Sync settlements"}
+              {loading ? "Syncing..." : "Sync payments"}
             </Button>
           </CardHeader>
           <CardContent>
@@ -159,11 +159,11 @@ const Transactions = () => {
             ) : filtered.length === 0 ? (
               <BrandedEmptyState
                 icon={RefreshCw}
-                title={status || search ? "No transactions match this view" : "No settlements pending"}
+                title={status || search ? "No transactions match this view" : "No payments pending"}
                 description={
                   status || search
-                    ? "Adjust your filters or run a broader search to review historical settlements."
-                    : "Once buyers submit proofs or cash hits your accounts, settlements will appear here."
+                    ? "Adjust your filters or run a broader search to review past payments."
+                    : "Once buyers submit proofs or cash hits your account, transactions will appear here."
                 }
                 badge={status || search ? "Filters applied" : "Queue clear"}
                 actions={

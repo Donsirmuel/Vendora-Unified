@@ -72,12 +72,12 @@ const AdminPayments: React.FC = () => {
           <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
             <div className="space-y-4">
               <Badge variant="outline" className="w-fit border-white/20 bg-white/10 uppercase tracking-[0.3em] text-xs text-primary/80">
-                Operations Desk
+                Operations
               </Badge>
               <div className="space-y-3">
                 <h1 className="text-3xl font-semibold md:text-4xl">Approve vendor upgrades</h1>
                 <p className="max-w-2xl text-sm text-slate-200 md:text-base">
-                  Keep serious desks live by clearing legitimate receipts quickly and rejecting imposters just as fast.
+                  Keep accounts active by approving valid receipts quickly and rejecting suspicious ones.
                 </p>
               </div>
               <div className="flex flex-wrap gap-3 text-sm">
@@ -107,7 +107,7 @@ const AdminPayments: React.FC = () => {
           <CardHeader className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <CardTitle className="text-xl font-semibold">Pending payment requests</CardTitle>
-              <CardDescription>Review receipts and unlock the right desks. Actions broadcast instantly to the vendor account.</CardDescription>
+              <CardDescription>Review receipts and unlock the right accounts. Actions update the vendor account instantly.</CardDescription>
             </div>
             <Button onClick={refresh} disabled={isRefreshing || loading} variant="secondary" className="gap-2">
               <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />

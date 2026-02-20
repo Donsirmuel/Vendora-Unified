@@ -92,7 +92,7 @@ const Availability = () => {
                 <span className="text-xs font-semibold uppercase tracking-[0.3em]">Why it matters</span>
               </div>
               <p className="mt-3 leading-relaxed">
-                Availability flips the Telegram bot state so orders, broadcasts, and automations stay aligned with your desk's real-world schedule.
+                Availability updates your Telegram bot status so orders and broadcasts match your real schedule.
               </p>
             </div>
             <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-slate-100 shadow-inner">

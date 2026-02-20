@@ -1,0 +1,6 @@
+Place your PWA splash image here. Recommended: 1280x720 PNG or JPG named splash.png
+
+Copy from your Downloads (PowerShell):
+cp "C:\Users\user\Downloads\Preview.png" "..\frontend\public\splash\splash.png"
+
+If you want the image to be used for Android/iOS PWA splash screens, generate multiple sizes or let the system scale automatically.

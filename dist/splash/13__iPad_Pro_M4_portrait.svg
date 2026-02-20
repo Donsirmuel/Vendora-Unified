@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="2064" height="2752" viewBox="0 0 2064 2752" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0C2231"/>
+      <stop offset="55%" stop-color="#071621"/>
+      <stop offset="100%" stop-color="#103445"/>
+    </linearGradient>
+    <radialGradient id="glow-1" cx="15%" cy="20%" r="55%">
+      <stop offset="0%" stop-color="#4CD7F0" stop-opacity="0.85" />
+      <stop offset="65%" stop-color="#0EA5B7" stop-opacity="0.15" />
+      <stop offset="100%" stop-color="#0EA5B7" stop-opacity="0" />
+    </radialGradient>
+    <radialGradient id="glow-2" cx="85%" cy="80%" r="60%">
+      <stop offset="0%" stop-color="#0EA5B7" stop-opacity="0.75" />
+      <stop offset="45%" stop-color="#0EA5B7" stop-opacity="0.05" />
+      <stop offset="100%" stop-color="#0EA5B7" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="badge-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0EA5B7" stop-opacity="0.85" />
+      <stop offset="100%" stop-color="#4CD7F0" stop-opacity="0.95" />
+    </linearGradient>
+  </defs>
+  <rect width="2064" height="2752" fill="url(#bg-gradient)"/>
+  <rect width="2064" height="2752" fill="url(#glow-1)"/>
+  <rect width="2064" height="2752" fill="url(#glow-2)"/>
+  <g transform="translate(1032, 1376)">
+    <circle r="247.67999999999998" fill="rgba(14,165,183,0.18)" />
+    <circle r="178.32959999999997" fill="rgba(14,165,183,0.85)" />
+    <text text-anchor="middle" dominant-baseline="central" fill="#071621" font-family="'Inter','Segoe UI',sans-serif" font-size="210.52799999999996" font-weight="700">V</text>
+  </g>
+  <g transform="translate(1032, 1846.5919999999999)" text-anchor="middle">
+    <text fill="#F9FBFD" font-family="'Inter','Segoe UI',sans-serif" font-size="103.2" font-weight="600" letter-spacing="0.04em">VENDORA</text>
+    <text y="165.12" fill="#D4E6EE" font-family="'Inter','Segoe UI',sans-serif" font-size="57.792" font-weight="400">Preparing your vendor desk</text>
+  </g>
+  <g transform="translate(1032, 583.424)">
+    <rect x="-371.52" y="-66.048" width="743.04" height="132.096" rx="66.048" fill="url(#badge-gradient)" opacity="0.85" />
+    <text x="0" y="16.512" text-anchor="middle" fill="#071621" font-family="'Inter','Segoe UI',sans-serif" font-size="53.663999999999994" font-weight="600" letter-spacing="0.14em">VENDOR DESK</text>
+  </g>
+</svg>

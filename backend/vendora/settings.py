@@ -108,9 +108,9 @@ JAZZMIN_SETTINGS = {
     "site_brand": "Vendora",
     "welcome_sign": "Welcome to Vendora Admin",
     # Logos & icon (paths within Django staticfiles)
-    "site_logo": "vendora/logo.svg",
-    "site_logo_small": "vendora/mark.svg",
-    "site_icon": "vendora/mark.svg",
+    "site_logo": "vendora/logo.png",
+    "site_logo_small": "vendora/mark.png",
+    "site_icon": "vendora/mark.png",
     # UI/menus
     "show_ui_builder": False,
     "topmenu_links": [

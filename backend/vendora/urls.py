@@ -41,7 +41,7 @@ urlpatterns = [
     path("metrics/", metrics_view, name="metrics"),
 
     # Favicon for backend domain (helps avoid third-party default icons)
-    path("favicon.ico", RedirectView.as_view(url=settings.STATIC_URL + 'vendora/mark.svg', permanent=True)),
+    path("favicon.ico", RedirectView.as_view(url=settings.STATIC_URL + 'vendora/mark.png', permanent=True)),
 
     # SEO
     path("sitemap.xml", sitemap, {"sitemaps": {"static": StaticViewSitemap}}, name="sitemap"),

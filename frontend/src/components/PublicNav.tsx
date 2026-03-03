@@ -78,7 +78,6 @@ export default function PublicNav({ links = defaultLinks, variant = "translucent
           </span>
           <span className="public-nav__brand-title">
             Vendora
-            <span className="public-nav__badge">Beta</span>
           </span>
         </Link>
         <button

@@ -100,7 +100,7 @@ const plans: Plan[] = [
       "Advanced revenue and payout analytics",
       "Bi-monthly success check-ins",
       "Custom labels for orders and payouts",
-      "Early access to beta features"
+      "Early access to new features"
     ]
   },
   {

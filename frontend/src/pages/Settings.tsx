@@ -22,6 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { cn } from "@/lib/utils";
 import BrandedEmptyState from "@/components/BrandedEmptyState";
+import { resolveMediaUrl } from "@/lib/media-url";
 
 type SectionTone = 'solid' | 'muted' | 'gradient';
 
@@ -140,7 +141,7 @@ const Settings = () => {
   const [profileSubscriptionStatus, setProfileSubscriptionStatus] = useState<SubscriptionStatus | null>(null);
   const [profileImageError, setProfileImageError] = useState<string>("");
   // daily usage is handled inside the FreePlan components which fetch their own data
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
 
   const loadProfileData = async () => {
     try {
@@ -153,7 +154,7 @@ const Settings = () => {
       setBio((profile as any).bio || "");
       setCurrency((profile as any).currency || "USD");
       setProfileSubscriptionStatus(((profile as any).subscription_status as SubscriptionStatus) || null);
-      if ((profile as any).avatar_url) setProfileImage((profile as any).avatar_url);
+      if ((profile as any).avatar_url) setProfileImage(resolveMediaUrl((profile as any).avatar_url));
       if ((profile as any).bot_link) setBotLink((profile as any).bot_link);
       setAutoExpireMinutes(
         typeof profile.auto_expire_minutes === "number" ? profile.auto_expire_minutes : ""
@@ -310,8 +311,9 @@ const Settings = () => {
         const form = new FormData();
         form.append("avatar", file);
         const res = await http.patch('/api/v1/accounts/vendors/me/', form);
-        const url = res.data.avatar_url || URL.createObjectURL(file);
+        const url = resolveMediaUrl(res.data.avatar_url) || URL.createObjectURL(file);
         setProfileImage(url);
+        await refreshUser();
         setProfileImageError("");
         toast({ title: "Profile updated", description: "Avatar uploaded.", className: "bg-success text-success-foreground" });
       } catch (err: any) {

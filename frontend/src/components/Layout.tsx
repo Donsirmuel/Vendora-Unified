@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import ThemeToggle from '@/components/ThemeToggle';
 import { useAuth } from "@/contexts/AuthContext";
+import { resolveMediaUrl } from "@/lib/media-url";
 // TrialBanner intentionally not displayed globally; shown only on Settings page
 import Footer from '@/components/Footer';
 import { ensurePushRegistered } from "@/main";
@@ -195,7 +196,7 @@ const Layout = ({ children, title }: LayoutProps) => {
               <div className="flex items-center gap-3">
                 <Avatar className="h-10 w-10">
                   {(() => {
-                    const avatarUrl = (user as any)?.avatar_url as string | undefined;
+                    const avatarUrl = resolveMediaUrl((user as any)?.avatar_url as string | undefined);
                     const name = user.name || '';
                     const parts = name.trim().split(/\s+/).filter(Boolean);
                     const first = parts[0]?.[0] || '';

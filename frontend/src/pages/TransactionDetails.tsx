@@ -12,6 +12,7 @@ import { http, tokenStore } from "@/lib/http";
 import { getErrorMessage } from "@/lib/errors";
 import { formatCurrency } from "@/lib/currency";
 import { useAuth } from "@/contexts/AuthContext";
+import { resolveMediaUrl } from "@/lib/media-url";
 
 const TransactionDetails = () => {
   const { id } = useParams();
@@ -22,13 +23,8 @@ const TransactionDetails = () => {
   const [isMarkingComplete, setIsMarkingComplete] = useState(false);
   const [txn, setTxn] = useState<any | null>(null);
   const [order, setOrder] = useState<any | null>(null);
-  const apiBase = (import.meta as any).env?.VITE_API_BASE || '';
-  const toAbs = (u?: string | null) => {
-    if (!u) return '';
-    if (u.startsWith('http://') || u.startsWith('https://')) return u;
-    if (u.startsWith('/')) return `${apiBase}${u}`;
-    return u;
-  };
+  const [customerProofLoadError, setCustomerProofLoadError] = useState(false);
+  const [vendorProofLoadError, setVendorProofLoadError] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -48,6 +44,11 @@ const TransactionDetails = () => {
     };
     load();
   }, [id]);
+
+  useEffect(() => {
+    setCustomerProofLoadError(false);
+    setVendorProofLoadError(false);
+  }, [txn?.id, txn?.proof, txn?.proof_of_payment, txn?.customer_proof, txn?.vendor_proof]);
 
   const handleMarkComplete = async () => {
     setIsMarkingComplete(true);
@@ -259,13 +260,24 @@ const TransactionDetails = () => {
           </CardHeader>
           <CardContent>
             {(() => {
-              const url = toAbs((txn as any).proof || (txn as any).proof_of_payment || (txn as any).customer_proof || null);
+              const url = resolveMediaUrl((txn as any).proof || (txn as any).proof_of_payment || (txn as any).customer_proof || null);
               if (url) {
                 return (
                   <div className="space-y-3">
-                    <div className="p-3 border rounded-lg bg-secondary/30 overflow-hidden">
-                      <img src={url} alt="Customer proof" className="w-full max-h-[60vh] object-contain mx-auto" />
-                    </div>
+                    {!customerProofLoadError ? (
+                      <div className="p-3 border rounded-lg bg-secondary/30 overflow-hidden">
+                        <img
+                          src={url}
+                          alt="Customer proof"
+                          className="w-full max-h-[60vh] object-contain mx-auto"
+                          onError={() => setCustomerProofLoadError(true)}
+                        />
+                      </div>
+                    ) : (
+                      <div className="p-3 border rounded-lg bg-secondary/30 text-sm text-muted-foreground">
+                        Preview unavailable for this proof. Open the original file below.
+                      </div>
+                    )}
                     <a href={url} target="_blank" rel="noreferrer" className="inline-flex text-sm underline text-primary">Open original</a>
                   </div>
                 );
@@ -384,10 +396,21 @@ const TransactionDetails = () => {
             <CardContent>
               {txn.vendor_proof ? (
                 <div className="space-y-3">
-                  <div className="p-3 border rounded-lg bg-secondary/30 overflow-hidden">
-                    <img src={toAbs(txn.vendor_proof)} alt="Vendor proof" className="w-full max-h-[60vh] object-contain mx-auto" />
-                  </div>
-                  <a href={toAbs(txn.vendor_proof)} target="_blank" rel="noreferrer" className="inline-flex text-sm underline text-primary">Open original</a>
+                  {!vendorProofLoadError ? (
+                    <div className="p-3 border rounded-lg bg-secondary/30 overflow-hidden">
+                      <img
+                        src={resolveMediaUrl(txn.vendor_proof)}
+                        alt="Vendor proof"
+                        className="w-full max-h-[60vh] object-contain mx-auto"
+                        onError={() => setVendorProofLoadError(true)}
+                      />
+                    </div>
+                  ) : (
+                    <div className="p-3 border rounded-lg bg-secondary/30 text-sm text-muted-foreground">
+                      Preview unavailable for this proof. Open the original file below.
+                    </div>
+                  )}
+                  <a href={resolveMediaUrl(txn.vendor_proof)} target="_blank" rel="noreferrer" className="inline-flex text-sm underline text-primary">Open original</a>
                 </div>
               ) : (
                 <div className="text-sm text-muted-foreground">No vendor proof uploaded yet</div>

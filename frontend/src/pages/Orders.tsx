@@ -340,7 +340,6 @@ const Orders = () => {
                     <Button
                       onClick={handleRefresh}
                       variant="secondary"
-                      className="bg-white/10 text-white hover:bg-white/20"
                     >
                       Clear filters
                     </Button>

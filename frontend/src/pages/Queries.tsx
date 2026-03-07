@@ -283,7 +283,6 @@ const Queries = () => {
                 {(searchTerm || statusFilter !== "all") && (
                   <Button
                     variant="secondary"
-                    className="bg-white/10 text-white hover:bg-white/20"
                     onClick={() => {
                       setSearchTerm("");
                       setStatusFilter("all");

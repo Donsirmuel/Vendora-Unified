@@ -57,21 +57,9 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             {/* Public Auth Routes - Default to Home */}
-            <Route path="/terms" element={
-              <PublicRoute>
-                <Terms />
-              </PublicRoute>
-            } />
-            <Route path="/privacy" element={
-              <PublicRoute>
-                <Privacy />
-              </PublicRoute>
-            } />
-            <Route path="/pricing" element={
-              <PublicRoute>
-                <Pricing />
-              </PublicRoute>
-            } />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/pricing" element={<Pricing />} />
             <Route path="/" element={
               <PublicRoute>
                 <Home />

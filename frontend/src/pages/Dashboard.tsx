@@ -319,7 +319,7 @@ const Dashboard = () => {
 
           <Card className="card-anim">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Settled revenue ({userCurrency})</CardTitle>
+              <CardTitle className="text-sm font-medium">Total revenue ({userCurrency})</CardTitle>
         <span className="sr-only">{userCurrency}</span>
             </CardHeader>
             <CardContent>
@@ -332,7 +332,7 @@ const Dashboard = () => {
 
           <Card className="card-anim">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Transactions released</CardTitle>
+              <CardTitle className="text-sm font-medium">Completed Transactions</CardTitle>
               <ArrowLeftRight className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -345,7 +345,7 @@ const Dashboard = () => {
 
           <Card className="card-anim">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Buyer queries open</CardTitle>
+              <CardTitle className="text-sm font-medium">Open queries</CardTitle>
               <MessageCircle className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -360,7 +360,7 @@ const Dashboard = () => {
   {/* Recent Activity */}
   <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Pending Orders */}
-          <Card className="border-border bg-gradient-to-br from-background via-muted/40 to-primary/10 shadow-sm">
+          <Card className="rounded-3xl border border-border bg-gradient-to-br from-background via-muted/40 to-primary/10 shadow-xl shadow-primary/10">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <Clock className="h-5 w-5" />
@@ -421,7 +421,7 @@ const Dashboard = () => {
           </Card>
 
           {/* Latest Uncompleted Transactions */}
-          <Card className="border-border bg-gradient-to-br from-background via-muted/40 to-primary/10 shadow-sm">
+          <Card className="rounded-3xl border border-border bg-gradient-to-br from-background via-muted/40 to-primary/10 shadow-xl shadow-primary/10">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <ArrowLeftRight className="h-5 w-5" />
@@ -480,7 +480,7 @@ const Dashboard = () => {
           </Card>
 
           {/* Recent Queries */}
-          <Card className="border-border bg-gradient-to-br from-background via-muted/40 to-primary/10 shadow-sm">
+          <Card className="rounded-3xl border border-border bg-gradient-to-br from-background via-muted/40 to-primary/10 shadow-xl shadow-primary/10">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <MessageCircle className="h-5 w-5" />

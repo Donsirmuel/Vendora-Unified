@@ -118,7 +118,7 @@ export default function UpgradePage() {
   return (
     <Layout title="Upgrade">
       <div className="space-y-10 pb-12">
-        <div className="rounded-3xl border border-white/10 bg-gradient-to-br from-slate-950 via-slate-900 to-primary/25 px-8 py-10 text-white shadow-xl shadow-primary/20">
+        <div className="rounded-3xl border border-border bg-gradient-to-br from-background via-muted/40 to-primary/10 px-8 py-10 text-foreground shadow-xl shadow-primary/10">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
             <div className="space-y-4">
               <Badge variant="outline" className="w-fit border-white/20 bg-white/10 uppercase tracking-[0.3em] text-xs text-primary/80">
@@ -419,7 +419,6 @@ function PendingStateCard() {
         badge="Activation in review"
         title="No payment requests yet"
         description="Upload your receipt after payment and our team will flip your plan live within minutes."
-        className="bg-slate-950"
       />
     );
   }

@@ -1,7 +1,6 @@
 from datetime import timedelta
-from django.db.models import Count, Q, Sum
-from django.db.models.functions import Coalesce
-from django.db.models.functions import TruncDate
+from decimal import Decimal
+from django.db.models import Count, Q
 from django.conf import settings
 from django.utils import timezone
 from rest_framework.permissions import IsAuthenticated
@@ -27,10 +26,30 @@ class DashboardSummaryView(APIView):
             completed=Count("id", filter=Q(status=Order.COMPLETED)),
         )
 
-        tx_agg = Transaction.objects.filter(order__vendor=user).aggregate(
-            completed_count=Count("id", filter=Q(status="completed")),
-            total_revenue=Coalesce(Sum("order__total_value", filter=Q(status="completed")), 0),
-        )
+        completed_transactions_qs = Transaction.objects.filter(order__vendor=user).filter(
+            Q(status__iexact="completed") | Q(completed_at__isnull=False) | Q(vendor_completed_at__isnull=False)
+        ).select_related("order")
+
+        completed_count = completed_transactions_qs.values("id").distinct().count()
+        total_revenue_decimal = Decimal("0")
+        for tx in completed_transactions_qs:
+            order = getattr(tx, "order", None)
+            if not order:
+                continue
+            total_value = getattr(order, "total_value", None)
+            if total_value is not None:
+                try:
+                    total_revenue_decimal += Decimal(str(total_value))
+                    continue
+                except Exception:
+                    pass
+            amount = getattr(order, "amount", None)
+            rate = getattr(order, "rate", None)
+            if amount is not None and rate is not None:
+                try:
+                    total_revenue_decimal += Decimal(str(amount)) * Decimal(str(rate))
+                except Exception:
+                    continue
 
         pending_queries_qs = Query.objects.filter(
             Q(vendor=user) | Q(order__vendor=user)
@@ -70,25 +89,37 @@ class DashboardSummaryView(APIView):
 
         today = timezone.localdate()
         start_date = today - timedelta(days=13)
-        tx_by_day_qs = (
-            Transaction.objects.filter(order__vendor=user, status="completed", completed_at__date__gte=start_date)
-            .annotate(day=TruncDate("completed_at"))
-            .values("day")
-            .annotate(
-                count=Count("id"),
-                revenue=Coalesce(Sum("order__total_value"), 0),
-            )
-            .order_by("day")
-        )
+        tx_by_day = {}
+        for tx in completed_transactions_qs:
+            event_dt = tx.completed_at or tx.vendor_completed_at or tx.created_at
+            if not event_dt:
+                continue
+            event_day = timezone.localtime(event_dt).date() if timezone.is_aware(event_dt) else event_dt.date()
+            if event_day < start_date:
+                continue
+            day_key = event_day.isoformat()
+            if day_key not in tx_by_day:
+                tx_by_day[day_key] = {"count": 0, "revenue": 0.0}
+            tx_by_day[day_key]["count"] += 1
 
-        tx_by_day = {
-            row["day"].isoformat(): {
-                "count": int(row.get("count") or 0),
-                "revenue": float(row.get("revenue") or 0),
-            }
-            for row in tx_by_day_qs
-            if row.get("day")
-        }
+            order = getattr(tx, "order", None)
+            value_to_add = Decimal("0")
+            if order is not None:
+                total_value = getattr(order, "total_value", None)
+                if total_value is not None:
+                    try:
+                        value_to_add = Decimal(str(total_value))
+                    except Exception:
+                        value_to_add = Decimal("0")
+                else:
+                    amount = getattr(order, "amount", None)
+                    rate = getattr(order, "rate", None)
+                    if amount is not None and rate is not None:
+                        try:
+                            value_to_add = Decimal(str(amount)) * Decimal(str(rate))
+                        except Exception:
+                            value_to_add = Decimal("0")
+            tx_by_day[day_key]["revenue"] += float(value_to_add)
 
         daily_completed = []
         for i in range(14):
@@ -138,8 +169,8 @@ class DashboardSummaryView(APIView):
                 "total_orders_received": (order_counts.get("accepted") or 0) + (order_counts.get("declined") or 0),
                 "pending_orders": order_counts.get("pending") or 0,
                 "completed_orders": order_counts.get("completed") or 0,
-                "total_revenue": float(tx_agg.get("total_revenue") or 0),
-                "completed_transactions": tx_agg.get("completed_count") or 0,
+                "total_revenue": float(total_revenue_decimal),
+                "completed_transactions": completed_count,
                 "pending_queries": pending_queries_count,
             },
             "recent": {

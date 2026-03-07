@@ -67,9 +67,18 @@ const Layout = ({ children, title }: LayoutProps) => {
             case 'unsupported':
               toast({ title: 'Notifications unavailable', description: 'This device does not support push notifications.', variant: 'destructive' });
               break;
+            case 'misconfigured':
+              toast({ title: 'Notifications setup pending', description: 'Permission is granted, but push is not fully configured yet. You can retry from Settings.' });
+              break;
             case 'error':
+              if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+                toast({ title: 'Notifications setup pending', description: 'Permission is granted. Finishing setup may take a moment; use Settings to refresh if needed.' });
+              } else {
+                toast({ title: 'Notifications unavailable', description: 'We could not enable notifications automatically. Try again from Settings.' });
+              }
+              break;
             case 'unauthenticated':
-              toast({ title: 'Notifications unavailable', description: 'We could not enable notifications automatically. Try again from Settings.', variant: 'destructive' });
+              toast({ title: 'Notifications unavailable', description: 'Sign in again to enable notifications.', variant: 'destructive' });
               break;
             default:
               break;
@@ -255,9 +264,9 @@ const Layout = ({ children, title }: LayoutProps) => {
       )}
 
       {/* Main content */}
-      <div className="lg:ml-64 flex flex-col min-h-dvh">
+      <div className="lg:ml-64 flex flex-col min-h-dvh pt-14 lg:pt-0">
           {title && (
-            <header className="bg-card border-b border-border px-6 py-4" role="banner">
+        <header className="bg-card border-b border-border px-4 sm:px-6 py-4" role="banner">
               <div className="flex items-center gap-4">
                 <h1 className="text-2xl font-semibold text-foreground">{title}</h1>
                 {/* Trial indicator moved to Settings page only */}
@@ -266,7 +275,7 @@ const Layout = ({ children, title }: LayoutProps) => {
           )}
 
           {/* Page content */}
-          <main id="main-content" className="flex-1 p-6 pb-12 safe-pb" role="main" tabIndex={-1}>
+          <main id="main-content" className="flex-1 p-4 sm:p-6 pb-12 safe-pb" role="main" tabIndex={-1}>
             {children}
           </main>
           <Footer />

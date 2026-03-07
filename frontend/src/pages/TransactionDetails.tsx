@@ -158,8 +158,8 @@ const TransactionDetails = () => {
       <div className="space-y-6">
         
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div className="flex items-start md:items-center gap-3 md:gap-4">
             <Link to="/transactions">
               <Button variant="outline" size="sm" className="border-border">
                 <ArrowLeft className="h-4 w-4 mr-2" />
@@ -171,7 +171,7 @@ const TransactionDetails = () => {
               <p className="text-muted-foreground">Complete transaction information and actions</p>
             </div>
           </div>
-          <Button variant="outline" onClick={handleDownloadPDF} className="border-border">
+          <Button variant="outline" onClick={handleDownloadPDF} className="border-border w-full md:w-auto">
             <Download className="h-4 w-4 mr-2" />
             Download PDF
           </Button>
@@ -263,10 +263,10 @@ const TransactionDetails = () => {
               if (url) {
                 return (
                   <div className="space-y-3">
-                    <div className="p-3 border rounded-lg bg-secondary/30">
-                      <img src={url} alt="Customer proof" className="max-h-96 object-contain mx-auto" />
+                    <div className="p-3 border rounded-lg bg-secondary/30 overflow-hidden">
+                      <img src={url} alt="Customer proof" className="w-full max-h-[60vh] object-contain mx-auto" />
                     </div>
-                    <a href={url} target="_blank" rel="noreferrer" className="text-sm underline text-primary">Open original</a>
+                    <a href={url} target="_blank" rel="noreferrer" className="inline-flex text-sm underline text-primary">Open original</a>
                   </div>
                 );
               }
@@ -319,6 +319,7 @@ const TransactionDetails = () => {
                         </div>
                       )}
                     </div>
+                    <p className="text-xs text-muted-foreground">Uploading proof here will also mark this transaction as completed.</p>
                   </div>
                 </>
               )}
@@ -383,10 +384,10 @@ const TransactionDetails = () => {
             <CardContent>
               {txn.vendor_proof ? (
                 <div className="space-y-3">
-                  <div className="p-3 border rounded-lg bg-secondary/30">
-                    <img src={toAbs(txn.vendor_proof)} alt="Vendor proof" className="max-h-96 object-contain mx-auto" />
+                  <div className="p-3 border rounded-lg bg-secondary/30 overflow-hidden">
+                    <img src={toAbs(txn.vendor_proof)} alt="Vendor proof" className="w-full max-h-[60vh] object-contain mx-auto" />
                   </div>
-                  <a href={toAbs(txn.vendor_proof)} target="_blank" rel="noreferrer" className="text-sm underline text-primary">Open original</a>
+                  <a href={toAbs(txn.vendor_proof)} target="_blank" rel="noreferrer" className="inline-flex text-sm underline text-primary">Open original</a>
                 </div>
               ) : (
                 <div className="text-sm text-muted-foreground">No vendor proof uploaded yet</div>

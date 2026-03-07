@@ -115,7 +115,7 @@ const Transactions = () => {
         <Card className="border-border/70">
           <CardHeader className="flex items-center justify-between">
             <div>
-              <CardTitle className="text-lg font-semibold text-white">Payments queue</CardTitle>
+              <CardTitle className="text-lg font-semibold text-foreground">Payments queue</CardTitle>
               <p className="text-sm text-muted-foreground">Track every payout across your orders.</p>
             </div>
             <Button
@@ -172,7 +172,6 @@ const Transactions = () => {
                       <Button
                         size="sm"
                         variant="secondary"
-                        className="bg-white/10 text-white hover:bg-white/20"
                         onClick={() => {
                           setStatus("");
                           setSearch("");
@@ -191,46 +190,90 @@ const Transactions = () => {
                 }
               />
             ) : (
-              <div className="overflow-x-auto">
-                <Table>
-          <TableHeader>
-                    <TableRow>
-                      <TableHead>ID</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Order Code</TableHead>
-                      <TableHead>Asset</TableHead>
-                      <TableHead>Amount</TableHead>
-            <TableHead>Value ({userCurrency})</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Completed At</TableHead>
-                      <TableHead>Proof</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filtered.map((t) => (
-                      <TableRow key={t.id} className="hover:bg-muted/40">
-                        <TableCell>
-                          <Link to={`/transactions/${t.id}`} className="text-primary underline">
-                            {String(t.id).padStart(4, '0')}
-                          </Link>
-                        </TableCell>
-                        <TableCell className="capitalize">{t.order_type || "-"}</TableCell>
-                        <TableCell>{t.order_code || t.order}</TableCell>
-                        <TableCell>{t.order_asset || "-"}</TableCell>
-                        <TableCell>{t.order_amount ?? "-"}</TableCell>
-                        <TableCell>
-                          {t.order_total_value != null ? formatCurrency(Number(t.order_total_value), userCurrency) : "-"}
-                        </TableCell>
-                        <TableCell>{statusBadge(t.status)}</TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {t.completed_at ? new Date(t.completed_at).toLocaleString() : "-"}
-                        </TableCell>
-                        <TableCell>{t.proof ? "Yes" : "No"}</TableCell>
+              <>
+                <div className="space-y-3 md:hidden">
+                  {filtered.map((t) => (
+                    <Card key={t.id} className="border-border/70">
+                      <CardContent className="pt-4 space-y-3">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <Link to={`/transactions/${t.id}`} className="text-primary underline font-medium">
+                              TX-{String(t.id).padStart(4, '0')}
+                            </Link>
+                            <p className="text-xs text-muted-foreground mt-1">Order {t.order_code || t.order}</p>
+                          </div>
+                          {statusBadge(t.status)}
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3 text-sm">
+                          <div>
+                            <p className="text-xs text-muted-foreground">Type</p>
+                            <p className="capitalize">{t.order_type || '-'}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground">Asset</p>
+                            <p>{t.order_asset || '-'}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground">Amount</p>
+                            <p>{t.order_amount ?? '-'}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground">Value ({userCurrency})</p>
+                            <p>{t.order_total_value != null ? formatCurrency(Number(t.order_total_value), userCurrency) : '-'}</p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between text-xs text-muted-foreground">
+                          <span>{t.completed_at ? new Date(t.completed_at).toLocaleString() : 'Not completed'}</span>
+                          <span>Proof: {t.proof ? 'Yes' : 'No'}</span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+
+                <div className="hidden md:block overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>ID</TableHead>
+                        <TableHead>Type</TableHead>
+                        <TableHead>Order Code</TableHead>
+                        <TableHead>Asset</TableHead>
+                        <TableHead>Amount</TableHead>
+                        <TableHead>Value ({userCurrency})</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Completed At</TableHead>
+                        <TableHead>Proof</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+                    </TableHeader>
+                    <TableBody>
+                      {filtered.map((t) => (
+                        <TableRow key={t.id} className="hover:bg-muted/40">
+                          <TableCell>
+                            <Link to={`/transactions/${t.id}`} className="text-primary underline">
+                              {String(t.id).padStart(4, '0')}
+                            </Link>
+                          </TableCell>
+                          <TableCell className="capitalize">{t.order_type || "-"}</TableCell>
+                          <TableCell>{t.order_code || t.order}</TableCell>
+                          <TableCell>{t.order_asset || "-"}</TableCell>
+                          <TableCell>{t.order_amount ?? "-"}</TableCell>
+                          <TableCell>
+                            {t.order_total_value != null ? formatCurrency(Number(t.order_total_value), userCurrency) : "-"}
+                          </TableCell>
+                          <TableCell>{statusBadge(t.status)}</TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {t.completed_at ? new Date(t.completed_at).toLocaleString() : "-"}
+                          </TableCell>
+                          <TableCell>{t.proof ? "Yes" : "No"}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </>
             )}
           </CardContent>
         </Card>

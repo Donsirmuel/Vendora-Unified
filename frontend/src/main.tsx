@@ -21,6 +21,7 @@ export type PushRegistrationResult =
 	| 'prompt-required'
 	| 'unsupported'
 	| 'error'
+	| 'misconfigured'
 	| 'unauthenticated';
 
 // Register service worker and subscribe to push when available
@@ -91,7 +92,14 @@ async function registerPush({ promptPermission = false, force = false }: { promp
 			return 'subscribed';
 		}
 		return 'error';
-	} catch (e) {
+	} catch (e: any) {
+		const status = Number(e?.response?.status || 0);
+		if (status === 401 || status === 403) {
+			return 'unauthenticated';
+		}
+		if (status === 503) {
+			return 'misconfigured';
+		}
 		return 'error';
 	}
 }

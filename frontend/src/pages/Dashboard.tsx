@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,10 +15,6 @@ import {
   Clock
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { listOrders } from "@/lib/orders";
-import { listTransactions, type Transaction } from "@/lib/transactions";
-import { listQueries } from "@/lib/queries";
-import { listBroadcasts } from "@/lib/broadcast";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/currency";
 // Removed direct bank/rate imports previously used for legacy inline checklist
@@ -45,6 +41,31 @@ interface RecentActivity {
   broadcasts: any[];
 }
 
+interface DashboardSummaryResponse {
+  profile?: {
+    currency?: string;
+    telegram_username?: string | null;
+    bot_link?: string | null;
+  };
+  stats: {
+    total_orders_received: number;
+    pending_orders: number;
+    completed_orders: number;
+    total_revenue: number;
+    completed_transactions: number;
+    pending_queries: number;
+  };
+  recent: {
+    orders: any[];
+    transactions: any[];
+    queries: any[];
+    broadcasts: any[];
+  };
+  insights?: {
+    daily_completed?: Array<{ date: string; count: number; revenue: number }>;
+  };
+}
+
 const Dashboard = () => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -63,11 +84,14 @@ const Dashboard = () => {
     broadcasts: []
   });
   const [isLoading, setIsLoading] = useState(true);
-  const [completedTx, setCompletedTx] = useState<Transaction[]>([]);
+  const [completedSeries, setCompletedSeries] = useState<Array<{ date: string; count: number; revenue: number }>>([]);
   const [botLink, setBotLink] = useState<string | null>(null);
   const [telegramUser, setTelegramUser] = useState<string | null>(null);
   const [showCharts, setShowCharts] = useState(false);
   const [userCurrency, setUserCurrency] = useState<string>('USD');
+  const [lastSyncMs, setLastSyncMs] = useState<number | null>(null);
+  const lastReloadRef = useRef(0);
+  const reloadTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     loadDashboardData();
@@ -75,12 +99,31 @@ const Dashboard = () => {
     const sub = connectSSE('/api/v1/stream/', {
       onMessage: (ev) => {
         if (ev.type === 'snapshot') {
-          // Whenever snapshot markers change, refresh dashboard data
-          loadDashboardData();
+          const now = Date.now();
+          const minInterval = 3000;
+          if (now - lastReloadRef.current > minInterval) {
+            lastReloadRef.current = now;
+            loadDashboardData({ silent: true });
+            return;
+          }
+          if (reloadTimerRef.current) {
+            window.clearTimeout(reloadTimerRef.current);
+          }
+          reloadTimerRef.current = window.setTimeout(() => {
+            lastReloadRef.current = Date.now();
+            loadDashboardData({ silent: true });
+            reloadTimerRef.current = null;
+          }, minInterval);
         }
       },
     });
-    return () => sub.close();
+    return () => {
+      if (reloadTimerRef.current) {
+        window.clearTimeout(reloadTimerRef.current);
+        reloadTimerRef.current = null;
+      }
+      sub.close();
+    };
   }, []);
 
   // Stagger card reveal for a more noticeable dashboard entrance
@@ -100,92 +143,52 @@ const Dashboard = () => {
   }, []);
 
   useEffect(() => {
-    // Load vendor bot link and currency preference for easy sharing
-    (async () => {
-      try {
-        const res = await http.get('/api/v1/accounts/vendors/me/');
-        const data = res.data || {};
-        setBotLink(data.bot_link || null);
-        setTelegramUser(data.telegram_username || null);
-        setUserCurrency(data.currency || 'USD');
-      } catch {
-        // ignore, use default currency
-        setUserCurrency('USD');
-      }
-    })();
+    // Keep dashboard responsive with a sensible default before summary arrives
+    setUserCurrency(user?.currency || 'USD');
   }, []);
 
-  const loadDashboardData = async () => {
+  const loadDashboardData = async ({ silent = false }: { silent?: boolean } = {}) => {
+    const startedAt = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
     try {
-      setIsLoading(true);
-      
-      // Load orders by status (use counts for accuracy)
-      const [pendingOrdersResp, acceptedOrdersResp, declinedOrdersResp, completedOrdersResp] = await Promise.all([
-        listOrders(1, 'pending'),
-        listOrders(1, 'accepted'),
-        listOrders(1, 'declined'),
-        listOrders(1, 'completed'),
-      ]);
-      const pendingOrders = pendingOrdersResp.results;
-      const acceptedCount = acceptedOrdersResp.count || 0;
-      const declinedCount = declinedOrdersResp.count || 0;
-      const completedOrdersCount = completedOrdersResp.count || 0;
-      
-      // Load transactions: completed (for charts) and uncompleted (latest list)
-      const allTransactions: Transaction[] = [];
-      let completedCount = 0;
-      try {
-        const completedPage1 = await listTransactions(1, 'completed');
-        completedCount = completedPage1.count || 0;
-        let pageRes = completedPage1;
-        allTransactions.push(...pageRes.results);
-        // fetch up to 2 more pages
-        for (let page = 2; page <= 3 && pageRes.next; page++) {
-          pageRes = await listTransactions(page, 'completed');
-          allTransactions.push(...pageRes.results);
-        }
-      } catch {}
-      const completedTransactions = allTransactions;
-      const uncompletedResp = await listTransactions(1, 'uncompleted');
-      const uncompletedTransactions = uncompletedResp.results;
-      
-      // Load queries
-  const queriesResponse = await listQueries(1);
-  // Backend Query model has no explicit status; treat those without reply as pending
-  const pendingQueries = queriesResponse.results.filter((q: any) => !q.reply || String(q.reply).trim() === "");
-      
-      // Load recent broadcasts
-      const broadcastsResponse = await listBroadcasts(1);
-      const recentBroadcasts = broadcastsResponse.results.slice(0, 2);
-      
-      // Calculate revenue from NGN totals exposed via order_total_value
-      const totalRevenue = completedTransactions.reduce((sum: number, tx: any) => {
-        const v = (tx as any).order_total_value;
-        const n = v != null ? Number(v) : NaN;
-        return sum + (isFinite(n) ? n : 0);
-      }, 0);
-      
+      if (!silent) {
+        setIsLoading(true);
+      }
+
+      const summary = await http.get<DashboardSummaryResponse>('/api/v1/accounts/dashboard-summary/');
+      const summaryStats = summary.data?.stats;
+      const summaryRecent = summary.data?.recent;
+      const summaryProfile = summary.data?.profile;
+
+      setBotLink(summaryProfile?.bot_link || null);
+      setTelegramUser(summaryProfile?.telegram_username || null);
+      setUserCurrency(summaryProfile?.currency || user?.currency || 'USD');
+
       setStats({
-        totalOrdersReceived: acceptedCount + declinedCount,
-        pendingOrders: pendingOrdersResp.count || 0,
-        completedOrders: completedOrdersCount,
-        totalRevenue,
-        completedTransactions: completedCount,
-        pendingQueries: pendingQueries.length
+        totalOrdersReceived: summaryStats?.total_orders_received || 0,
+        pendingOrders: summaryStats?.pending_orders || 0,
+        completedOrders: summaryStats?.completed_orders || 0,
+        totalRevenue: Number(summaryStats?.total_revenue || 0),
+        completedTransactions: summaryStats?.completed_transactions || 0,
+        pendingQueries: summaryStats?.pending_queries || 0,
       });
-  setCompletedTx(completedTransactions);
-      
+
       setRecentActivity({
-        orders: pendingOrders.slice(0, 3),
-  transactions: uncompletedTransactions.slice(0, 3),
-  queries: pendingQueries.slice(0, 3),
-        broadcasts: recentBroadcasts
+        orders: summaryRecent?.orders || [],
+        transactions: summaryRecent?.transactions || [],
+        queries: summaryRecent?.queries || [],
+        broadcasts: summaryRecent?.broadcasts || [],
       });
+
+      setCompletedSeries(summary.data?.insights?.daily_completed || []);
       
     } catch (error) {
       console.error('Error loading dashboard data:', error);
     } finally {
-      setIsLoading(false);
+      const finishedAt = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+      setLastSyncMs(Math.max(0, finishedAt - startedAt));
+      if (!silent) {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -213,42 +216,20 @@ const Dashboard = () => {
 
   // Build insights from completed transactions
   const insights = useMemo(() => {
-    // last 14 days timeline
-    const days = 14;
-    const today = new Date();
-    const byDay: Record<string, { revenue: number; count: number }> = {};
-    for (let i = days - 1; i >= 0; i--) {
-      const d = new Date(today);
-      d.setDate(today.getDate() - i);
-      const key = d.toISOString().slice(0, 10);
-      byDay[key] = { revenue: 0, count: 0 };
-    }
+    const series = completedSeries.length > 0 ? completedSeries : [];
 
     const statusCounts = { completed: 0, pending: 0, failed: 0 };
 
-    // We only have completedTx here; for statusCounts, estimate from stats
-    statusCounts.completed = completedTx.length;
+    statusCounts.completed = stats.completedTransactions || 0;
     statusCounts.pending = 0; // not shown now
-    // failed count best-effort (unknown without dedicated fetch). Leave as 0 if not present
-
-    for (const tx of completedTx) {
-      if (!tx.completed_at) continue;
-      const dayKey = tx.completed_at.slice(0, 10);
-      if (!(dayKey in byDay)) continue; // only chart last 14 days
-    const amt = (tx as any).order_total_value != null ? Number((tx as any).order_total_value) : 0;
-    byDay[dayKey].revenue += isFinite(amt) ? amt : 0;
-      byDay[dayKey].count += 1;
-    }
-
-    const series = Object.entries(byDay).map(([date, v]) => ({ date, ...v }));
 
     const totals = series.reduce(
-      (acc, d) => ({ revenue: acc.revenue + d.revenue, count: acc.count + d.count }),
+      (acc, d) => ({ revenue: acc.revenue + Number(d.revenue || 0), count: acc.count + Number(d.count || 0) }),
       { revenue: 0, count: 0 }
     );
 
     return { series, statusCounts, totals };
-  }, [completedTx, stats.completedTransactions, stats.completedOrders]);
+  }, [completedSeries, stats.completedTransactions, stats.completedOrders]);
 
   if (isLoading) {
     return (
@@ -268,15 +249,18 @@ const Dashboard = () => {
       <div className="space-y-6 page-anim">
         {/* Header */}
         <div className="flex items-center justify-between gap-4 flex-wrap">
-          <h1 className="text-3xl font-bold text-white">Vendora dashboard</h1>
+          <h1 className="text-3xl font-bold text-foreground">Vendora dashboard</h1>
           <div className="flex items-center gap-2 ml-auto">
             <Button
               variant="outline"
               className="border-primary/40 text-primary hover:bg-primary/10"
-              onClick={loadDashboardData}
+              onClick={() => loadDashboardData()}
             >
               Sync dashboard
             </Button>
+            {lastSyncMs != null && (
+              <span className="text-xs text-muted-foreground">Last sync: {Math.round(lastSyncMs)}ms</span>
+            )}
           </div>
         </div>
         <p className="text-muted-foreground">
@@ -301,7 +285,7 @@ const Dashboard = () => {
                   <span className="ml-2 text-xs text-muted-foreground">(@{telegramUser})</span>
                 )}
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <Button
                   variant="outline"
                   onClick={async () => {
@@ -312,7 +296,9 @@ const Dashboard = () => {
                       toast({ title: 'Copy failed', description: 'Select and copy manually', variant: 'destructive' });
                     }
                   }}
-                >Copy</Button>
+                >
+                  Copy
+                </Button>
                 <a href={botLink} target="_blank" rel="noreferrer">
                   <Button variant="default">Open in Telegram</Button>
                 </a>
@@ -359,7 +345,7 @@ const Dashboard = () => {
             <CardContent>
               <div className="text-2xl font-bold">{stats.completedTransactions}</div>
               <p className="text-xs text-muted-foreground">
-                {completedTx.length} released in the latest sync
+                {stats.completedTransactions} released in the latest sync
               </p>
             </CardContent>
           </Card>
@@ -395,14 +381,14 @@ const Dashboard = () => {
               {recentActivity.orders.length > 0 ? (
                 <div className="space-y-3">
                   {recentActivity.orders.map((order) => (
-                    <div key={order.id} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div>
+                    <div key={order.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 border rounded-lg">
+                      <div className="min-w-0">
                         <p className="font-medium">{order.asset}</p>
                         <p className="text-sm text-muted-foreground">
                           {order.amount} {order.asset} @ {order.rate}
                         </p>
                       </div>
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center flex-wrap gap-2">
                         {getStatusBadge(order.status)}
                         <Link to={`/orders/${order.id}`}>
                           <Button size="sm" variant="outline">View</Button>
@@ -425,7 +411,6 @@ const Dashboard = () => {
                       <Link to="/orders">
                         <Button
                           variant="secondary"
-                          className="bg-white/10 text-white hover:bg-white/20"
                         >
                           Review order history
                         </Button>
@@ -457,12 +442,12 @@ const Dashboard = () => {
               {recentActivity.transactions.length > 0 ? (
                 <div className="space-y-3">
                   {recentActivity.transactions.map((tx: any) => (
-                    <div key={tx.id} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div>
+                    <div key={tx.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 border rounded-lg">
+                      <div className="min-w-0">
                         <p className="font-medium">{tx.order_asset} • {tx.order_type?.toUpperCase()}</p>
                         <p className="text-sm text-muted-foreground">{formatCurrencyDisplay(Number(tx.order_total_value || 0))}</p>
                       </div>
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center flex-wrap gap-2">
                         <Badge className="bg-yellow-100 text-yellow-800">Uncompleted</Badge>
                         <Link to={`/transactions/${tx.id}`}>
                           <Button size="sm" variant="outline">Open</Button>
@@ -485,7 +470,6 @@ const Dashboard = () => {
                       <Link to="/transactions">
                         <Button
                           variant="secondary"
-                          className="bg-white/10 text-white hover:bg-white/20"
                         >
                           Review transaction log
                         </Button>
@@ -542,7 +526,6 @@ const Dashboard = () => {
                       <Link to="/broadcast-messages">
                         <Button
                           variant="secondary"
-                          className="bg-white/10 text-white hover:bg-white/20"
                         >
                           Share availability update
                         </Button>
@@ -585,7 +568,7 @@ const Dashboard = () => {
                   <div key={broadcast.id} className="p-3 border rounded-lg">
                     <h4 className="font-medium">{broadcast.title}</h4>
                     <p className="text-sm text-muted-foreground mt-1">
-                      {broadcast.content.substring(0, 100)}...
+                      {String(broadcast.content || '').substring(0, 100)}...
                     </p>
                     <p className="text-xs text-muted-foreground mt-2">
                       Sent: {new Date(broadcast.created_at).toLocaleDateString()}

@@ -54,7 +54,17 @@ class NotificationViewSet(ModelViewSet):
         p256dh = keys.get("p256dh")
         auth = keys.get("auth")
         if not endpoint or not p256dh or not auth:
-            return Response({"detail": "Invalid subscription"}, status=status.HTTP_400_BAD_REQUEST)
+            missing = []
+            if not endpoint:
+                missing.append("endpoint")
+            if not p256dh:
+                missing.append("keys.p256dh")
+            if not auth:
+                missing.append("keys.auth")
+            return Response(
+                {"detail": "Invalid subscription payload", "missing": missing},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         obj, _ = PushSubscription.objects.update_or_create(
             endpoint=endpoint,
             defaults={"vendor": user, "p256dh": p256dh, "auth": auth, "user_agent": request.META.get("HTTP_USER_AGENT", "")},
@@ -72,7 +82,10 @@ class NotificationViewSet(ModelViewSet):
     @action(detail=False, methods=["get"], url_path="vapid-key", permission_classes=[AllowAny])
     def vapid_key(self, request):
         from django.conf import settings
-        return Response({"publicKey": getattr(settings, "VAPID_PUBLIC_KEY", "")})
+        key = getattr(settings, "VAPID_PUBLIC_KEY", "")
+        if not key:
+            return Response({"detail": "Push notifications are not configured"}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+        return Response({"publicKey": key})
 
     @action(detail=False, methods=["post"], url_path="test-push")
     def test_push(self, request):
@@ -80,8 +93,15 @@ class NotificationViewSet(ModelViewSet):
         title = (request.data or {}).get("title") or "Vendora Test"
         message = (request.data or {}).get("message") or "Push notifications are working."
         try:
-            send_web_push_to_vendor(request.user, title, message)
-            return Response({"status": "sent"}, status=status.HTTP_200_OK)
+            result = send_web_push_to_vendor(request.user, title, message)
+            sent = int(result.get("sent", 0))
+            failed = int(result.get("failed", 0))
+            if sent <= 0 and failed > 0:
+                return Response(
+                    {"status": "failed", "detail": "No compatible subscriptions could be reached", "sent": sent, "failed": failed},
+                    status=status.HTTP_502_BAD_GATEWAY,
+                )
+            return Response({"status": "sent", "sent": sent, "failed": failed}, status=status.HTTP_200_OK)
         except Exception as e:
             logger.exception("Failed to send test push: %s", e)
             return Response({"detail": "Failed to send test push"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

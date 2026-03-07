@@ -230,10 +230,16 @@ const Settings = () => {
         toast({ title: 'Permission blocked', description: 'Enable notifications from your browser settings to receive alerts.', variant: 'destructive' });
       } else if (result === 'unsupported') {
         toast({ title: 'Not supported', description: 'Push notifications are not supported on this device.', variant: 'destructive' });
+      } else if (result === 'misconfigured') {
+        toast({ title: 'Setup pending', description: 'Permission is granted, but push service is not fully configured yet.' });
       } else if (result === 'unauthenticated') {
         toast({ title: 'Login required', description: 'Sign in again to enable notifications.', variant: 'destructive' });
       } else {
-        toast({ title: 'Notification issue', description: 'Could not enable notifications right now.', variant: 'destructive' });
+        if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+          toast({ title: 'Setup pending', description: 'Permission was granted, but subscription has not completed yet. Try refresh subscription.' });
+        } else {
+          toast({ title: 'Notification issue', description: 'Could not enable notifications right now.', variant: 'destructive' });
+        }
       }
     } finally {
       refreshNotificationStatus();
@@ -366,26 +372,26 @@ const Settings = () => {
   return (
     <Layout title="Settings">
       <div className="space-y-10">
-        <div className="rounded-3xl border border-white/10 bg-gradient-to-br from-slate-950 via-slate-900 to-primary/25 px-8 py-10 text-white shadow-xl shadow-primary/20">
+        <div className="rounded-3xl border border-border bg-gradient-to-br from-background via-muted/40 to-primary/10 px-8 py-10 text-foreground shadow-xl shadow-primary/10">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
             <div className="space-y-4">
-              <Badge variant="outline" className="w-fit border-white/20 bg-white/10 uppercase tracking-[0.3em] text-xs text-primary/80">
+              <Badge variant="outline" className="w-fit uppercase tracking-[0.3em] text-xs text-primary/80">
                 Settings
               </Badge>
               <div>
                 <h1 className="text-3xl font-semibold md:text-4xl">Settings</h1>
-                <p className="mt-3 max-w-2xl text-sm text-slate-200 md:text-base">
+                <p className="mt-3 max-w-2xl text-sm text-muted-foreground md:text-base">
                   Manage your profile, rates, and bot settings in one place.
                 </p>
               </div>
               <div className="flex flex-wrap gap-3">
-                <Button asChild size="sm" variant="secondary" className="bg-white/10 text-white hover:bg-white/20">
+                <Button asChild size="sm" variant="secondary">
                   <Link to="/availability">
                     <Sparkles className="mr-2 h-4 w-4" />
                     Update availability
                   </Link>
                 </Button>
-                <Button asChild size="sm" variant="outline" className="border-white/30 bg-transparent text-white hover:bg-white/10">
+                <Button asChild size="sm" variant="outline">
                   <Link to="/broadcast-messages">
                     <Megaphone className="mr-2 h-4 w-4" />
                     Broadcast studio
@@ -393,12 +399,12 @@ const Settings = () => {
                 </Button>
               </div>
             </div>
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-5 text-sm text-slate-100 shadow-inner">
+            <div className="rounded-2xl border border-border bg-card/70 p-5 text-sm text-foreground shadow-inner">
               <div className="flex items-center gap-2 text-primary">
                 <Sparkles className="h-4 w-4" />
                 <span className="text-xs font-semibold uppercase tracking-[0.3em]">Daily workflow</span>
               </div>
-              <ul className="mt-4 space-y-2 text-sm text-slate-200/90">
+              <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
                 <li className="flex items-start gap-2">
                   <ArrowRight className="mt-1 h-3.5 w-3.5 text-primary/80" />
                   <span>Refresh trading rails, rates, and payout details before market open.</span>
@@ -534,7 +540,7 @@ const Settings = () => {
             key="application"
             id="application"
             title="Application"
-            description="Ship instant updates, install the PWA, and stay alert with push notifications."
+            description="Shows whether a new version of Vendora is available."
             icon={SettingsIcon}
           >
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -545,6 +551,15 @@ const Settings = () => {
                 {!updateReady && <p className="text-sm text-muted-foreground">Updates are checked automatically and applied when available.</p>}
               </div>
             </div>
+          </SettingsSection>
+
+          <SettingsSection
+            key="install-app"
+            id="install-app"
+            title="Install App"
+            description="Install Vendora as a PWA for faster launches and app-like behavior."
+            icon={SettingsIcon}
+          >
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div className="flex items-center gap-3">
                 <Button onClick={handleInstall} disabled={isInstalled || !canInstall}>
@@ -562,6 +577,15 @@ const Settings = () => {
                 </div>
               </div>
             </div>
+          </SettingsSection>
+
+          <SettingsSection
+            key="notifications"
+            id="notifications"
+            title="Notifications"
+            description="Manage browser push notifications and subscription health."
+            icon={SettingsIcon}
+          >
             <div className="space-y-3">
               <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                 <div className="flex items-center gap-2 text-sm">
@@ -794,7 +818,7 @@ const Settings = () => {
                       Add asset
                     </Button>
                   }
-                  className="bg-slate-950 text-left md:text-center"
+                  className="text-left md:text-center"
                 />
               )}
             </div>
@@ -898,7 +922,7 @@ const Settings = () => {
                       Add bank profile
                     </Button>
                   }
-                  className="bg-slate-950 text-left md:text-center"
+                  className="text-left md:text-center"
                 />
               )}
             </div>

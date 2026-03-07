@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { User, DollarSign, Moon, Sun, Settings as SettingsIcon, Plus, Trash2, Pencil, Copy, CreditCard, TrendingUp, Sparkles, Megaphone, ArrowRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { getVendorProfile, updateVendorProfile, VendorProfile } from "@/lib/auth";
+import { getVendorProfile, updateVendorProfile, VendorProfile, SubscriptionStatus } from "@/lib/auth";
 import { listBankDetails, createBankDetail, updateBankDetail, deleteBankDetail, BankDetail } from "@/lib/bankDetails";
 import { listRates, createRate, updateRate, deleteRate, Rate } from "@/lib/rates";
 import { getCurrencyOptions } from "@/lib/currency";
@@ -137,37 +137,42 @@ const Settings = () => {
     return Notification.permission;
   });
   const [notificationLoading, setNotificationLoading] = useState(false);
+  const [profileSubscriptionStatus, setProfileSubscriptionStatus] = useState<SubscriptionStatus | null>(null);
+  const [profileImageError, setProfileImageError] = useState<string>("");
   // daily usage is handled inside the FreePlan components which fetch their own data
   const { user } = useAuth();
 
+  const loadProfileData = async () => {
+    try {
+      setLoading(true);
+      const profile: VendorProfile = await getVendorProfile();
+      setUserName(profile.name || "");
+      setAutoAccept(!!(profile as any).auto_accept);
+      setBankDetails(profile.bank_details || "");
+      setTelegramUsername((profile as any).telegram_username || "");
+      setBio((profile as any).bio || "");
+      setCurrency((profile as any).currency || "USD");
+      setProfileSubscriptionStatus(((profile as any).subscription_status as SubscriptionStatus) || null);
+      if ((profile as any).avatar_url) setProfileImage((profile as any).avatar_url);
+      if ((profile as any).bot_link) setBotLink((profile as any).bot_link);
+      setAutoExpireMinutes(
+        typeof profile.auto_expire_minutes === "number" ? profile.auto_expire_minutes : ""
+      );
+      const [banksRes, ratesRes] = await Promise.all([
+        listBankDetails(1),
+        listRates(1)
+      ]);
+      setBankList(banksRes.results || []);
+      setRates(ratesRes.results || []);
+    } catch (e: any) {
+      toast({ title: "Failed to load profile", description: getErrorMessage(e, String(e)), variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const load = async () => {
-      try {
-        setLoading(true);
-  const profile: VendorProfile = await getVendorProfile();
-  setUserName(profile.name || "");
-  setAutoAccept(!!(profile as any).auto_accept);
-  setBankDetails(profile.bank_details || "");
-  setTelegramUsername((profile as any).telegram_username || "");
-  setBio((profile as any).bio || "");  setCurrency((profile as any).currency || "USD");        if ((profile as any).avatar_url) setProfileImage((profile as any).avatar_url);
-        if ((profile as any).bot_link) setBotLink((profile as any).bot_link);
-        setAutoExpireMinutes(
-          typeof profile.auto_expire_minutes === "number" ? profile.auto_expire_minutes : ""
-        );
-        // Load bank details and rates
-        const [banksRes, ratesRes] = await Promise.all([
-          listBankDetails(1),
-          listRates(1)
-        ]);
-        setBankList(banksRes.results || []);
-        setRates(ratesRes.results || []);
-      } catch (e: any) {
-        toast({ title: "Failed to load profile", description: getErrorMessage(e, String(e)), variant: "destructive" });
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
+    loadProfileData();
   }, [toast]);
 
   // Listen for SW update availability
@@ -270,6 +275,9 @@ const Settings = () => {
       );
       setTelegramUsername((updated as any).telegram_username || "");
       setBio((updated as any).bio || "");
+      if ((updated as any).subscription_status) {
+        setProfileSubscriptionStatus((updated as any).subscription_status as SubscriptionStatus);
+      }
       toast({
         title: "Settings Saved",
         description: "Your settings have been updated successfully.",
@@ -285,15 +293,31 @@ const Settings = () => {
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (!file.type.startsWith("image/")) {
+        const message = "Please upload an image file (JPG, PNG, WEBP, etc).";
+        setProfileImageError(message);
+        toast({ title: "Invalid file", description: message, variant: "destructive" });
+        return;
+      }
+      const maxBytes = 5 * 1024 * 1024;
+      if (file.size > maxBytes) {
+        const message = "Image is too large. Maximum size is 5MB.";
+        setProfileImageError(message);
+        toast({ title: "Image too large", description: message, variant: "destructive" });
+        return;
+      }
       try {
         const form = new FormData();
         form.append("avatar", file);
         const res = await http.patch('/api/v1/accounts/vendors/me/', form);
         const url = res.data.avatar_url || URL.createObjectURL(file);
         setProfileImage(url);
+        setProfileImageError("");
         toast({ title: "Profile updated", description: "Avatar uploaded.", className: "bg-success text-success-foreground" });
       } catch (err: any) {
-        toast({ title: "Upload failed", description: getErrorMessage(err, String(err)), variant: "destructive" });
+        const message = getErrorMessage(err, String(err));
+        setProfileImageError(message);
+        toast({ title: "Upload failed", description: message, variant: "destructive" });
       }
     }
   };
@@ -365,7 +389,23 @@ const Settings = () => {
     return "₦";
   };
 
-  const subscriptionStatus = user?.subscription_status;
+  const subscriptionStatus: SubscriptionStatus | null = profileSubscriptionStatus || user?.subscription_status || null;
+
+  const formatPlanLabel = (status: SubscriptionStatus | null) => {
+    if (!status) return "Unknown";
+    if (status.is_trial || status.plan === 'trial') return 'Trial';
+    if (status.plan === 'none') return 'Free Plan';
+    if (status.plan === 'monthly') return 'Monthly Plan';
+    if (status.plan === 'quarterly') return '3-Month Plan';
+    if (status.plan === 'semi-annual') return '6-Month Plan';
+    if (status.plan === 'yearly') return 'Annual Plan';
+    if (status.plan === 'perpetual') return 'Perpetual Plan';
+    return status.plan;
+  };
+
+  const isFreeOrTrial = !!subscriptionStatus && (
+    subscriptionStatus.is_trial || subscriptionStatus.plan === 'none' || subscriptionStatus.plan === 'trial'
+  );
 
   return (
     <Layout>
@@ -420,11 +460,10 @@ const Settings = () => {
           </div>
         </div>
 
-        {subscriptionStatus && (
-          <SectionGroup
-            title="Plan &amp; Usage"
-            description="Review plan status, monitor daily usage, and know when to level up."
-          >
+        <SectionGroup
+          title="Plan &amp; Usage"
+          description="Review your active plan, monitor usage, and open upgrade options quickly."
+        >
             <SettingsSection
               key="account"
               id="account-summary"
@@ -433,49 +472,65 @@ const Settings = () => {
               icon={CreditCard}
               bodyClassName="space-y-2 text-sm"
             >
-              {subscriptionStatus.is_trial ? (
-                <p className="text-sm">
-                  You are on a trial account. This trial ends on <strong>{subscriptionStatus.trial_expires_at ? new Date(subscriptionStatus.trial_expires_at).toLocaleString() : 'N/A'}</strong>.
-                </p>
+              {subscriptionStatus ? (
+                <>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-sm text-muted-foreground">Current plan:</span>
+                    <Badge variant="secondary">{formatPlanLabel(subscriptionStatus)}</Badge>
+                    {subscriptionStatus.expired && <Badge variant="destructive">Expired</Badge>}
+                  </div>
+                  {(subscriptionStatus.is_trial || subscriptionStatus.plan === 'trial') ? (
+                    <p className="text-sm">
+                      Trial ends on <strong>{subscriptionStatus.trial_expires_at ? new Date(subscriptionStatus.trial_expires_at).toLocaleString() : 'N/A'}</strong>.
+                    </p>
+                  ) : (
+                    <p className="text-sm">
+                      {subscriptionStatus.plan_expires_at ? (
+                        <>Plan expires on <strong>{new Date(subscriptionStatus.plan_expires_at).toLocaleString()}</strong>.</>
+                      ) : (
+                        <>No expiration date on record for this plan.</>
+                      )}
+                    </p>
+                  )}
+                </>
               ) : (
-                <p className="text-sm">
-                  Your plan: <strong>{subscriptionStatus.plan}</strong>
-                  {subscriptionStatus.plan_expires_at ? (
-                    <> — expires on <strong>{new Date(subscriptionStatus.plan_expires_at).toLocaleString()}</strong></>
-                  ) : null}
-                </p>
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground">
+                    Plan details are temporarily unavailable. Reload to fetch your latest subscription state.
+                  </p>
+                  <Button variant="outline" size="sm" onClick={loadProfileData} disabled={loading}>
+                    {loading ? 'Refreshing…' : 'Refresh plan status'}
+                  </Button>
+                </div>
               )}
             </SettingsSection>
 
             <SettingsSection
               key="plan-usage"
               id="plan-usage"
-              title="Plan & Usage"
-              description="Monitor limits, unlock upgrades, and keep an eye on volume."
+              title="Plans, Usage & Upgrades"
+              description="See your real plan, compare options, and open the upgrade flow."
               icon={TrendingUp}
             >
+              <div className="flex flex-wrap gap-2">
+                <Button asChild size="sm">
+                  <Link to="/upgrade">Upgrade plan</Link>
+                </Button>
+                <Button asChild size="sm" variant="outline">
+                  <Link to="/pricing">View all plans</Link>
+                </Button>
+              </div>
+
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-muted-foreground">Current Plan</Label>
                   <div className="flex items-center gap-2">
                     <span className="text-lg font-semibold">
-                      {subscriptionStatus.is_trial ? 'Trial' :
-                        subscriptionStatus.plan === 'none' ? 'Free Plan' :
-                        subscriptionStatus.plan === 'monthly' ? 'Monthly Plan' :
-                        subscriptionStatus.plan === 'quarterly' ? '3-Month Plan' :
-                        subscriptionStatus.plan === 'semi-annual' ? '6-Month Plan' :
-                        subscriptionStatus.plan === 'yearly' ? 'Annual Plan' :
-                        subscriptionStatus.plan === 'perpetual' ? 'Perpetual Plan' :
-                        subscriptionStatus.plan}
+                      {formatPlanLabel(subscriptionStatus)}
                     </span>
-                    {(subscriptionStatus.plan === 'none' || subscriptionStatus.is_trial) && (
-                      <Button asChild size="sm" variant="outline">
-                        <Link to="/upgrade">Upgrade</Link>
-                      </Button>
-                    )}
                   </div>
                 </div>
-                {subscriptionStatus.plan_expires_at && (
+                {subscriptionStatus?.plan_expires_at && (
                   <div className="space-y-2">
                     <Label className="text-sm font-medium text-muted-foreground">Plan Expires</Label>
                     <div className="text-lg">
@@ -485,7 +540,7 @@ const Settings = () => {
                 )}
               </div>
 
-              {(subscriptionStatus.plan === 'none' || subscriptionStatus.is_trial) && (
+              {isFreeOrTrial && (
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
                     <TrendingUp className="h-4 w-4" />
@@ -496,7 +551,7 @@ const Settings = () => {
                 </div>
               )}
 
-              {!subscriptionStatus.is_trial && subscriptionStatus.plan !== 'none' && (
+              {!!subscriptionStatus && !isFreeOrTrial && (
                 <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
                   <TrendingUp className="h-4 w-4" />
                   <span className="text-sm font-medium">Unlimited daily orders</span>
@@ -504,7 +559,6 @@ const Settings = () => {
               )}
             </SettingsSection>
           </SectionGroup>
-        )}
 
         <SectionGroup
           title="Presence &amp; Install"
@@ -714,6 +768,10 @@ const Settings = () => {
                       disabled={loading}
                     />
                   </div>
+                  <p className="mt-1 text-xs text-muted-foreground">Accepted formats: image files up to 5MB.</p>
+                  {profileImageError && (
+                    <p className="mt-1 text-xs text-destructive">{profileImageError}</p>
+                  )}
                 </div>
               </div>
             </div>

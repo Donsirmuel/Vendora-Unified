@@ -1,6 +1,6 @@
 // Bump this version when deploying to force old caches to be purged
-const CACHE_NAME = 'vendora-cache-v17';
-const API_CACHE = 'vendora-api-v4';
+const CACHE_NAME = 'vendora-cache-v18';
+const API_CACHE = 'vendora-api-v5';
 const APP_SHELL = [
   '/',
   '/index.html',

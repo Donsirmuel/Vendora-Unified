@@ -21,6 +21,7 @@ from django.conf.urls.static import static
 from django.contrib.sitemaps.views import sitemap
 from .sitemaps import StaticViewSitemap
 from django.http import JsonResponse
+from api.media import serve_media_file
 from api.health import health_view
 from api.metrics import metrics_view
 from api.sse import sse_stream
@@ -51,6 +52,7 @@ urlpatterns = [
 # API routing for each supported prefix
 for _prefix in API_PREFIXES:
     urlpatterns += [
+        path(f"{_prefix}/media/<path:file_path>", serve_media_file, name=f"{_prefix.replace('/', '_')}_media_file"),
         path(f"{_prefix}/accounts/", include(("accounts.urls", "accounts"), namespace=f"{_prefix.replace('/', '_')}_accounts")),
         path(f"{_prefix}/orders/", include(("orders.urls", "orders"), namespace=f"{_prefix.replace('/', '_')}_orders")),
         path(f"{_prefix}/transactions/", include(("transactions.urls", "transactions"), namespace=f"{_prefix.replace('/', '_')}_transactions")),

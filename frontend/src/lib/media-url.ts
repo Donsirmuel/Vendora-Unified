@@ -23,8 +23,24 @@ export function resolveMediaUrl(input?: string | null): string {
     return url;
   };
 
+  const mediaProxyUrl = (mediaPath: string) => {
+    const cleanPath = mediaPath.replace(/^\/+/, "");
+    return `${apiOrigin}/api/v1/media/${cleanPath}`;
+  };
+
   if (raw.startsWith("http://") || raw.startsWith("https://")) {
-    return forceHttpsIfNeeded(raw);
+    const normalized = forceHttpsIfNeeded(raw);
+    try {
+      const parsed = new URL(normalized);
+      const mediaIndex = parsed.pathname.indexOf("/media/");
+      if (mediaIndex >= 0) {
+        const relativeMedia = parsed.pathname.slice(mediaIndex + "/media/".length);
+        return mediaProxyUrl(relativeMedia);
+      }
+    } catch {
+      return normalized;
+    }
+    return normalized;
   }
 
   if (raw.startsWith("//")) {
@@ -32,7 +48,14 @@ export function resolveMediaUrl(input?: string | null): string {
   }
 
   if (raw.startsWith("/")) {
+    if (raw.startsWith("/media/")) {
+      return mediaProxyUrl(raw.slice("/media/".length));
+    }
     return `${apiOrigin}${raw}`;
+  }
+
+  if (raw.startsWith("media/")) {
+    return mediaProxyUrl(raw.slice("media/".length));
   }
 
   return `${apiOrigin}/${raw.replace(/^\/+/, "")}`;

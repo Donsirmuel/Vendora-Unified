@@ -1,6 +1,6 @@
 // Bump this version when deploying to force old caches to be purged
-const CACHE_NAME = 'vendora-cache-v15';
-const API_CACHE = 'vendora-api-v2';
+const CACHE_NAME = 'vendora-cache-v16';
+const API_CACHE = 'vendora-api-v3';
 const APP_SHELL = [
   '/',
   '/index.html',
@@ -158,7 +158,7 @@ self.addEventListener('periodicsync', (event) => {
     event.waitUntil((async () => {
       try {
         const cache = await caches.open(API_CACHE);
-        const endpoints = ['/api/v1/orders/?status=pending', '/api/v1/transactions/?status=uncompleted'];
+        const endpoints = ['/api/v1/orders/?status=pending', '/api/v1/transactions/?status=uncompleted', '/api/v1/accounts/dashboard-summary/'];
         for (const ep of endpoints) {
           const res = await fetch(ep, { cache: 'no-store' });
           cache.put(ep, res.clone());

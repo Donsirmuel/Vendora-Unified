@@ -288,9 +288,7 @@ const Settings = () => {
       try {
         const form = new FormData();
         form.append("avatar", file);
-        const res = await http.patch('/api/v1/accounts/vendors/me/', form, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        });
+        const res = await http.patch('/api/v1/accounts/vendors/me/', form);
         const url = res.data.avatar_url || URL.createObjectURL(file);
         setProfileImage(url);
         toast({ title: "Profile updated", description: "Avatar uploaded.", className: "bg-success text-success-foreground" });
@@ -370,13 +368,13 @@ const Settings = () => {
   const subscriptionStatus = user?.subscription_status;
 
   return (
-    <Layout title="Settings">
+    <Layout>
       <div className="space-y-10">
         <div className="rounded-3xl border border-border bg-gradient-to-br from-background via-muted/40 to-primary/10 px-8 py-10 text-foreground shadow-xl shadow-primary/10">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
             <div className="space-y-4">
               <Badge variant="outline" className="w-fit uppercase tracking-[0.3em] text-xs text-primary/80">
-                Settings
+                Control Center
               </Badge>
               <div>
                 <h1 className="text-3xl font-semibold md:text-4xl">Settings</h1>
@@ -952,19 +950,19 @@ const Settings = () => {
                   </label>
                 </div>
               </div>
-              <Button asChild variant="ghost" className="h-auto justify-start rounded-xl border border-border/60 bg-primary/5 p-4 text-left hover:bg-primary/10">
-                <Link to="/availability">
+              <Button asChild variant="ghost" className="h-auto items-start justify-start whitespace-normal rounded-xl border border-border/60 bg-primary/5 p-4 text-left hover:bg-primary/10">
+                <Link to="/availability" className="block w-full whitespace-normal break-words">
                   <div className="space-y-1">
                     <p className="font-medium">Availability Windows</p>
-                    <p className="text-sm text-muted-foreground">Broadcast when you're live so the Telegram bot knows when to pause hand-offs.</p>
+                    <p className="text-sm text-muted-foreground break-words">Broadcast when you're live so the Telegram bot knows when to pause hand-offs.</p>
                   </div>
                 </Link>
               </Button>
-              <Button asChild variant="ghost" className="h-auto justify-start rounded-xl border border-border/60 bg-primary/5 p-4 text-left hover:bg-primary/10">
-                <Link to="/broadcast-messages">
+              <Button asChild variant="ghost" className="h-auto items-start justify-start whitespace-normal rounded-xl border border-border/60 bg-primary/5 p-4 text-left hover:bg-primary/10">
+                <Link to="/broadcast-messages" className="block w-full whitespace-normal break-words">
                   <div className="space-y-1">
                     <p className="font-medium">Broadcast Studio</p>
-                    <p className="text-sm text-muted-foreground">Send polished promos, downtime alerts, and rate drops to every buyer instantly.</p>
+                    <p className="text-sm text-muted-foreground break-words">Send polished promos, downtime alerts, and rate drops to every buyer instantly.</p>
                   </div>
                 </Link>
               </Button>

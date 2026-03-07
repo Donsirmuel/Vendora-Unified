@@ -14,7 +14,7 @@ import {
   AlertCircle,
   Search,
   Filter,
-  Plus
+  RefreshCcw
 } from "lucide-react";
 import { listOrders, acceptOrder, declineOrder, Order } from "@/lib/orders";
 import { useToast } from "@/hooks/use-toast";
@@ -194,19 +194,19 @@ const Orders = () => {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-white">Orders dashboard</h1>
+            <h1 className="text-3xl font-bold text-foreground">Orders</h1>
             <p className="text-muted-foreground">
               Approve buyers, complete payments, and keep your deals moving in real time.
             </p>
           </div>
           <Button onClick={handleRefresh} variant="outline" className="border-primary/40 text-primary hover:bg-primary/10">
-            <Plus className="h-4 w-4 mr-2" />
-            Resync pending orders
+            <RefreshCcw className="h-4 w-4 mr-2" />
+            Refresh
           </Button>
         </div>
 
         {/* Filters */}
-        <Card className="border-border/70">
+        <Card className="border-border bg-gradient-to-br from-background via-muted/40 to-primary/10 shadow-sm">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <Filter className="h-5 w-5" />
@@ -259,7 +259,7 @@ const Orders = () => {
         <div className="space-y-4">
           {filteredOrders.length > 0 ? (
     filteredOrders.map((order) => (
-              <Card key={order.id} className="hover:shadow-md transition-shadow">
+              <Card key={order.id} className="border-border bg-gradient-to-br from-background via-muted/40 to-primary/10 shadow-sm transition-shadow hover:shadow-md">
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between">
                     <div className="flex items-start space-x-4">

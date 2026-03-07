@@ -138,7 +138,7 @@ const Queries = () => {
       {/* Header */}
       <div className="flex items-start gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">Buyer support queue</h1>
+          <h1 className="text-2xl font-bold text-foreground">Buyer support queue</h1>
           <p className="text-muted-foreground">Reply to buyers, log resolutions, and keep your Vendora bot conversations tidy.</p>
         </div>
         <div className="ml-auto">
@@ -163,9 +163,9 @@ const Queries = () => {
       </div>
 
       {/* Filters */}
-      <Card className="border-border/70">
+      <Card className="border-border bg-gradient-to-br from-background via-muted/40 to-primary/10 shadow-sm">
         <CardHeader>
-          <CardTitle className="text-lg font-semibold text-white">Filter buyer conversations</CardTitle>
+          <CardTitle className="text-lg font-semibold text-foreground">Filter buyer conversations</CardTitle>
           <CardDescription>Search by keyword, status, or triage level.</CardDescription>
         </CardHeader>
         <CardContent>
@@ -203,7 +203,7 @@ const Queries = () => {
           </Card>
         ) : filteredQueries.length > 0 ? (
           filteredQueries.map((query) => (
-            <Card key={query.id} className="bg-gradient-card border-border hover:shadow-lg transition-shadow">
+            <Card key={query.id} className="border-border bg-gradient-to-br from-background via-muted/40 to-primary/10 shadow-sm transition-shadow hover:shadow-lg">
               <CardHeader>
                 <div className="flex justify-between items-start">
                   <div className="space-y-2">

@@ -89,7 +89,6 @@ const Dashboard = () => {
   const [telegramUser, setTelegramUser] = useState<string | null>(null);
   const [showCharts, setShowCharts] = useState(false);
   const [userCurrency, setUserCurrency] = useState<string>('USD');
-  const [lastSyncMs, setLastSyncMs] = useState<number | null>(null);
   const lastReloadRef = useRef(0);
   const reloadTimerRef = useRef<number | null>(null);
 
@@ -148,7 +147,6 @@ const Dashboard = () => {
   }, []);
 
   const loadDashboardData = async ({ silent = false }: { silent?: boolean } = {}) => {
-    const startedAt = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
     try {
       if (!silent) {
         setIsLoading(true);
@@ -184,8 +182,6 @@ const Dashboard = () => {
     } catch (error) {
       console.error('Error loading dashboard data:', error);
     } finally {
-      const finishedAt = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
-      setLastSyncMs(Math.max(0, finishedAt - startedAt));
       if (!silent) {
         setIsLoading(false);
       }
@@ -258,9 +254,6 @@ const Dashboard = () => {
             >
               Sync dashboard
             </Button>
-            {lastSyncMs != null && (
-              <span className="text-xs text-muted-foreground">Last sync: {Math.round(lastSyncMs)}ms</span>
-            )}
           </div>
         </div>
         <p className="text-muted-foreground">
@@ -367,7 +360,7 @@ const Dashboard = () => {
   {/* Recent Activity */}
   <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Pending Orders */}
-          <Card className="border-border/70">
+          <Card className="border-border bg-gradient-to-br from-background via-muted/40 to-primary/10 shadow-sm">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <Clock className="h-5 w-5" />
@@ -381,7 +374,7 @@ const Dashboard = () => {
               {recentActivity.orders.length > 0 ? (
                 <div className="space-y-3">
                   {recentActivity.orders.map((order) => (
-                    <div key={order.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 border rounded-lg">
+                    <div key={order.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-lg border border-border/70 bg-card/80 p-3">
                       <div className="min-w-0">
                         <p className="font-medium">{order.asset}</p>
                         <p className="text-sm text-muted-foreground">
@@ -428,7 +421,7 @@ const Dashboard = () => {
           </Card>
 
           {/* Latest Uncompleted Transactions */}
-          <Card className="border-border/70">
+          <Card className="border-border bg-gradient-to-br from-background via-muted/40 to-primary/10 shadow-sm">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <ArrowLeftRight className="h-5 w-5" />
@@ -442,7 +435,7 @@ const Dashboard = () => {
               {recentActivity.transactions.length > 0 ? (
                 <div className="space-y-3">
                   {recentActivity.transactions.map((tx: any) => (
-                    <div key={tx.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 border rounded-lg">
+                    <div key={tx.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-lg border border-border/70 bg-card/80 p-3">
                       <div className="min-w-0">
                         <p className="font-medium">{tx.order_asset} • {tx.order_type?.toUpperCase()}</p>
                         <p className="text-sm text-muted-foreground">{formatCurrencyDisplay(Number(tx.order_total_value || 0))}</p>
@@ -487,7 +480,7 @@ const Dashboard = () => {
           </Card>
 
           {/* Recent Queries */}
-          <Card className="border-border/70">
+          <Card className="border-border bg-gradient-to-br from-background via-muted/40 to-primary/10 shadow-sm">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <MessageCircle className="h-5 w-5" />
@@ -501,7 +494,7 @@ const Dashboard = () => {
               {recentActivity.queries.length > 0 ? (
                 <div className="space-y-3">
                   {recentActivity.queries.map((query) => (
-                    <div key={query.id} className="p-3 border rounded-lg">
+                    <div key={query.id} className="rounded-lg border border-border/70 bg-card/80 p-3">
                       <p className="font-medium text-sm">{query.message.substring(0, 50)}...</p>
                       <p className="text-xs text-muted-foreground mt-1">
                         Contact: {query.contact}

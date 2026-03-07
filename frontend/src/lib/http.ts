@@ -69,6 +69,12 @@ function processQueue(error: any, token: string | null) {
 // Request interceptor to add auth token
 http.interceptors.request.use(
   (config) => {
+    if (typeof FormData !== 'undefined' && config.data instanceof FormData) {
+      const headers = (config.headers || {}) as any;
+      delete headers['Content-Type'];
+      delete headers['content-type'];
+      config.headers = headers;
+    }
     const token = tokenStore.getAccessToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;

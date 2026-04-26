@@ -8,29 +8,29 @@
 @layer base {
   /* Default = light theme */
   :root {
-  --background: 0.99 0.005 264;
-  --foreground: 0.15 0.02 264;
+  --background: 0.985 0.006 210;
+  --foreground: 0.2 0.025 230;
 
   --card: 1 0 0;
-  --card-foreground: 0.2 0.02 264;
+  --card-foreground: 0.2 0.025 230;
 
-  --popover: 0.98 0.01 264;
-  --popover-foreground: 0.16 0.02 264;
+  --popover: 0.99 0.005 220;
+  --popover-foreground: 0.2 0.025 230;
 
-  --primary: 0.55 0.18 275;
-  --primary-foreground: 0.99 0.01 265;
+  --primary: 0.56 0.16 218;
+  --primary-foreground: 0.985 0.01 205;
 
-  --secondary: 0.94 0.02 260;
-  --secondary-foreground: 0.22 0.02 260;
+  --secondary: 0.945 0.012 220;
+  --secondary-foreground: 0.28 0.03 228;
 
-  --muted: 0.92 0.015 260;
-  --muted-foreground: 0.5 0.02 264;
+  --muted: 0.95 0.01 220;
+  --muted-foreground: 0.48 0.03 228;
 
-  --accent: 0.55 0.14 192;
-  --accent-foreground: 0.14 0.03 192;
+  --accent: 0.68 0.14 168;
+  --accent-foreground: 0.18 0.03 178;
 
   --destructive: 0.54 0.25 25;
-  --destructive-foreground: 0.98 0.005 264;
+  --destructive-foreground: 0.99 0.005 220;
 
   --success: 0.62 0.18 150;
   --success-foreground: 0.12 0.02 160;
@@ -38,9 +38,9 @@
   --warning: 0.68 0.17 45;
   --warning-foreground: 0.18 0.02 38;
 
-  --border: 0.9 0.01 264;
-  --input: 0.9 0.01 264;
-  --ring: 0.55 0.18 275;
+  --border: 0.89 0.01 225;
+  --input: 0.89 0.01 225;
+  --ring: 0.56 0.16 218;
 
     --radius: 0.75rem;
 
@@ -48,59 +48,59 @@
   --crypto-gold: 0.7 0.16 75;
   --crypto-green: 0.62 0.18 150;
   --crypto-red: 0.53 0.24 25;
-  --crypto-blue: 0.55 0.18 275;
+  --crypto-blue: 0.56 0.16 218;
 
     /* Gradients */
   --gradient-primary: linear-gradient(135deg, oklch(var(--primary) / 1), oklch(var(--accent) / 1));
   --gradient-success: linear-gradient(135deg, oklch(var(--success) / 1), oklch(0.58 0.17 145 / 1));
   --gradient-warning: linear-gradient(135deg, oklch(var(--warning) / 1), oklch(0.64 0.2 55 / 1));
-  --gradient-card: linear-gradient(135deg, oklch(var(--card) / 1), oklch(0.96 0.01 264 / 1));
+  --gradient-card: linear-gradient(145deg, oklch(var(--card) / 1), oklch(0.955 0.012 220 / 1));
 
     /* Shadows */
   --shadow-soft: 0 8px 24px -6px oklch(var(--primary) / 0.18);
   --shadow-glow: 0 0 42px oklch(var(--accent) / 0.22);
-  --shadow-card: 0 22px 48px -18px oklch(0.72 0.04 250 / 0.18);
+  --shadow-card: 0 24px 58px -22px oklch(0.5 0.03 225 / 0.22);
 
     /* Transitions */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-fast: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
 
     /* Sidebar (light) */
-    --sidebar-background: 0.99 0.005 264;
-    --sidebar-foreground: 0.2 0.02 264;
-    --sidebar-primary: 0.55 0.18 275;
-    --sidebar-primary-foreground: 0.99 0.01 265;
-    --sidebar-accent: 0.94 0.02 260;
-    --sidebar-accent-foreground: 0.24 0.02 260;
-    --sidebar-border: 0.9 0.01 264;
-    --sidebar-ring: 0.55 0.18 275;
+    --sidebar-background: 0.99 0.005 220;
+    --sidebar-foreground: 0.22 0.026 228;
+    --sidebar-primary: 0.56 0.16 218;
+    --sidebar-primary-foreground: 0.985 0.01 205;
+    --sidebar-accent: 0.95 0.01 220;
+    --sidebar-accent-foreground: 0.28 0.03 228;
+    --sidebar-border: 0.89 0.01 225;
+    --sidebar-ring: 0.56 0.16 218;
   }
 
   /* Dark overrides when `.dark` is on <html> */
   .dark {
-    --background: 0.1 0.02 250;
-    --foreground: 0.98 0.005 264;
+    --background: 0.13 0.02 238;
+    --foreground: 0.97 0.006 220;
 
-    --card: 0.15 0.02 250;
-    --card-foreground: 0.98 0.005 264;
+    --card: 0.18 0.02 236;
+    --card-foreground: 0.97 0.006 220;
 
-    --popover: 0.18 0.02 250;
-    --popover-foreground: 0.97 0.005 264;
+    --popover: 0.2 0.02 236;
+    --popover-foreground: 0.97 0.006 220;
 
-    --primary: 0.5 0.2 255;
-    --primary-foreground: 0.97 0.01 260;
+    --primary: 0.62 0.15 210;
+    --primary-foreground: 0.17 0.03 224;
 
-    --secondary: 0.22 0.02 250;
-    --secondary-foreground: 0.9 0.01 260;
+    --secondary: 0.24 0.02 236;
+    --secondary-foreground: 0.92 0.01 220;
 
-    --muted: 0.28 0.015 250;
-    --muted-foreground: 0.68 0.015 250;
+    --muted: 0.27 0.016 236;
+    --muted-foreground: 0.72 0.016 220;
 
-    --accent: 0.6 0.17 160;
-    --accent-foreground: 0.16 0.03 160;
+    --accent: 0.65 0.14 168;
+    --accent-foreground: 0.16 0.03 178;
 
     --destructive: 0.48 0.24 20;
-    --destructive-foreground: 0.97 0.005 264;
+    --destructive-foreground: 0.97 0.006 220;
 
     --success: 0.58 0.18 150;
     --success-foreground: 0.16 0.03 150;
@@ -108,25 +108,31 @@
     --warning: 0.7 0.16 75;
     --warning-foreground: 0.18 0.02 70;
 
-    --border: 0.25 0.02 250;
-    --input: 0.3 0.02 250;
-    --ring: 0.5 0.2 255;
+    --border: 0.32 0.02 236;
+    --input: 0.32 0.02 236;
+    --ring: 0.62 0.15 210;
 
     /* Gradients */
-    --gradient-card: linear-gradient(135deg, oklch(0.18 0.02 250 / 1), oklch(0.24 0.02 250 / 1));
+    --gradient-card: linear-gradient(145deg, oklch(0.18 0.02 236 / 1), oklch(0.24 0.02 236 / 1));
 
     /* Shadows */
-    --shadow-card: 0 24px 52px -18px oklch(0.26 0.02 250 / 0.42);
+    --shadow-card: 0 24px 52px -18px oklch(0.16 0.02 236 / 0.45);
 
     /* Sidebar (dark) */
-    --sidebar-background: 0.09 0.02 250;
-    --sidebar-foreground: 0.96 0.005 264;
-    --sidebar-primary: 0.5 0.2 255;
-    --sidebar-primary-foreground: 0.17 0.02 255;
-    --sidebar-accent: 0.22 0.02 250;
-    --sidebar-accent-foreground: 0.92 0.01 260;
-    --sidebar-border: 0.25 0.02 250;
-    --sidebar-ring: 0.5 0.2 255;
+    --sidebar-background: 0.12 0.02 236;
+    --sidebar-foreground: 0.96 0.006 220;
+    --sidebar-primary: 0.62 0.15 210;
+    --sidebar-primary-foreground: 0.16 0.03 224;
+    --sidebar-accent: 0.24 0.02 236;
+    --sidebar-accent-foreground: 0.92 0.01 220;
+    --sidebar-border: 0.32 0.02 236;
+    --sidebar-ring: 0.62 0.15 210;
+  }
+
+  html,
+  body,
+  #root {
+    min-height: 100%;
   }
 
   * {
@@ -135,6 +141,16 @@
 
   body {
     @apply bg-background text-foreground;
+    font-family: "Manrope", "Plus Jakarta Sans", "Segoe UI", sans-serif;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: "Fraunces", "Manrope", serif;
+    letter-spacing: -0.01em;
   }
 
   /* Subtle animated gradient background on body (accessible + respects prefers-reduced-motion) */
@@ -145,24 +161,24 @@
     z-index: -1;
     pointer-events: none;
     /* More vivid, layered gradient for stronger visibility */
-  background: radial-gradient(1200px 600px at 10% 20%, oklch(var(--primary) / 0.18), transparent 18%), linear-gradient(120deg, oklch(0.96 0.015 264 / 0.6), oklch(var(--accent) / 0.28) 35%, oklch(0.9 0.01 264 / 0.12));
-  background-size: 400% 400%, 320% 320%;
-  filter: saturate(1.05) blur(18px) contrast(1.01);
+  background: radial-gradient(1200px 620px at 12% 18%, oklch(var(--primary) / 0.18), transparent 44%), radial-gradient(900px 480px at 90% 6%, oklch(var(--accent) / 0.16), transparent 48%), linear-gradient(125deg, oklch(0.99 0.004 220 / 0.95), oklch(0.95 0.01 214 / 0.9) 50%, oklch(0.94 0.012 232 / 0.86));
+  background-size: 240% 240%, 260% 260%, 220% 220%;
+  filter: saturate(1.02) blur(20px) contrast(1.01);
     transform: translateZ(0);
     transition: opacity .35s ease, filter .35s ease;
-    animation: globalGradientShift 12s linear infinite;
+    animation: globalGradientShift 14s linear infinite;
   }
 
   /* Dark mode variant */
   .dark body::before {
-  background: radial-gradient(900px 420px at 90% 80%, oklch(var(--primary) / 0.22), transparent 22%), linear-gradient(120deg, oklch(0.12 0.02 250 / 0.72), oklch(var(--accent) / 0.22) 35%, oklch(0.22 0.02 250 / 0.14));
-  filter: saturate(0.92) blur(26px) contrast(.94);
+  background: radial-gradient(900px 420px at 90% 80%, oklch(var(--primary) / 0.18), transparent 40%), radial-gradient(750px 360px at 8% 20%, oklch(var(--accent) / 0.12), transparent 42%), linear-gradient(120deg, oklch(0.12 0.02 236 / 0.78), oklch(0.18 0.02 230 / 0.74));
+  filter: saturate(0.9) blur(26px) contrast(0.96);
   }
 
   @keyframes globalGradientShift {
-    0% { background-position: 0% 40%, 0% 50%; }
-    50% { background-position: 100% 60%, 100% 50%; }
-    100% { background-position: 0% 40%, 0% 50%; }
+    0% { background-position: 0% 40%, 0% 45%, 0% 50%; }
+    50% { background-position: 100% 60%, 100% 55%, 100% 50%; }
+    100% { background-position: 0% 40%, 0% 45%, 0% 50%; }
   }
 
 @media (prefers-reduced-motion: reduce) {

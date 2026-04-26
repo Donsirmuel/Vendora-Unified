@@ -3,6 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <meta name="theme-color" content="#0ea5b7" />
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="icon" href="/icons/icon-192.png?v=4" type="image/png" />
@@ -64,8 +67,8 @@
     <script>
       try {
         const stored = localStorage.getItem('vendora_theme');
-        // Default to 'dark' theme if no preference is stored
-        const theme = stored || 'dark';
+        // Default to 'light' theme if no preference is stored
+        const theme = stored || 'light';
         if (theme === 'dark') document.documentElement.classList.add('dark');
         else document.documentElement.classList.remove('dark');
         document.documentElement.style.setProperty('color-scheme', theme === 'dark' ? 'dark' : 'light');

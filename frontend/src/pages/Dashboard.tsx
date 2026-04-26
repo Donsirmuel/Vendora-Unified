@@ -194,9 +194,9 @@ const Dashboard = () => {
 
   const getStatusBadge = (status: string) => {
     const statusConfig: { [key: string]: { color: string; icon: any } } = {
-      pending: { color: "bg-yellow-100 text-yellow-800", icon: Clock },
-      completed: { color: "bg-green-100 text-green-800", icon: CheckCircle },
-      declined: { color: "bg-red-100 text-red-800", icon: AlertCircle }
+      pending: { color: "border border-warning/35 bg-warning/15 text-warning-foreground", icon: Clock },
+      completed: { color: "border border-success/35 bg-success/15 text-success-foreground", icon: CheckCircle },
+      declined: { color: "border border-destructive/35 bg-destructive/15 text-destructive", icon: AlertCircle }
     };
     
     const config = statusConfig[status] || statusConfig.pending;
@@ -242,23 +242,44 @@ const Dashboard = () => {
 
   return (
     <Layout>
-      <div className="space-y-6 page-anim">
-        {/* Header */}
-        <div className="flex items-center justify-between gap-4 flex-wrap">
-          <h1 className="text-3xl font-bold text-foreground">Vendora dashboard</h1>
-          <div className="flex items-center gap-2 ml-auto">
-            <Button
-              variant="outline"
-              className="border-primary/40 text-primary hover:bg-primary/10"
-              onClick={() => loadDashboardData()}
-            >
-              Sync dashboard
-            </Button>
+      <div className="space-y-8 page-anim">
+        <div className="relative overflow-hidden rounded-3xl border border-border/70 bg-gradient-to-br from-card via-card to-primary/10 p-6 shadow-[0_30px_80px_-45px_oklch(var(--primary)/0.55)] sm:p-8">
+          <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-accent/20 blur-3xl" />
+          <div className="pointer-events-none absolute -left-16 bottom-0 h-44 w-44 rounded-full bg-primary/20 blur-3xl" />
+          <div className="relative space-y-6">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div className="max-w-2xl space-y-3">
+                <Badge className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs uppercase tracking-[0.18em] text-primary">
+                  Daily dashboard
+                </Badge>
+                <h1 className="text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
+                  Vendora dashboard
+                </h1>
+                <p className="text-sm text-muted-foreground sm:text-base">
+                  Welcome back, {user?.name || 'vendor'}. Manage orders, payments, and customer updates in one place.
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                className="border-primary/40 bg-background/70 text-primary hover:bg-primary/10"
+                onClick={() => loadDashboardData()}
+              >
+                Sync dashboard
+              </Button>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Link to="/orders">
+                <Button variant="secondary" className="rounded-full">Review orders</Button>
+              </Link>
+              <Link to="/transactions">
+                <Button variant="secondary" className="rounded-full">Track settlements</Button>
+              </Link>
+              <Link to="/broadcast-messages">
+                <Button className="rounded-full bg-gradient-primary text-primary-foreground">Send update</Button>
+              </Link>
+            </div>
           </div>
         </div>
-        <p className="text-muted-foreground">
-          Welcome back, {user?.name || 'vendor'}. Keep buyers updated, complete payments on time, and keep records in one place.
-        </p>
 
   {/* Onboarding Checklist (derived from backend) */}
   <OnboardingChecklist />
@@ -303,56 +324,72 @@ const Dashboard = () => {
   {/* (Legacy inline checklist removed in favour of server-derived OnboardingChecklist component) */}
 
         {/* Stats Cards */}
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-    <Card className="card-anim">
+    <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
+    <Card className="card-anim rounded-3xl border-border/70 bg-gradient-to-br from-card via-card to-primary/10 shadow-[0_26px_55px_-38px_oklch(var(--primary)/0.45)]">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium">Orders received</CardTitle>
-              <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+              <ShoppingCart className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
         <div className="text-2xl font-bold">{stats.totalOrdersReceived}</div>
-              <p className="text-xs text-muted-foreground">
+              <p className="mt-1 text-xs text-muted-foreground">
                 {stats.pendingOrders} waiting on vendor approval
               </p>
+              <div className="mt-3 inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs text-primary">
+                <TrendingUp className="h-3.5 w-3.5" />
+                Needs action
+              </div>
             </CardContent>
           </Card>
 
-          <Card className="card-anim">
+          <Card className="card-anim rounded-3xl border-border/70 bg-gradient-to-br from-card via-card to-accent/10 shadow-[0_26px_55px_-38px_oklch(var(--accent)/0.5)]">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total revenue ({userCurrency})</CardTitle>
-        <span className="sr-only">{userCurrency}</span>
+              <span className="sr-only">{userCurrency}</span>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{formatCurrencyDisplay(stats.totalRevenue)}</div>
-              <p className="text-xs text-muted-foreground">
+              <p className="mt-1 text-xs text-muted-foreground">
                 Driven by {stats.completedOrders} completed orders
               </p>
+              <div className="mt-3 inline-flex items-center gap-1 rounded-full bg-accent/15 px-2.5 py-1 text-xs text-accent-foreground">
+                <TrendingUp className="h-3.5 w-3.5" />
+                Money in
+              </div>
             </CardContent>
           </Card>
 
-          <Card className="card-anim">
+          <Card className="card-anim rounded-3xl border-border/70 bg-gradient-to-br from-card via-card to-success/10 shadow-[0_26px_55px_-38px_oklch(var(--success)/0.45)]">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Completed Transactions</CardTitle>
-              <ArrowLeftRight className="h-4 w-4 text-muted-foreground" />
+              <ArrowLeftRight className="h-4 w-4 text-success" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.completedTransactions}</div>
-              <p className="text-xs text-muted-foreground">
+              <p className="mt-1 text-xs text-muted-foreground">
                 {stats.completedTransactions} released in the latest sync
               </p>
+              <div className="mt-3 inline-flex items-center gap-1 rounded-full bg-success/15 px-2.5 py-1 text-xs text-success-foreground">
+                <CheckCircle className="h-3.5 w-3.5" />
+                Done today
+              </div>
             </CardContent>
           </Card>
 
-          <Card className="card-anim">
+          <Card className="card-anim rounded-3xl border-border/70 bg-gradient-to-br from-card via-card to-warning/10 shadow-[0_26px_55px_-38px_oklch(var(--warning)/0.45)]">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Open queries</CardTitle>
-              <MessageCircle className="h-4 w-4 text-muted-foreground" />
+              <MessageCircle className="h-4 w-4 text-warning-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.pendingQueries}</div>
-              <p className="text-xs text-muted-foreground">
+              <p className="mt-1 text-xs text-muted-foreground">
                 Require vendor response
               </p>
+              <div className="mt-3 inline-flex items-center gap-1 rounded-full bg-warning/20 px-2.5 py-1 text-xs text-warning-foreground">
+                <TrendingDown className="h-3.5 w-3.5" />
+                Answer soon
+              </div>
             </CardContent>
           </Card>
         </div>

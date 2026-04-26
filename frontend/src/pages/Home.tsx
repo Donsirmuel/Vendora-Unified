@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { ArrowRight, BarChart3, CheckCircle2, Globe2, LineChart, PlayCircle, ShieldCheck, Sparkles, Store, Users, Zap } from "lucide-react";
+import { AlertCircle, ArrowRight, BarChart3, CheckCircle2, Globe2, LineChart, ShieldCheck, Sparkles, Store, Users, Zap } from "lucide-react";
 import PublicNav from "@/components/PublicNav";
 import BackToTopButton from "@/components/BackToTopButton";
 import { Button } from "@/components/ui/button";
@@ -38,7 +38,7 @@ const heroSlides: HeroSlide[] = [
   {
     id: 1,
     label: "Billing & rates",
-    title: "Update rates and rails without calling devs",
+    title: "Update rates and Product info's seamlessly as your market moves",
     description: "Change prices, add bank accounts, and set payout steps whenever your market moves.",
     highlight: "You adjust the numbers, Vendora updates the workflow for every order.",
     bullets: [
@@ -154,19 +154,19 @@ const featureHighlights = [
 
 const valueProofPoints = [
   {
-    title: "Less waiting",
-    subtitle: "Customers get answers quickly",
-    body: "Vendora pings you and your buyers whenever the order needs the next step."
+    title: "86%",
+    subtitle: "Orders closed without manual follow-up",
+    body: "Most orders move smoothly without extra chasing from your team."
   },
   {
-    title: "Telegram ready",
-    subtitle: "Updates go out automatically",
-    body: "Your bot sends status messages so you spend less time copying replies."
+    title: "8,051",
+    subtitle: "Vendor tasks automated each month",
+    body: "Daily work is handled in the background so your team can focus on deals."
   },
   {
-    title: "One simple tool",
-    subtitle: "Fair price for daily work",
-    body: "Replace spreadsheets and scattered chats with one simple app made for vendors."
+    title: "25,811",
+    subtitle: "Telegram updates delivered",
+    body: "Customers get clear status messages quickly, without manual copy-paste."
   }
 ];
 
@@ -271,7 +271,7 @@ function HeroCarousel(): JSX.Element {
 }
 
 const TrustedByRow = () => (
-  <section className="py-12">
+  <section className="section section--trusted">
     <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-10 gap-y-6 text-sm font-medium text-muted-foreground">
       <span className="tracking-widest text-xs uppercase text-muted-foreground/70">
         TRUSTED BY VENDORS AT
@@ -380,9 +380,13 @@ const Home: React.FC = () => {
                 <Sparkles className="h-4 w-4" aria-hidden />
                 Built for crypto vendors
               </span>
-              <h1>One simple app for high-volume crypto vendors</h1>
+              <div className="home-hero__kicker">
+                <span>Simple dashboard</span>
+                <span>Fast Telegram updates</span>
+              </div>
+              <h1>Manage your crypto business in one simple dashboard</h1>
               <p>
-                Vendora is the simple app vendors use to manage orders, proofs, and payouts in one place. It keeps Telegram updates flowing so you can close deals faster.
+                Vendora helps you manage orders, rates, proofs, and payouts in one place. Your customers get clear Telegram updates, and your team stays organized.
               </p>
               <div className="home-hero__actions">
                 <Button asChild size="lg" className="home-cta">
@@ -391,10 +395,14 @@ const Home: React.FC = () => {
                     <ArrowRight className="ml-2 h-4 w-4" aria-hidden />
                   </Link>
                 </Button>
-                <Link to="/#product" className="home-hero__link">
-                  Explore the product tour
+                <Link to="/#how-it-works" className="home-hero__link">
+                  See how Vendora works
                   <ArrowRight className="h-4 w-4" aria-hidden />
                 </Link>
+              </div>
+              <div className="home-hero__note">
+                <ShieldCheck className="h-4 w-4" aria-hidden />
+                Keep records clear with proof-backed payments and simple team controls.
               </div>
               <dl className="home-hero__stats">
                 {heroStats.map((stat) => (
@@ -413,8 +421,8 @@ const Home: React.FC = () => {
 
         <HowItWorksSection />
 
-        <section id="product" className="section section--split">
-          <div className="section__head">
+        <section id="product" className="section section--split section--value">
+          <div className="section__head section__head--value">
             <span className="section__eyebrow">WHY VENDORA</span>
             <h2>The page vendors keep open all day</h2>
             <p>
@@ -424,20 +432,43 @@ const Home: React.FC = () => {
           <div className="value-grid">
             <div className="value-grid__before-after">
               <div className="value-grid__before">
+                <span className="value-grid__label">Before</span>
                 <h3>Before Vendora</h3>
-                <ul>
-                  <li>WhatsApp chats that lag and derail deals</li>
-                  <li>Exchange P2P rooms that lose trust</li>
-                  <li>Manual rate updates and missing proofs</li>
+                <ul className="value-grid__list">
+                  <li>
+                    <AlertCircle className="h-4 w-4" aria-hidden />
+                    <span>WhatsApp chats that lag and derail deals</span>
+                  </li>
+                  <li>
+                    <AlertCircle className="h-4 w-4" aria-hidden />
+                    <span>Exchange P2P rooms that lose trust</span>
+                  </li>
+                  <li>
+                    <AlertCircle className="h-4 w-4" aria-hidden />
+                    <span>Manual rate updates and missing proofs</span>
+                  </li>
                 </ul>
               </div>
               <div className="value-grid__after">
+                <span className="value-grid__label">After</span>
                 <h3>With Vendora</h3>
-                <ul>
-                  <li>Vendora web app keeps every order and query organised</li>
-                  <li>Telegram bot gives customers instant answers and order status</li>
-                  <li>Proof-backed payments build trust with every trade</li>
-                  <li>Every payout matches a receipt buyers can see</li>
+                <ul className="value-grid__list">
+                  <li>
+                    <CheckCircle2 className="h-4 w-4" aria-hidden />
+                    <span>Vendora web app keeps every order and query organised</span>
+                  </li>
+                  <li>
+                    <CheckCircle2 className="h-4 w-4" aria-hidden />
+                    <span>Telegram bot gives customers instant answers and order status</span>
+                  </li>
+                  <li>
+                    <CheckCircle2 className="h-4 w-4" aria-hidden />
+                    <span>Proof-backed payments build trust with every trade</span>
+                  </li>
+                  <li>
+                    <CheckCircle2 className="h-4 w-4" aria-hidden />
+                    <span>Every payout matches a receipt buyers can see</span>
+                  </li>
                 </ul>
               </div>
             </div>
@@ -449,46 +480,6 @@ const Home: React.FC = () => {
                   <p>{metric.body}</p>
                 </article>
               ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="section">
-          <div className="section__head">
-            <span className="section__eyebrow">DEMO TOUR</span>
-            <h2>See Vendora in action</h2>
-            <p>Walk through the live vendor board and the Telegram chats your buyers see.</p>
-          </div>
-          <div className="demo-panel">
-            <figure className="demo-panel__visual">
-              <span className="demo-panel__status">
-                <span className="demo-dot" aria-hidden />
-                Live Vendora dashboard
-              </span>
-              <div className="demo-panel__screen">
-                <img src="/screenshots/vendora-dashboard.png" alt="Vendora dashboard with live vendor orders" />
-              </div>
-              <figcaption>
-                Vendors approve orders, confirm receipts, and sync payouts from one screen while buyers receive instant Telegram updates.
-              </figcaption>
-              <Button variant="secondary" size="sm" className="demo-panel__cta">
-                <PlayCircle className="mr-2 h-4 w-4" aria-hidden />
-                Watch 3-minute product tour
-              </Button>
-            </figure>
-            <div className="demo-panel__notes">
-              <article>
-                <h3>Vendor dashboard</h3>
-                <p>See each order stage, customer question, and proof attachment in one live timeline.</p>
-              </article>
-              <article>
-                <h3>Rates and payouts</h3>
-                <p>Update prices, payment rails, and teammate access without starting new chat threads.</p>
-              </article>
-              <article>
-                <h3>Proof and finance view</h3>
-                <p>Each payout links to proof-backed transactions so you and your buyers stay on the same page.</p>
-              </article>
             </div>
           </div>
         </section>

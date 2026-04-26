@@ -14,7 +14,7 @@ export default function ThemeToggle({ className = '' }: { className?: string }) 
       if (stored === 'light' || stored === 'dark') return stored;
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       return prefersDark ? 'dark' : 'light';
-    } catch { return 'dark'; }
+    } catch { return 'light'; }
   });
 
   useEffect(() => {

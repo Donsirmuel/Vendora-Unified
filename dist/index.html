@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <meta name="theme-color" content="#0ea5b7" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="icon" href="/icons/icon-192.png?v=4" type="image/png" />
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon-180.png?v=4" />
+  <!-- Windows tile -->
+  <meta name="msapplication-TileColor" content="#0ea5b7" />
+  <meta name="msapplication-TileImage" content="/icons/icon-512.png?v=4" />
+  <!-- iOS splash (single canonical + device-specific fallbacks) -->
+  <link rel="apple-touch-startup-image" href="/splash/splash.png?v=2">
+  <!-- iPhone 17/16/15 Pro portrait (high DPR) -->
+  <link rel="apple-touch-startup-image" href="/splash/iPhone_17_Pro__iPhone_17__iPhone_16_Pro_portrait.png?v=2" media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3)">
+  <!-- iPhone 11 / XR landscape -->
+  <link rel="apple-touch-startup-image" href="/splash/iPhone_11__iPhone_XR_landscape.png?v=2" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)">
+  <!-- iPad Pro portrait -->
+  <link rel="apple-touch-startup-image" href="/splash/13__iPad_Pro_M4_portrait.png?v=2" media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2)">
+  <!-- Hint for service worker/update flows -->
+  <meta name="sw-update" content="v3">
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <title>Vendora – Crypto Vendor Platform</title>
+  <meta name="description" content="Vendora: OTC / P2P crypto vendor platform for managing orders, rates, transactions, notifications & Telegram bot." />
+  <meta name="author" content="Vendora" />
+  <meta name="robots" content="index,follow" />
+  <link rel="canonical" href="https://app.vendora.page/" />
+  <meta name="keywords" content="crypto vendor platform, otc crypto, p2p crypto trading, cryptocurrency orders, vendor dashboard" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Vendora – Crypto Vendor Platform" />
+  <meta property="og:description" content="Manage OTC crypto orders, rates, transactions & notifications in one PWA." />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="https://app.vendora.page/icons/og-image.png?v=1" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="Vendora banner showing automated vendor flow" />
+  <meta property="og:url" content="https://app.vendora.page/" />
+  <meta property="og:site_name" content="Vendora" />
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:site" content="@vendora" />
+  <meta name="twitter:image" content="https://app.vendora.page/icons/og-image.png?v=1" />
+  <meta name="twitter:image:alt" content="Vendora banner showing automated vendor flow" />
+  <meta name="twitter:title" content="Vendora – Crypto Vendor Platform" />
+  <meta name="twitter:description" content="Manage OTC crypto orders, rates, transactions & notifications in one PWA." />
+
+  <!-- Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Vendora",
+    "applicationCategory": "FinanceApplication",
+    "operatingSystem": "Any",
+    "description": "Platform for OTC crypto vendors: orders, rates, transactions, notifications, Telegram bot integration.",
+    "url": "https://app.vendora.page/",
+    "image": "https://app.vendora.page/icons/og-image.png?v=1"
+  }
+  </script>
+    <script>
+      try {
+        const stored = localStorage.getItem('vendora_theme');
+        // Default to 'light' theme if no preference is stored
+        const theme = stored || 'light';
+        if (theme === 'dark') document.documentElement.classList.add('dark');
+        else document.documentElement.classList.remove('dark');
+        document.documentElement.style.setProperty('color-scheme', theme === 'dark' ? 'dark' : 'light');
+      } catch {}
+    </script>
+    <script type="module" crossorigin src="/assets/vendor-Ckt5F6tJ.js"></script>
+    <script type="module" crossorigin src="/assets/vendor-recharts-Dj7IaDaJ.js"></script>
+    <script type="module" crossorigin src="/assets/charts_panel-Do4hvk42.js"></script>
+    <script type="module" crossorigin src="/assets/main-D5N3eICM.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/main-CDIxIjvo.css">
+  </head>
+
+  <body>
+  <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 bg-primary text-primary-foreground px-3 py-2 rounded">Skip to main content</a>
+    <div id="root"></div>
+  </body>
+</html>

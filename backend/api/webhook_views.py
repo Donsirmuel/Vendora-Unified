@@ -4,9 +4,34 @@ from django.views.decorators.http import require_http_methods
 from django.conf import settings
 import json
 import logging
+import hmac
 from typing import Dict, Any
+from rest_framework_simplejwt.authentication import JWTAuthentication
 
 logger = logging.getLogger(__name__)
+
+
+def _resolve_request_user(request):
+    """Resolve authenticated user from session or Bearer JWT for non-DRF views."""
+    user = getattr(request, "user", None)
+    if user and getattr(user, "is_authenticated", False):
+        return user
+    try:
+        auth_result = JWTAuthentication().authenticate(request)
+        if auth_result:
+            return auth_result[0]
+    except Exception:
+        pass
+    return None
+
+
+def _require_admin(request):
+    user = _resolve_request_user(request)
+    if not user or not getattr(user, "is_authenticated", False):
+        return None, JsonResponse({"detail": "Authentication required"}, status=401)
+    if not (getattr(user, "is_staff", False) or getattr(user, "is_superuser", False)):
+        return None, JsonResponse({"detail": "Admin privileges required"}, status=403)
+    return user, None
 
 
 @csrf_exempt
@@ -14,15 +39,18 @@ logger = logging.getLogger(__name__)
 def telegram_webhook(request):
     """Handle incoming webhooks from Telegram Bot."""
     try:
-        # Optional: verify Telegram secret token header
+        # Mandatory: verify Telegram secret token header.
+        # Fail closed when secret is not configured.
         try:
             expected = str(getattr(settings, "TELEGRAM_WEBHOOK_SECRET", "") or "").strip()
-            if expected:
-                got = str(request.headers.get("X-Telegram-Bot-Api-Secret-Token") or "").strip()
-                if got != expected:
-                    return JsonResponse({"status": "forbidden"}, status=403)
+            if not expected:
+                logger.error("TELEGRAM_WEBHOOK_SECRET is not configured; rejecting webhook request.")
+                return JsonResponse({"status": "misconfigured"}, status=503)
+            got = str(request.headers.get("X-Telegram-Bot-Api-Secret-Token") or "").strip()
+            if not hmac.compare_digest(got, expected):
+                return JsonResponse({"status": "forbidden"}, status=403)
         except Exception:
-            pass
+            return JsonResponse({"status": "forbidden"}, status=403)
 
         # Parse the incoming update
         update_data = json.loads(request.body or b"{}")
@@ -685,6 +713,10 @@ def telegram_webhook(request):
 def set_telegram_webhook(request):
     """Set the Telegram webhook URL."""
     try:
+        _, error_response = _require_admin(request)
+        if error_response is not None:
+            return error_response
+
         data = json.loads(request.body or b"{}")
         webhook_url = data.get("webhook_url")
         
@@ -715,6 +747,10 @@ def set_telegram_webhook(request):
 def telegram_webhook_info(request):
     """Get information about the current webhook."""
     try:
+        _, error_response = _require_admin(request)
+        if error_response is not None:
+            return error_response
+
         from .telegram_service import TelegramBotService
         telegram_service = TelegramBotService()
         

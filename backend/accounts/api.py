@@ -7,9 +7,37 @@ from .models import GlobalPaymentDestination
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAdminUser
 from django.utils import timezone
+from django.conf import settings
 
 
 class PaymentRequestSerializer(serializers.ModelSerializer):
+    def validate_receipt(self, value):
+        if not value:
+            return value
+
+        max_size = int(getattr(settings, "PAYMENT_RECEIPT_MAX_BYTES", 5 * 1024 * 1024) or (5 * 1024 * 1024))
+        allowed_types = {
+            "application/pdf",
+            "image/jpeg",
+            "image/png",
+            "image/webp",
+        }
+        allowed_ext = {".pdf", ".jpg", ".jpeg", ".png", ".webp"}
+
+        content_type = str(getattr(value, "content_type", "") or "").lower()
+        if content_type and content_type not in allowed_types:
+            raise serializers.ValidationError("Unsupported receipt file type.")
+
+        file_name = str(getattr(value, "name", "") or "")
+        ext = file_name[file_name.rfind('.'):].lower() if "." in file_name else ""
+        if ext not in allowed_ext:
+            raise serializers.ValidationError("Unsupported receipt file extension.")
+
+        if int(getattr(value, "size", 0) or 0) > max_size:
+            raise serializers.ValidationError("Receipt file is too large.")
+
+        return value
+
     class Meta:
         model = PaymentRequest
         fields = ['id','vendor','receipt','note','status','created_at','processed_at']

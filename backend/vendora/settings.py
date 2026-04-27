@@ -66,6 +66,17 @@ TELEGRAM_CHAT_ID = str(config('TELEGRAM_CHAT_ID', default='')).strip()
 TELEGRAM_WEBHOOK_URL = str(config('TELEGRAM_WEBHOOK_URL', default='')).strip()
 TELEGRAM_WEBHOOK_SECRET = str(config('TELEGRAM_WEBHOOK_SECRET', default='')).strip()
 
+# Streaming auth ticket defaults
+SSE_STREAM_TICKET_MAX_AGE = int(config('SSE_STREAM_TICKET_MAX_AGE', default=90))
+ALLOW_LEGACY_SSE_QUERY_JWT = config('ALLOW_LEGACY_SSE_QUERY_JWT', cast=bool, default=False)
+MAX_API_REQUEST_BYTES = int(config('MAX_API_REQUEST_BYTES', default=10 * 1024 * 1024))
+
+# JWT refresh cookie settings (HttpOnly migration path)
+JWT_REFRESH_COOKIE_NAME = str(config('JWT_REFRESH_COOKIE_NAME', default='vendora_refresh_token')).strip()
+JWT_REFRESH_COOKIE_MAX_AGE = int(config('JWT_REFRESH_COOKIE_MAX_AGE', default=60 * 60 * 24 * 7))
+JWT_REFRESH_COOKIE_SECURE = config('JWT_REFRESH_COOKIE_SECURE', cast=bool, default=not DEBUG)
+JWT_REFRESH_COOKIE_SAMESITE = str(config('JWT_REFRESH_COOKIE_SAMESITE', default='Lax')).strip()
+
 # Orders configuration
 # Global fallback for auto-expiry (minutes) used when a Vendor has not set a preference
 ORDER_AUTO_EXPIRE_MINUTES = int(config('ORDER_AUTO_EXPIRE_MINUTES', default=30))
@@ -164,12 +175,34 @@ class ApiCsrfExemptMiddleware(MiddlewareMixin):
                 pass
         return None
 
+
+class RequestSizeLimitMiddleware(MiddlewareMixin):
+    """Reject oversized API requests early to reduce abuse impact."""
+
+    def process_request(self, request):  # type: ignore[override]
+        # Apply only to API routes to avoid impacting static/admin behavior.
+        if not (request.path or '').startswith('/api/'):
+            return None
+
+        content_length_raw = request.META.get('CONTENT_LENGTH')
+        if not content_length_raw:
+            return None
+        try:
+            content_length = int(content_length_raw)
+        except (TypeError, ValueError):
+            return None
+        if content_length > MAX_API_REQUEST_BYTES:
+            from django.http import JsonResponse
+            return JsonResponse({'detail': 'Request body too large'}, status=413)
+        return None
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
+    'vendora.settings.RequestSizeLimitMiddleware',
     # Mark certain API endpoints as CSRF exempt before Django's CsrfViewMiddleware runs
     'vendora.settings.ApiCsrfExemptMiddleware',
     # Simple request id injection (fallback). Real impl could use a lib.
@@ -482,7 +515,7 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.AllowAny',
+        'rest_framework.permissions.IsAuthenticated',
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
@@ -533,7 +566,11 @@ if not DEBUG:
 if DEBUG:
     CORS_ALLOW_ALL_ORIGINS = True
 
-CORS_ALLOW_CREDENTIALS = True
+# Do not combine wildcard origins with credentialed CORS.
+if DEBUG and CORS_ALLOW_ALL_ORIGINS:
+    CORS_ALLOW_CREDENTIALS = False
+else:
+    CORS_ALLOW_CREDENTIALS = True
 
 # --- Production CORS hardening / enforcement ---
 if os.environ.get('DIGITALOCEAN_APP_PLATFORM'):
@@ -666,3 +703,27 @@ if os.environ.get('DIGITALOCEAN_APP_PLATFORM'):
         DATABASES = {
             'default': dj_database_url.parse(DATABASE_URL)
         }
+
+
+def _assert_production_security_settings() -> None:
+    """Fail fast when required production security controls are missing."""
+    if DEBUG:
+        return
+
+    errors: list[str] = []
+    if not TELEGRAM_WEBHOOK_SECRET:
+        errors.append('TELEGRAM_WEBHOOK_SECRET must be set when DEBUG=False')
+    if SECRET_KEY == 'CHANGE_ME_DEV_ONLY':
+        errors.append('SECRET_KEY must not use development default when DEBUG=False')
+    if CORS_ALLOW_ALL_ORIGINS:
+        errors.append('CORS_ALLOW_ALL_ORIGINS must be False when DEBUG=False')
+    if not CORS_ALLOWED_ORIGINS:
+        errors.append('CORS_ALLOWED_ORIGINS must be non-empty when DEBUG=False')
+    if not ALLOWED_HOSTS:
+        errors.append('ALLOWED_HOSTS must be configured when DEBUG=False')
+
+    if errors:
+        raise RuntimeError('Production security configuration error(s): ' + '; '.join(errors))
+
+
+_assert_production_security_settings()

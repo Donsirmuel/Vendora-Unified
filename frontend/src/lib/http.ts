@@ -3,41 +3,78 @@ import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
 // Token interface
 export interface Tokens {
   access: string;
-  refresh: string;
+  refresh?: string;
 }
 
 // Token storage utilities
 class TokenStorage {
   private readonly ACCESS_TOKEN_KEY = 'vendora_access_token';
-  private readonly REFRESH_TOKEN_KEY = 'vendora_refresh_token';
+  private memoryTokens: Tokens | null = null;
+
+  private readSessionToken(key: string): string | null {
+    try {
+      return sessionStorage.getItem(key);
+    } catch {
+      return null;
+    }
+  }
+
+  private writeSessionToken(key: string, value: string): void {
+    try {
+      sessionStorage.setItem(key, value);
+    } catch {
+      // ignore storage write failures (private mode/quota/etc.)
+    }
+  }
+
+  private removeSessionToken(key: string): void {
+    try {
+      sessionStorage.removeItem(key);
+    } catch {
+      // ignore storage remove failures
+    }
+  }
+
+  // Remove legacy persistent browser tokens if they exist from older builds.
+  private clearLegacyLocalStorage(): void {
+    try {
+      localStorage.removeItem(this.ACCESS_TOKEN_KEY);
+      localStorage.removeItem('vendora_refresh_token');
+    } catch {
+      // ignore
+    }
+  }
 
   set(tokens: Tokens): void {
-    localStorage.setItem(this.ACCESS_TOKEN_KEY, tokens.access);
-    localStorage.setItem(this.REFRESH_TOKEN_KEY, tokens.refresh);
+    this.memoryTokens = { access: tokens.access };
+    this.writeSessionToken(this.ACCESS_TOKEN_KEY, tokens.access);
+    this.clearLegacyLocalStorage();
   }
 
   get(): Tokens | null {
-    const access = localStorage.getItem(this.ACCESS_TOKEN_KEY);
-    const refresh = localStorage.getItem(this.REFRESH_TOKEN_KEY);
+    if (this.memoryTokens?.access) {
+      return this.memoryTokens;
+    }
+
+    const access = this.readSessionToken(this.ACCESS_TOKEN_KEY);
     
-    if (access && refresh) {
-      return { access, refresh };
+    if (access) {
+      const tokens = { access };
+      this.memoryTokens = tokens;
+      return tokens;
     }
     
     return null;
   }
 
   clear(): void {
-    localStorage.removeItem(this.ACCESS_TOKEN_KEY);
-    localStorage.removeItem(this.REFRESH_TOKEN_KEY);
+    this.memoryTokens = null;
+    this.removeSessionToken(this.ACCESS_TOKEN_KEY);
+    this.clearLegacyLocalStorage();
   }
 
   getAccessToken(): string | null {
-    return localStorage.getItem(this.ACCESS_TOKEN_KEY);
-  }
-
-  getRefreshToken(): string | null {
-    return localStorage.getItem(this.REFRESH_TOKEN_KEY);
+    return this.get()?.access || null;
   }
 }
 
@@ -111,13 +148,6 @@ http.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
-      const refreshToken = tokenStore.getRefreshToken();
-      if (!refreshToken) {
-        tokenStore.clear();
-        window.location.href = '/login';
-        return Promise.reject(error);
-      }
-
       if (isRefreshing) {
         // Queue the request until refresh completes
         return new Promise((resolve, reject) => {
@@ -135,10 +165,10 @@ http.interceptors.response.use(
       isRefreshing = true;
       const baseURL = import.meta.env.VITE_API_BASE || 'https://vendora-backend.onrender.com';
       refreshPromise = axios
-        .post(`${baseURL}/api/v1/accounts/token/refresh/`, { refresh: refreshToken })
+        .post(`${baseURL}/api/v1/accounts/token/refresh/`, {}, { withCredentials: true })
         .then((refreshResponse) => {
           const newAccess = refreshResponse.data.access as string;
-          tokenStore.set({ access: newAccess, refresh: refreshToken });
+          tokenStore.set({ access: newAccess });
           processQueue(null, newAccess);
           return newAccess;
         })

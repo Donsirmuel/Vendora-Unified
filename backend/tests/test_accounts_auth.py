@@ -28,6 +28,32 @@ def test_jwt_obtain_and_refresh(db):
     assert "access" in res.json()
 
 
+def test_jwt_refresh_cookie_and_logout(db):
+    client = APIClient()
+    from django.contrib.auth import get_user_model
+
+    User = get_user_model()
+    User.objects.create_user(email="cookie@example.com", password="pass1234", name="Cookie Tester")
+
+    obtain_url = reverse("accounts:token_obtain_pair")
+    res = client.post(obtain_url, {"email": "cookie@example.com", "password": "pass1234"}, format="json")
+    assert int(cast(Any, res).status_code) in (200, 201)
+    assert "access" in res.json()
+    assert res.cookies.get("vendora_refresh_token") is not None
+
+    refresh_url = reverse("accounts:token_refresh")
+    client.cookies["vendora_refresh_token"] = res.cookies["vendora_refresh_token"].value
+    res2 = client.post(refresh_url, {}, format="json")
+    assert int(cast(Any, res2).status_code) == 200
+    assert "access" in res2.json()
+
+    logout_url = reverse("accounts:token_logout")
+    res3 = client.post(logout_url, {}, format="json")
+    assert int(cast(Any, res3).status_code) == 200
+    assert res3.cookies.get("vendora_refresh_token") is not None
+    assert res3.cookies.get("vendora_refresh_token").value == ""
+
+
 def test_jwt_wrong_password(db):
     client = APIClient()
     from django.contrib.auth import get_user_model

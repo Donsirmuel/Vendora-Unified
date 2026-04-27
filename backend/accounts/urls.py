@@ -1,11 +1,12 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from rest_framework_simplejwt.views import TokenRefreshView
 from .views import VendorViewSet, BroadcastMessageViewSet, BankDetailViewSet, PlanUpgradeView, DailyUsageView
 from .api import PaymentRequestViewSet, GlobalPaymentDestinationViewSet
 from .sse import payment_request_stream
 from .auth_views import (
     CustomTokenObtainPairView,
+    CustomTokenRefreshView,
+    logout,
     signup, 
     request_password_reset, 
     confirm_password_reset
@@ -26,7 +27,8 @@ router.register(r"global-payment-destinations", GlobalPaymentDestinationViewSet,
 urlpatterns = [
     # Custom JWT authentication with email support
     path('token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('token/refresh/', CustomTokenRefreshView.as_view(), name='token_refresh'),
+    path('token/logout/', logout, name='token_logout'),
     
     # Custom authentication endpoints
     path('signup/', signup, name='signup'),

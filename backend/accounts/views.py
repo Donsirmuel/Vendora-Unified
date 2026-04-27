@@ -1,5 +1,5 @@
 from rest_framework.viewsets import ModelViewSet
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from django.db.models import QuerySet
 from typing import Any, cast
 from .models import Vendor, BroadcastMessage, BankDetail
@@ -248,7 +248,7 @@ class PlanUpgradeView(APIView):
     Payload: {"plan": "monthly" | "yearly" | "perpetual", "duration_days"?: int}
     Returns updated vendor representation.
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminUser]
 
     def post(self, request):  # type: ignore[override]
         serializer = PlanUpgradeSerializer(data=request.data, context={'request': request})

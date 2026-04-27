@@ -6,6 +6,9 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.views import TokenRefreshView
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
@@ -20,6 +23,27 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+def _set_refresh_cookie(response: Response, refresh_token: str) -> Response:
+    response.set_cookie(
+        key=getattr(settings, 'JWT_REFRESH_COOKIE_NAME', 'vendora_refresh_token'),
+        value=refresh_token,
+        max_age=getattr(settings, 'JWT_REFRESH_COOKIE_MAX_AGE', 60 * 60 * 24 * 7),
+        httponly=True,
+        secure=getattr(settings, 'JWT_REFRESH_COOKIE_SECURE', True),
+        samesite=getattr(settings, 'JWT_REFRESH_COOKIE_SAMESITE', 'Lax'),
+        path='/api/v1/accounts/token/',
+    )
+    return response
+
+
+def _clear_refresh_cookie(response: Response) -> Response:
+    response.delete_cookie(
+        key=getattr(settings, 'JWT_REFRESH_COOKIE_NAME', 'vendora_refresh_token'),
+        path='/api/v1/accounts/token/',
+    )
+    return response
+
+
 @method_decorator(csrf_exempt, name="dispatch")
 class CustomTokenObtainPairView(TokenObtainPairView):
     """Custom token view that uses email instead of username.
@@ -31,6 +55,43 @@ class CustomTokenObtainPairView(TokenObtainPairView):
     """
     serializer_class = CustomTokenObtainPairSerializer
     authentication_classes: list[type[BaseAuthentication]] = []  # type: ignore[assignment]
+
+    def post(self, request, *args, **kwargs):  # type: ignore[override]
+        response = super().post(request, *args, **kwargs)
+        try:
+            refresh = response.data.get('refresh')
+            if refresh:
+                _set_refresh_cookie(response, refresh)
+        except Exception:
+            pass
+        return response
+
+
+class CustomTokenRefreshView(TokenRefreshView):
+    """Refresh access tokens from a HttpOnly cookie or legacy JSON body."""
+
+    def post(self, request, *args, **kwargs):  # type: ignore[override]
+        refresh = request.data.get('refresh') or request.COOKIES.get(getattr(settings, 'JWT_REFRESH_COOKIE_NAME', 'vendora_refresh_token'))
+        payload = {'refresh': refresh} if refresh else request.data
+        serializer = self.get_serializer(data=payload)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except (TokenError, InvalidToken):
+            raise
+        response = Response(serializer.validated_data, status=status.HTTP_200_OK)
+        new_refresh = serializer.validated_data.get('refresh')
+        if new_refresh:
+            _set_refresh_cookie(response, new_refresh)
+        return response
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+@authentication_classes([])
+def logout(request):
+    """Clear the refresh cookie client-side sign-out path."""
+    response = Response({'detail': 'Logged out'}, status=status.HTTP_200_OK)
+    return _clear_refresh_cookie(response)
 
 
 # IMPORTANT: csrf_exempt must wrap the final DRF-dispatched view; therefore it

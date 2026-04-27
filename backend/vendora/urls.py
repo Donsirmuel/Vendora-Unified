@@ -24,7 +24,7 @@ from django.http import JsonResponse
 from api.media import serve_media_file
 from api.health import health_view
 from api.metrics import metrics_view
-from api.sse import sse_stream
+from api.sse import sse_stream, issue_stream_ticket
 from django.views.generic import TemplateView, RedirectView
 
 # Some hosting environments (DigitalOcean App Platform) may mount the service at
@@ -59,6 +59,7 @@ for _prefix in API_PREFIXES:
         path(f"{_prefix}/queries/", include(("queries.urls", "queries"), namespace=f"{_prefix.replace('/', '_')}_queries")),
         path(f"{_prefix}/rates/", include(("rates.urls", "rates"), namespace=f"{_prefix.replace('/', '_')}_rates")),
         path(f"{_prefix}/notifications/", include(("notifications.urls", "notifications"), namespace=f"{_prefix.replace('/', '_')}_notifications")),
+        path(f"{_prefix}/stream-ticket/", issue_stream_ticket, name=f"{_prefix.replace('/', '_')}_sse_stream_ticket"),
         path(f"{_prefix}/stream/", sse_stream, name=f"{_prefix.replace('/', '_')}_sse_stream"),
     path(f"{_prefix}/telegram/", include(("api.urls", "telegram"), namespace=f"{_prefix.replace('/', '_')}_telegram")),
     ]

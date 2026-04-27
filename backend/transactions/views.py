@@ -8,6 +8,35 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import status
 from django.http import HttpResponse
+from django.conf import settings
+
+
+def _validate_proof_upload(file_obj):
+    if not file_obj:
+        return None
+
+    max_size = int(getattr(settings, "TRANSACTION_PROOF_MAX_BYTES", 8 * 1024 * 1024) or (8 * 1024 * 1024))
+    allowed_types = {
+        "application/pdf",
+        "image/jpeg",
+        "image/png",
+        "image/webp",
+    }
+    allowed_ext = {".pdf", ".jpg", ".jpeg", ".png", ".webp"}
+
+    content_type = str(getattr(file_obj, "content_type", "") or "").lower()
+    if content_type and content_type not in allowed_types:
+        return "Unsupported file type."
+
+    file_name = str(getattr(file_obj, "name", "") or "")
+    ext = file_name[file_name.rfind('.'):].lower() if "." in file_name else ""
+    if ext not in allowed_ext:
+        return "Unsupported file extension."
+
+    if int(getattr(file_obj, "size", 0) or 0) > max_size:
+        return "File is too large."
+
+    return None
 
 
 class TransactionViewSet(ModelViewSet):
@@ -68,9 +97,15 @@ class TransactionViewSet(ModelViewSet):
 
         # Allow vendor to upload their own proof file (e.g., transfer receipt)
         if "vendor_proof" in request.FILES:
+            err = _validate_proof_upload(request.FILES["vendor_proof"])
+            if err:
+                return Response({"detail": err}, status=status.HTTP_400_BAD_REQUEST)
             transaction.vendor_proof = request.FILES["vendor_proof"]
         # Accept generic 'proof' field (test uses 'proof')
         if "proof" in request.FILES:
+            err = _validate_proof_upload(request.FILES["proof"])
+            if err:
+                return Response({"detail": err}, status=status.HTTP_400_BAD_REQUEST)
             transaction.proof = request.FILES["proof"]
 
         # If files were uploaded but no status provided, only save the files and mark proof_uploaded_at

@@ -148,7 +148,17 @@ class VendorSerializer(serializers.ModelSerializer):
             "daily_orders_date",
             "currency",
         ]
-        read_only_fields = ["id", "is_staff", "is_superuser"]
+        read_only_fields = [
+            "id",
+            "email",
+            "trial_started_at",
+            "is_staff",
+            "is_superuser",
+            "plan",
+            "is_trial",
+            "daily_orders_count",
+            "daily_orders_date",
+        ]
 
     def validate_name(self, value: str) -> str:
         if not value.strip():

@@ -86,8 +86,7 @@ export async function login(credentials: LoginCredentials): Promise<LoginRespons
 
     // Store tokens
     tokenStore.set({
-      access: tokens.access,
-      refresh: tokens.refresh
+      access: tokens.access
     });
 
     return tokens;
@@ -147,6 +146,7 @@ export async function confirmPasswordReset(data: PasswordResetConfirm): Promise<
 }
 
 export function logout(): void {
+  void http.post('/api/v1/accounts/token/logout/', {}, { withCredentials: true }).catch(() => undefined);
   tokenStore.clear();
   window.location.href = '/';
 }

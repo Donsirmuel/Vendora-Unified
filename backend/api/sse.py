@@ -1,8 +1,10 @@
 from ctypes import cast
-from django.http import StreamingHttpResponse, HttpResponse
+from django.http import StreamingHttpResponse, HttpResponse, JsonResponse
 from django.utils import timezone
 from django.db.models import Max
 from django.conf import settings
+from django.core import signing
+from django.contrib.auth import get_user_model
 from time import sleep
 import json
 
@@ -11,21 +13,58 @@ from orders.models import Order
 from transactions.models import Transaction
 
 
-def _authenticate_from_query_token(request):
-    """
-    Authenticate using a `token` query param (JWT access token).
-    This avoids the limitation that EventSource cannot set Authorization headers.
-    """
-    token = request.GET.get("token")
-    if not token:
-        return None
+def _resolve_request_user_from_auth_header(request):
+    """Authenticate request using Authorization: Bearer JWT."""
     try:
-        auth = JWTAuthentication()
-        validated = auth.get_validated_token(token)
-        user = auth.get_user(validated)
-        return user
+        auth_result = JWTAuthentication().authenticate(request)
+        if auth_result:
+            return auth_result[0]
+    except Exception:
+        pass
+    return None
+
+
+def _build_stream_ticket(user_id: int) -> str:
+    signer = signing.TimestampSigner(salt="vendora.sse.stream")
+    return signer.sign(str(user_id))
+
+
+def _authenticate_from_stream_ticket(request):
+    """Authenticate SSE using a short-lived, signed stream ticket in query param `st`."""
+    ticket = (request.GET.get("st") or "").strip()
+    if not ticket:
+        return None
+
+    max_age_seconds = int(getattr(settings, "SSE_STREAM_TICKET_MAX_AGE", 90) or 90)
+    signer = signing.TimestampSigner(salt="vendora.sse.stream")
+    try:
+        raw_user_id = signer.unsign(ticket, max_age=max_age_seconds)
+        user_id = int(raw_user_id)
     except Exception:
         return None
+
+    try:
+        User = get_user_model()
+        return User.objects.get(id=user_id)
+    except Exception:
+        return None
+
+
+def issue_stream_ticket(request):
+    """Mint a short-lived stream ticket for SSE clients.
+
+    The frontend requests this endpoint with Bearer JWT, then uses the returned
+    `stream_ticket` as `?st=...` when opening EventSource.
+    """
+    user = _resolve_request_user_from_auth_header(request)
+    if not user or not user.is_authenticated:
+        return JsonResponse({"detail": "Authentication required"}, status=401)
+
+    max_age_seconds = int(getattr(settings, "SSE_STREAM_TICKET_MAX_AGE", 90) or 90)
+    return JsonResponse({
+        "stream_ticket": _build_stream_ticket(int(getattr(user, "id"))),
+        "expires_in": max_age_seconds,
+    })
 
 
 def sse_stream(request):
@@ -34,7 +73,18 @@ def sse_stream(request):
     Emits whenever Orders or Transactions for the vendor change (based on max updated/created timestamps).
     Long-polls the DB for a short window and then closes, letting the client auto-reconnect.
     """
-    user = _authenticate_from_query_token(request)
+    user = _authenticate_from_stream_ticket(request)
+    # Optional compatibility path (disabled by default) to support legacy clients.
+    if (not user or not user.is_authenticated) and bool(getattr(settings, "ALLOW_LEGACY_SSE_QUERY_JWT", False)):
+        token = request.GET.get("token")
+        if token:
+            try:
+                auth = JWTAuthentication()
+                validated = auth.get_validated_token(token)
+                user = auth.get_user(validated)
+            except Exception:
+                user = None
+
     if not user or not user.is_authenticated:
         return HttpResponse(status=401)
 
